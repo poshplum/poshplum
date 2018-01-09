@@ -38,67 +38,73 @@ Getting started is easy:
 // in component files:
 import {Card} from 'a-posh-plum/cards';
 
-@MyLayout  // -- gives the layout to your home page
 class Home extends Component {
-  render() { 
-    return <div>
-      <h1>My Posh app</h1>
+  render() {
+    let {MoreMenuItems,Title} = TopMenuLayout 
+    return <TopMenuLayout>
+      <Title>My Posh app</Title>
+      <MoreMenuItems>
+        <Link to="/pricing">Pricing</Link>
+        <Link to="/terms">Terms of Service</Link>
+      </MoreMenuItems>
       
       <p>This app lets you manage all of your widgets 
         and share them with your friends, ...
       </p> 
-    </div>
+    </TopMenuLayout>
   }
 }
-@MyLayout  // -- gives the layout to your Hello page
 class Hello extends Component {
   render() { 
-    return <div>
-      <h1>Hello World</h1>
+    let {partId} = ... // get from route
+    let {MoreMenuItems,Title} = TopMenuLayout;
+    return <SideMenuLayout>
+      <Title>Hello World</Title>
+      <MoreMenuItems>
+        <Link to={`/service/part/{partId}`}>Finding Service</Link>
+        <Link to="/terms">Terms of Service</Link>
+      </MoreMenuItems>
+      
       <Card>
         <Card.Title>My first Card</Card.Title>
-        <Card.Body>Check it out!</Card.Body>
+        
+        <Card.Body>
+          Check out these electronic parts...
+        </Card.Body>
       </Card>
     </div>
-  }
-}
-
-// -- in MyLayout.jsx:
-import {withMenuBar} from 'a-posh-plum/layouts';
-import {NavLink} from 'react-router-dom';
-
-@withMenuBar // mixes your menu with Plum's built-in layout template
-class MyLayout extends Component {
-  render() { // renders menu items for the layout
-    return [ 
-      <NavLink to="/">Home</NavLink>,
-      <NavLink to="/hello">Members</NavLink>,
-    ]
   }
 }
 ```
 
 ## Anatomy of a Plum-based app
 
-Apps built with Plum are based on a mental model you already know: pages, 
-layouts and cards.  Plum's UI components give you a refined presentation 
+Apps built with Plum are based on a mental model you already know: routes, 
+pages, layouts and cards.  Plum's UI components give you a refined presentation 
 that's easy to apply.
 
-Layouts provide consistency across various pages of your app. 
+Routes map from URLs to pages.  Each page is presented with a layout, and layouts 
+are shareable. Panels and cards can be used to construct pages by placing them into 
+any content area. More than one page can be routed at the same time (typically with 
+distinct layouts - more on that below). 
+
+![diagram described above: routes, pages, panels, cards](./plumAnatomy.svg)
+
+Layouts provide consistency and reusability across various pages of your app. 
 You can make your own layouts (see more below) or use Plum's built-in
 layouts for responsive apps:    
 
- * withMenuBar: A simple layout with a standard horizontal menu bar and 
+ * `<TopMenuBar>`: A simple layout with a standard horizontal menu bar and 
    page-body area.  Use a single menu for your entire app, or choose dynamic 
    menu content that changes with the current page.
    
- * withMenuPanel: Another simple layout with a standard vertical menu area 
+ * `<LeftMenuBar>`: Another simple layout with a standard vertical menu area 
    on the left (hidden by default on small screens).
    
- * withPanel: A fancier layout, with a floating panel that opens to reveal 
-   details on top of an existing screen, without disturbing the contextual 
-   content.
-   
+ * `<Panel>`: A fancier-looking layout that shows extra content or other 
+  UI in a floating panel, partially obstructing the background material while
+  maintaining the background for the user's mental context.  
+
 Plum's layout components are easy to mix together with your application's 
 pages and customize for great reusability. 
 
@@ -110,11 +116,72 @@ baked right in.
   > _He put in his thumb,_  
   > _And pulled out a plum,_  
   > _And said, "what a good boy am I!"_
-
-  -- [Mother Goose](https://www.poetryfoundation.org/poems/46973/little-jack-horner-56d2271c5917a)
-
+-- [Mother Goose](https://www.poetryfoundation.org/poems/46973/little-jack-horner-56d2271c5917a)
 
 ## Getting Posh
+
+### Blended layout slots 
+
+Need to group a dozen different pages, each sharing a section-level menu?
+Plum's `<Layout>`s are easy to compose, thanks to React - this lets you blend
+together layout slots for easy reusability.
+
+```
+// -- in MyLayout.jsx:
+import {SideMenuLayout} from 'a-posh-plum/layouts';
+import {NavLink} from 'react-router-dom';
+
+// reusable section of an app
+class PartsSection extends Component {
+  render() {
+    let {children} = props;
+    let {MoreMenuItems,Title} = SideMenuLayout;
+    return <SideMenuLayout>
+      <MoreMenuItems>
+         ... 9 items in shared menu...
+      </MoreMenuItems>
+      
+      {children}          {/* seamlessly blending Titles from children */}
+                          </*   ...or additional MoreMenuItems */}
+    </SideMenuLayout>
+  } 
+}
+
+// reusing the Parts section:
+class PartsInstallation extends Component {
+  render() { // renders menu items for the layout
+    let {Title} = SideMenuLayout;
+    return <PartsSection>
+      <Title>Parts Installation</Title>
+      
+      <h2>At our offices</h2>
+      ....
+      <h2>At your site</h2>
+      ...
+    </PartsSection>
+  }
+}
+
+class PartsFinding extends Component {
+  render() { // renders menu items for the layout
+    let {Title} = SideMenuLayout;
+    return <PartsSection>
+      <Title>Finding the right parts for your stuff</Title>
+      <MoreMenuItems>
+         MOAR MENU ITEMS
+      </MoreMenuItems>
+      
+      <h2>By manufacturer</h2>
+      ....
+      <h2>By model number</h2>
+      ...
+    </PartsSection>
+  }
+}
+```
+
+In the `<PartsFinding>` component, MOAR MENU ITEMS will be included after 
+the 9 menu items from the `<PartsSection>`. 
 
 ### Using Plum's material UI
 
@@ -128,24 +195,24 @@ people understand intuitively.
 
 ```
 import {Card} from 'a-posh-plum/cards'
-  ...
-  render() {
-    <Card>
-      <Card.Icon icon="icon-check"/>
-      <Card.Title>My Thing</Card.Title>
-      <Card.StateTag>Ready</Card.StateTag>
-      <Card.Body>
-        Awesome Item
-      </Card.Body>
-      <Card.Route path="/items/:id">
-        Expanding content when the card is tapped
-      </Card.Route>
-    </Card>
-  }
+MyCard = () => <Card>
+    <Card.Icon icon="icon-check"/>
+    <Card.Title>My thing in a posh Card   </Card.Title>
+    <Card.StateTag>
+      Ready
+    </Card.StateTag>
+    <Card.Body>
+      Awesome Item
+    </Card.Body>
+    
+    <Card.Route path="/items/:id">
+      Expanding content when the card is tapped
+    </Card.Route>
+</Card>
 ```
 
 The Card subcomponents like `<Card.StateTag>` are easily auto-completed from your
-Javascript-aware editor, so you can fluently build out your app, one 
+Javascript-aware editor (IDEA, VSCode), so you can fluently build out your app, one 
 auto-completed element at a time.
 
 There's also a `<CardList>` component that takes a collection of items to render
@@ -153,106 +220,99 @@ as cards - see its docs for usage.
 
 #### Panel
 
-The Panel component gives an overlay treatment that responds to small or large
-screens, displaying both primary content and (if the screen is big enough) 
-background material.  
+The Panel component gives an overlay treatment for nested
+screens/workflows, such as a master/detail pattern; it responds 
+to small or large screens, and helps manage user-attention 
+concerns. 
 
-There's a layout form of the panel component, or you
-can use the Panel directly (notice how the sub-components have the same form as 
-the Card subcomponents above):
-
-```
-import {Panel} from 'a-posh-plum/cards'
-
-<Panel>
-  <Panel.Icon src="/bow-tie.png" />
-  <Panel.Title>A sweet editing panel</Panel.Title>
-  <Panel.StateTag tag="Posh!" />
-  <Panel.Body><form> 
-      ...some form elements
-    </form>
-  </Panel.Body>
-</Panel>
-```
-
-The Panel can be used like this, but you're more likely to use it as a layout instead...
-
-#### The `withPanel` layout
-
-The "withPanel" layout provides a layered presentation with background content 
-(provided by an existing page and route) plus an overlaid panel having more 
-specific content, which you define with an _*additional*_ page and route.  
+For example, let's say the user is 
+viewing a Client summary screen, and they can click one of the 
+customer's orders.  To minimize attention churn, we can keep 
+the Client Summary screen being displayed as-is, overlaying a  
+Panel to show the details of the order - only until the user closes 
+it.
 
 ```
-// in your routes setup:
+// in your routes setup (top-level app component):
 <Route path="/things" component={ThingList} />
 <Route path="/things/:id/edit" component={ThingEditor} />
+```
 
-// A page-level component:
-import {withPanel} from 'a-posh-plum/layouts'
-import {Panel} from 'a-posh-plum/cards'
+Both routes can match, and both things can be rendered; this helps 
+people maintain a conceptual anchor to their location (the Client 
+summary screen); viewing an order doesn't change the person's 
+notion of "where they are".   
 
-@withPanel class ThingEditor extends Component {
-  render() {
+On small screens, the nested workflow is shown in full-screen style; 
+a Back button is expected in the upper-left.
+
+```
+import {Panel} from 'a-posh-plum/layouts'
+
+class ThingEditor extends Component {
+  render() { return <Panel>
     <Panel.Icon src="/bow-tie.png" />
     <Panel.Title>{this.state.title}</Panel>
 
     ... some form elements ...
+  </Panel>
   }
 }  
 ```
-
-As you can see, this makes your page component into a panel, and you can use
-the Panel's subcomponents to render an icon, title, and so on (this example
-also shows the "default body" feature, which extracts content to a default
-Body section, saving a little typing).
-
-The two routes shown in this example both match the editing URL (one is more 
-specific, but they both match); both pages are rendered, so the ThingList is 
-displayed (if the screen is big enough) behind the panel. 
-
-On smaller screens, the ThingEditor will be fullscreen and scrollable,
-hiding the ThingList instead.  See the docs for the Panel component to learn 
-more about making it responsive to small screens.
  
 #### Custom Layouts
 
 Plum's cards and layouts are created with just a couple of simple utilities, which 
-you can use yourself to make layouts of your own.
+you can use to make layouts of your own creation.  Note the use of defaultSlot for 
+the Body section.
 
 ```
 import {namedSlot, Layout} from 'a-posh-plum/util`;
 
+let Title = Layout.namedSlot("Title");
+let Sidebar = Layout.namedSlot("Sidebar");
+let Body = Layout.defaultSlot("Body");
+
 class MyLayout extends Layout {
-  static displayName = "MyLayout"
-  static Title = namedSlot(displayName, "Title");
-  static Sidebar = namedSlot(displayName, "Sidebar");
+  static Title = Title;
+  static Sidebar = Sidebar;
+  static slots={Title,Sidebar,Body}
   render() {
-    let slots = this.extractSlots()
+    let slots = this.slots;
+    
     // ... your html markup for this layout...
     return <div>
        <h1 className="title">{slots.Title}</h1> 
           
        <div className="sidebar">{slots.Sidebar}</div>
-       <div className="body">{slots.other}{slots.body}</div>
+       <div className="body">
+          {slots.Body}
+       </div>
      </div>
   }
 }
 ```
 
-This example doesn't specify styling for these items; when you make a layout,
-you can control exactly the HTML and styles you want.  
+This example doesn't specify much styling, but when you make a 
+layout, you can control exactly the HTML and styles you want.  
 
 You might think of a layout as an 
 envelope for page-level content; in the layout component above, you can configure
 exactly the layout of the envelope, and when you insert pages into the 
-envelope, the page content shows through the envelope sections ("slots").
+envelope, the page content shows through the envelope sections ("slots"). 
 
-To use the layout for your pages:
+You can make as many slots as needed for your layout.  Here's a layout that includes
+a right-side `<ContextPanel>` area, which can be controlled by your page-level 
+components. 
+
+![visual of slots, each with their space in a layout](./plumLayouts.svg)
+
+The layout component can re-order the slot content, and place them exactly where they 
+need to achieve its presentation goals.   
 
 ```
-@MyLayout class Page1 extends Component {
-  render() { return <div>
+class Page1 extends Component {
+  render() { return <MyLayout>
     <MyLayout.Title>Page 1</MyLayout.Title>
 
     Check out my sweet page.
@@ -260,22 +320,23 @@ To use the layout for your pages:
     <MyLayout.Sidebar>
       <img src="/dessert1.png" />
     </MyLayout.Sidebar>
-  </div>
+  </MyLayout>
   }
 }
 
-@MyLayout class Page2 extends Component {
-  render() { return <div>
-    <MyLayout.Title>Page 2</MyLayout.Title>
+class Page2 extends Component {
+  render() { return <MyLayout>
+    <MyLayout.Title>AWESOME PAGE!!!</MyLayout.Title>
 
     This page is chock full of awesome.
+    Unmatched children go to the defaultSlot.
     
     <MyLayout.Sidebar>
       <img src="/awesome1.png" />
       <img src="/awesome2.png" />
       <img src="/awesome3.png" />
     </MyLayout.Sidebar>
-  </div>
+  </MyLayout>
   }
 }
 ```
@@ -289,13 +350,16 @@ The package.json includes scripts for triggering important actions.
 > yarn run     // run a UI harness on port 5000 for a web-browser preview
 > yarn test    // run tests
 > yarn testing // run tests with --watch
+> yarn testing-debug // with debugger/inspector for test debugging
 > yarn build   // build the package
 ```
 
+Use [chrome devtools](chrome://inspect) to attach to the Jest tests.
+
 #### Note for Windows-based developers
 
-On Windows, `yarn testing` needs `git` to be in the path, and Cygwin's 
+On Windows + Cygwin, `yarn testing` needs `git` to be in the path, and Cygwin's 
 `/usr/bin/git.exe` doesn't fill the need (`Error: spawn git ENOENT`). Making an 
-alias or shell script with `PATH=/cygdrive/c/Program\ Files/Git/bin:$PATH yarn testing` 
-corrects the error.  See [this issue comment](https://github.com/facebook/jest/issues/3214#issuecomment-312186643) 
+alias or shell script with \` `PATH=/cygdrive/c/Program\ Files/Git/bin:$PATH yarn testing`\` 
+(or similar) corrects the error.  See [this issue comment](https://github.com/facebook/jest/issues/3214#issuecomment-312186643) 
 for more background.

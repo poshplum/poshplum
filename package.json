@@ -3,20 +3,25 @@
     "@neutrinojs/jest": "^8.3.0",
     "@neutrinojs/node": "^8.3.0",
     "@neutrinojs/react-components": "^8.3.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "enzyme": "^3.7.0",
+    "enzyme-adapter-react-16": "*",
+    "enzyme-to-json": "^3.3.4",
+    "lodash": "^4.17.11",
     "neutrino": "^8.3.0",
-    "react-addons-test-utils": "^15.6.2"
+    "react-test-renderer": "^16.6.0"
   },
   "dependencies": {
-    "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "source-map-support": "^0.5.9"
   },
   "scripts": {
     "start": "neutrino start",
-    "test": "neutrino test --use @neutrinojs/node",
-    "testing": "neutrino test --use @neutrinojs/node --watch",
+    "test": "neutrino test --use @neutrinojs/node --color",
+    "test-debug": "node --inspect node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --runInBand",
+    "testing": "neutrino test --use @neutrinojs/node --watch --color",
+    "testing-debug": "node --inspect node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --watch --runInBand --color",
     "coverage": "neutrino test --coverage",
     "build": "neutrino build"
   }

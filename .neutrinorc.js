@@ -18,14 +18,27 @@ module.exports = {
         babelWithDecorators
       ] },
       production: { use: [
-        '@neutrinojs/react-components',
-        babelWithDecorators
-      ] }
+          '@neutrinojs/react-components',
+          babelWithDecorators
+      ] },
+      test: { use: [
+          '@neutrinojs/node',
+          '@neutrinojs/react-components',
+          babelWithDecorators,
+          ['@neutrinojs/jest', {
+            // setup script for the framework
+            setupTestFrameworkScriptFile: '<rootDir>/test/test-setup.js',
+            // and / or shims
+            // setupFiles: [
+            //   '<rootDir>/shim.js'
+            // ]
+          }]
+        ]
+      }
     }
   },
   use: [
-    '@neutrinojs/jest',
-    '@neutrinojs/react-components'
+     // '@neutrinojs/react-components'
   ]
 }
 
