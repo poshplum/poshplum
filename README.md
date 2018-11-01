@@ -4,7 +4,7 @@ A lightweight application shell giving clean, consistent UI to React apps.
 
 ![Plum with top-hat, bow tie and monocle](./aPoshPlum.svg)
 
-Your app is destined for greatness.  A posh plum makes it all easier.
+Your app is destined for greatness.  A Posh Plum makes it all easier.
 
 ## Why?
 
@@ -57,7 +57,7 @@ class Hello extends Component {
       <h1>Hello World</h1>
       <Card>
         <Card.Title>My first Card</Card.Title>
-        <Card.Body>Check it out!</Card.Body
+        <Card.Body>Check it out!</Card.Body>
       </Card>
     </div>
   }
@@ -184,9 +184,15 @@ The "withPanel" layout provides a layered presentation with background content
 specific content, which you define with an _*additional*_ page and route.  
 
 ```
+// in your routes setup:
+<Route path="/things" component={ThingList} />
+<Route path="/things/:id/edit" component={ThingEditor} />
+
+// A page-level component:
 import {withPanel} from 'a-posh-plum/layouts'
 import {Panel} from 'a-posh-plum/cards'
-@withPanel class MyPaneledPage extends Component {
+
+@withPanel class ThingEditor extends Component {
   render() {
     <Panel.Icon src="/bow-tie.png" />
     <Panel.Title>{this.state.title}</Panel>
@@ -201,25 +207,13 @@ the Panel's subcomponents to render an icon, title, and so on (this example
 also shows the "default body" feature, which extracts content to a default
 Body section, saving a little typing).
 
-Rendering a page with a panel is usually done with a combination of two routes and
-corresponding page components.  These two routes both match the URL, with the route 
-to the `withPanel`'d page being more specific.  
- 
-```
-<Route path="/things" component={ThingList} />
-<Route path="/things/:id/edit" component={ThingEditor} />
-  
-@withPanel class ThingEditor extends Component {
-   //... as above
-}
-```  
-
-In this example, the ThingList is displayed (if the screen is big enough) behind 
-the panel. 
+The two routes shown in this example both match the editing URL (one is more 
+specific, but they both match); both pages are rendered, so the ThingList is 
+displayed (if the screen is big enough) behind the panel. 
 
 On smaller screens, the ThingEditor will be fullscreen and scrollable,
-hiding the ThingList.  See the docs for the Panel component to learn more about
-making it responsive to small screens.
+hiding the ThingList instead.  See the docs for the Panel component to learn 
+more about making it responsive to small screens.
  
 #### Custom Layouts
 
@@ -247,8 +241,10 @@ class MyLayout extends Layout {
 ```
 
 This example doesn't specify styling for these items; when you make a layout,
-you can control exactly the layout you need.  You might think of it as an 
-envelope for your content; in the layout component above, you can configure
+you can control exactly the HTML and styles you want.  
+
+You might think of a layout as an 
+envelope for page-level content; in the layout component above, you can configure
 exactly the layout of the envelope, and when you insert pages into the 
 envelope, the page content shows through the envelope sections ("slots").
 
@@ -278,9 +274,8 @@ To use the layout for your pages:
       <img src="/awesome1.png" />
       <img src="/awesome2.png" />
       <img src="/awesome3.png" />
-    </MyLayout.Sidebar
+    </MyLayout.Sidebar>
   </div>
   }
 }
 ```
-
