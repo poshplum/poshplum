@@ -8,7 +8,7 @@ Your app is destined for greatness.  A Posh Plum makes it all easier.
 
 ## Why?
 
-React makes it easy to control the fine details of a web page. 
+React lets you control the fine details of a web page. 
 You're in control, but you're left having to make all the choices 
 (and components) yourself.
 
