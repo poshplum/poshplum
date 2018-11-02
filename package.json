@@ -14,10 +14,10 @@
     "source-map-support": "^0.5.9"
   },
   "scripts": {
-    "start": "neutrino start --use @neutrinojs/react-components",
-    "test": "neutrino test --use @neutrinojs/node @neutrinojs/jest",
-    "testing": "neutrino test --use @neutrinojs/node @neutrinojs/jest --watch",
+    "start": "neutrino start",
+    "test": "neutrino test",
+    "testing": "neutrino test --watch",
     "coverage": "neutrino test --coverage",
-    "build": "neutrino build --use @neutrinojs/react-components"
+    "build": "neutrino build"
   }
 }
