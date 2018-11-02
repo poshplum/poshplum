@@ -1,0 +1,23 @@
+{
+  "devDependencies": {
+    "@neutrinojs/jest": "^8.3.0",
+    "@neutrinojs/node": "^8.3.0",
+    "@neutrinojs/react-components": "^8.3.0",
+    "enzyme": "^3.7.0",
+    "neutrino": "^8.3.0",
+    "react-addons-test-utils": "^15.6.2"
+  },
+  "dependencies": {
+    "babel-plugin-transform-decorators-legacy": "^1.3.5",
+    "react": "^16.6.0",
+    "react-dom": "^16.6.0",
+    "source-map-support": "^0.5.9"
+  },
+  "scripts": {
+    "start": "neutrino start --use @neutrinojs/react-components",
+    "test": "neutrino test --use @neutrinojs/node @neutrinojs/jest",
+    "testing": "neutrino test --use @neutrinojs/node @neutrinojs/jest --watch",
+    "coverage": "neutrino test --coverage",
+    "build": "neutrino build --use @neutrinojs/react-components"
+  }
+}
