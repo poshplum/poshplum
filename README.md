@@ -144,7 +144,7 @@ import {Card} from 'a-posh-plum/cards'
   }
 ```
 
-The Card subcomponents like `<Card.Title>` are easily auto-completed from your
+The Card subcomponents like `<Card.StateTag>` are easily auto-completed from your
 Javascript-aware editor, so you can fluently build out your app, one 
 auto-completed element at a time.
 
@@ -279,3 +279,23 @@ To use the layout for your pages:
   }
 }
 ```
+
+## Developing
+
+This repo uses neutrino.js for packaging and development-time operation.
+The package.json includes scripts for triggering important actions.
+
+```
+> yarn run     // run a UI harness on port 5000 for a web-browser preview
+> yarn test    // run tests
+> yarn testing // run tests with --watch
+> yarn build   // build the package
+```
+
+#### Note for Windows-based developers
+
+On Windows, `yarn testing` needs `git` to be in the path, and Cygwin's 
+`/usr/bin/git.exe` doesn't fill the need (`Error: spawn git ENOENT`). Making an 
+alias or shell script with `PATH=/cygdrive/c/Program\ Files/Git/bin:$PATH yarn testing` 
+corrects the error.  See [this issue comment](https://github.com/facebook/jest/issues/3214#issuecomment-312186643) 
+for more background.

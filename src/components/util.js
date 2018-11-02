@@ -1,6 +1,8 @@
-export default const util = {
+const util = {
   namedSlot() {
   },
   extractSlots() {
   }
 };
+
+export default util;
