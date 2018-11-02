@@ -4,15 +4,15 @@ import {withTopMenu} from './components/layout';
 
 
 const root = document.getElementById('root');
-
 @withTopMenu
 class MyTestPage extends React.Component {
   render() {
-    <div>My content</div>
+    return <div>My content</div>
   }
 }
 
 render((
-  <MenuBarLayout />
-
+  <div><h1>Test with top menu</h1>
+    <MyTestPage />
+  </div>
 ), root);

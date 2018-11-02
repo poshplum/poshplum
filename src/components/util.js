@@ -1,5 +1,10 @@
 const util = {
-  namedSlot() {
+  namedSlot(name,component) {
+    let rv = component || function({children}) {
+      return children
+    };
+    rv.displayName = name;
+    return rv;
   },
   extractSlots() {
   }

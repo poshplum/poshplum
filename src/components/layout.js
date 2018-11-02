@@ -1,10 +1,11 @@
-import Component from 'react';
-
+import {Component} from 'react';
+import Util from './util';
 
 export class TopMenuLayout extends Component {
+  static Menu = Util.namedSlot("Menu");
   render() {
     let {children} = this.props;
-    return <div className="layout">
+    return <div className="layout top-menu-layout">
       <div className="menu">Menu Area</div>
       <div className="body">
         {children}
@@ -14,14 +15,22 @@ export class TopMenuLayout extends Component {
 }
 
 export const withTopMenu = (WrappedComponent) => {
-  let MenuedComponent = class extends Component {
-    static displayName = `Page(${WrappedComponent.displayName})`;
+  let wrappedName = WrappedComponent.displayName || WrappedComponent.name;
+  if (!wrappedName) {
+    console.error("missing name or displayName in wrapped component", WrappedComponent);
+    throw new Error("wrapped component needs a name or displayName");
+  }
+  class ComponentWithMenu extends Component {
+    static displayName = `withTopMenu(${wrappedName})`;
     render() {
+      let {props} = this;
       return <TopMenuLayout>
-        <WrappedComponent />
+        <WrappedComponent {...props} />
       </TopMenuLayout>
     }
   }
+
+  return ComponentWithMenu;
 };
 
 const Layout = {
@@ -29,6 +38,5 @@ const Layout = {
   withTopMenu,
   // withSideMenu,
   // withPanel,
-}
-
-// export default Layout;
+};
+export default Layout;
