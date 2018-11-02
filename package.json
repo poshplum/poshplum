@@ -15,8 +15,8 @@
   },
   "scripts": {
     "start": "neutrino start",
-    "test": "neutrino test",
-    "testing": "neutrino test --watch",
+    "test": "neutrino test --use @neutrinojs/node",
+    "testing": "neutrino test --use @neutrinojs/node --watch",
     "coverage": "neutrino test --coverage",
     "build": "neutrino build"
   }
