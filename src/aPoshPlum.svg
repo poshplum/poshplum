@@ -2,8 +2,9 @@
 <svg viewBox="229.014 219.52 203.652 201.926" width="203.652" height="201.926" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <linearGradient id="linearGradient3771-4" x1="373" gradientUnits="userSpaceOnUse" y1="591.37" gradientTransform="matrix(0.65106, 0, 0, 0.65106, 77.465956, -71.561993)" x2="244.24" y2="298.85">
-            <stop id="stop3715-0" stop-color="#3e0057" offset="0"/>
-            <stop id="stop3717-3" stop-color="#7e00b2" offset="1"/>
+            <stop id="stop3715-0" stop-color="#5e0084" offset="0"/>
+            <stop id="stop3717-3" stop-color="#cc00d7" offset="0.7"/>
+            <stop id="stop3717-3" stop-color="#9f00d7" offset="1"/>
         </linearGradient>
         <linearGradient id="linearGradient3768-6" x1="321.97" gradientUnits="userSpaceOnUse" y1="310.15" gradientTransform="matrix(.65106 0 0 .65106 77.466 -71.562)" x2="395.02" y2="149.22">
             <stop id="stop3657-4" stop-color="#00d100" offset="0"/>

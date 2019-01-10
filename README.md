@@ -2,7 +2,7 @@
 
 A lightweight application shell giving clean, consistent UI to React apps.
 
-![Plum with top-hat, bow tie and monocle](./aPoshPlum.svg)
+![Cartoon showing a plum with top-hat, bow tie and monocle](./src/aPoshPlum.svg)
 
 Your app is destined for greatness.  A Posh Plum makes it all easier.
 
@@ -36,17 +36,19 @@ Getting started is easy:
 <Route path="/hello" component={Hello} />
 
 // in component files:
-import {Card} from 'a-posh-plum/cards';
+import {Card} from 'plum/cards';
+import {TopMenuLayout} from 'plum/layouts';
 
 class Home extends Component {
   render() {
-    let {MoreMenuItems,Title} = TopMenuLayout 
+    let {MoreMenuItems,Title} = TopMenuLayout.slots;
+    
     return <TopMenuLayout>
       <Title>My Posh app</Title>
-      <MoreMenuItems>
+      <Menu>
         <Link to="/pricing">Pricing</Link>
         <Link to="/terms">Terms of Service</Link>
-      </MoreMenuItems>
+      </Menu>
       
       <p>This app lets you manage all of your widgets 
         and share them with your friends, ...
@@ -57,13 +59,13 @@ class Home extends Component {
 class Hello extends Component {
   render() { 
     let {partId} = ... // get from route
-    let {MoreMenuItems,Title} = TopMenuLayout;
+    let {Menu,Title} = TopMenuLayout;
     return <SideMenuLayout>
       <Title>Hello World</Title>
-      <MoreMenuItems>
+      <Menu>
         <Link to={`/service/part/{partId}`}>Finding Service</Link>
         <Link to="/terms">Terms of Service</Link>
-      </MoreMenuItems>
+      </Menu>
       
       <Card>
         <Card.Title>My first Card</Card.Title>
@@ -83,14 +85,13 @@ Apps built with Plum are based on a mental model you already know: routes,
 pages, layouts and cards.  Plum's UI components give you a refined presentation 
 that's easy to apply.
 
-Routes map from URLs to pages.  Each page is presented with a layout, and layouts 
-are shareable. Panels and cards can be used to construct pages by placing them into 
-any content area. More than one page can be routed at the same time (typically with 
-distinct layouts - more on that below). 
-
 ![diagram described above: routes, pages, panels, cards](./plumAnatomy.svg)
 
-Layouts provide consistency and reusability across various pages of your app. 
+Routes map from URLs to pages.  Each page is presented with a layout, and layouts 
+are shareable.  Layouts provide consistency and reusability across various pages 
+of your app.  They contain named slots, and they package the "render props" 
+pattern in a way that inverts control and simplifies syntax.
+ 
 You can make your own layouts (see more below) or use Plum's built-in
 layouts for responsive apps:    
 
@@ -108,8 +109,25 @@ layouts for responsive apps:
 Plum's layout components are easy to mix together with your application's 
 pages and customize for great reusability. 
 
-To add a page to your app, you simply create a react component that uses a 
-layout.  Add the pages into your top-level routing config, and *poof* your 
+To add a page to your app, you simply create a react component, decorated with
+a chosen layout.  Its `render()` method declares the content to be inserted into 
+the layout.
+
+```
+let {Title,Body} = TopMenuBar;
+class MyPage {
+  render() {
+    return <TopMenuBar>
+       <Title>My Fine Page</Title>
+       <Body>
+         <p>this is some body content on my page.  Any HTML I like goes here.</p>
+       </Body>
+    </TopMenuBar>
+  }
+}
+```
+
+Add the pages into your routing config, and *poof* your 
 app's presentation comes together as an integrated unit, with consistency 
 baked right in.
 
@@ -118,7 +136,7 @@ baked right in.
   > _And said, "what a good boy am I!"_
 -- [Mother Goose](https://www.poetryfoundation.org/poems/46973/little-jack-horner-56d2271c5917a)
 
-## Getting Posh
+## Extra Posh
 
 ### Blended layout slots 
 
@@ -127,19 +145,19 @@ Plum's `<Layout>`s are easy to compose, thanks to React - this lets you blend
 together layout slots for easy reusability.
 
 ```
-// -- in MyLayout.jsx:
-import {SideMenuLayout} from 'a-posh-plum/layouts';
-import {NavLink} from 'react-router-dom';
+  // -- in MyLayout.jsx:
+  import {SideMenuLayout} from 'a-posh-plum/layouts';
+  import {NavLink} from 'react-router-dom';
 
-// reusable section of an app
-class PartsSection extends Component {
-  render() {
+  // reusable section of an app
+  class PartsSection extends Component {
+    render() {
     let {children} = props;
-    let {MoreMenuItems,Title} = SideMenuLayout;
+    let {Menu,Title} = SideMenuLayout;
     return <SideMenuLayout>
-      <MoreMenuItems>
+      <Menu>
          ... 9 items in shared menu...
-      </MoreMenuItems>
+      </Menu>
       
       {children}          {/* seamlessly blending Titles from children */}
                           </*   ...or additional MoreMenuItems */}
@@ -167,9 +185,9 @@ class PartsFinding extends Component {
     let {Title} = SideMenuLayout;
     return <PartsSection>
       <Title>Finding the right parts for your stuff</Title>
-      <MoreMenuItems>
-         MOAR MENU ITEMS
-      </MoreMenuItems>
+      <Menu>
+         More menu items
+      </Menu>
       
       <h2>By manufacturer</h2>
       ....
@@ -180,16 +198,16 @@ class PartsFinding extends Component {
 }
 ```
 
-In the `<PartsFinding>` component, MOAR MENU ITEMS will be included after 
+In the `<PartsFinding>` component, "More menu items" will be included after 
 the 9 menu items from the `<PartsSection>`. 
 
 ### Using Plum's material UI
 
 Plum's UI components provide you with a declarative way to make a pixel-perfect
-UI that appears to be made with material like paper or or cardboard.  You can
+UI that appears to be made with material like paper or cardstock.  You can
 place your application's conceptual objects into Plum's UI components, making them
-tangible to your app's users.  This gives you a simple tap-based interface that
-people understand intuitively.
+tangible to your app's users.  This gives your app a simple touch-ready interface 
+that people understand intuitively.
 
 #### Card
 
@@ -198,9 +216,9 @@ import {Card} from 'a-posh-plum/cards'
 MyCard = () => <Card>
     <Card.Icon icon="icon-check"/>
     <Card.Title>My thing in a posh Card   </Card.Title>
-    <Card.StateTag>
+    <Card.Label>
       Ready
-    </Card.StateTag>
+    </Card.Label>
     <Card.Body>
       Awesome Item
     </Card.Body>
@@ -211,7 +229,7 @@ MyCard = () => <Card>
 </Card>
 ```
 
-The Card subcomponents like `<Card.StateTag>` are easily auto-completed from your
+The Card subcomponents like `<Card.Label>` are easily auto-completed from your
 Javascript-aware editor (IDEA, VSCode), so you can fluently build out your app, one 
 auto-completed element at a time.
 
@@ -228,7 +246,7 @@ concerns.
 For example, let's say the user is 
 viewing a Client summary screen, and they can click one of the 
 customer's orders.  To minimize attention churn, we can keep 
-the Client Summary screen being displayed as-is, overlaying a  
+the Client Summary screen being displayed as-is, and overlay a  
 Panel to show the details of the order - only until the user closes 
 it.
 
@@ -257,9 +275,9 @@ class ThingEditor extends Component {
     ... some form elements ...
   </Panel>
   }
-}  
+}
 ```
- 
+
 #### Custom Layouts
 
 Plum's cards and layouts are created with just a couple of simple utilities, which 
