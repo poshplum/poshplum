@@ -9,12 +9,18 @@
     "enzyme-to-json": "^3.3.4",
     "lodash": "^4.17.11",
     "neutrino": "^8.3.0",
-    "react-test-renderer": "^16.6.0"
+    "node-sass": "^4.10.0",
+    "postcss-loader": "^3.0.0",
+    "react-test-renderer": "^16.6.0",
+    "sass-loader": "^7.1.0",
+    "source-map-support": "^0.5.9",
+    "spectre.css": "0.5.4"
   },
   "dependencies": {
+    "jest-mock-console": "^0.4.2",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
-    "source-map-support": "^0.5.9"
+    "react-responsive": "^6.0.1"
   },
   "scripts": {
     "start": "neutrino start",
