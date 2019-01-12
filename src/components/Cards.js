@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 import map from 'lodash/map';
 import keys from 'lodash/keys';
+import {Link} from 'react-router-dom';
 
 import Respond from '../helpers/Responsive';
 
@@ -51,7 +52,7 @@ export class Card extends Layout {
   static slots = {Title, Icon, Body, Footer, Label};
 
   render() {
-    let {active, item, debug, match, children, className="", render, ...otherProps} = this.props;
+    let {active, compact, item, debug, match, children, className="", link, render, ...otherProps} = this.props;
     if (render) {
       if(!item) {
         throw new Error("Cards.Card requires an 'item' prop when using the 'render' prop.")
@@ -61,8 +62,10 @@ export class Card extends Layout {
     if (debug) debugger;
     let {Title, Icon, Body, Footer, Label} = this.slots;
 
+    if (compact) className += " compact";
+
     // let clickFn = (e) => { if (cardItemClicked) cardItemClicked(item) };
-    return <div {...otherProps} className={`card ${className} ${active ? "active" : ""}`}>
+    let card = <div {...otherProps} className={`card ${className} ${active ? "active" : ""}`}>
       { (Icon || Title || Label ) && <div key="header" className="card-header">
         {Icon}
         {Label}
@@ -71,6 +74,10 @@ export class Card extends Layout {
       {Body}
       {Footer}
     </div>;
+    if (link) {
+      return <Link to={link}>{card}</Link>
+    }
+    return card;
   }
 };
 Card.displayName="Card";

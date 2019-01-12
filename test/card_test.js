@@ -6,6 +6,7 @@ import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
 import toJson from 'enzyme-to-json';
 import {getClassName} from "../src/helpers/ClassNames";
+import MockRouter from 'react-mock-router';
 
 describe('Card layouts', () => {
   describe('card primitive', () => {
@@ -46,6 +47,30 @@ describe('Card layouts', () => {
 
     })
   });
+  describe("link= prop", () => {
+    it("linkifies the card", function () {
+      const bodyText = "bodyText";
+      const component = mount(
+        <MockRouter>
+          <Card link="/hi">
+            {bodyText}
+          </Card>
+        </MockRouter>
+      );
+
+      expect(component.find("a").text()).toBe(bodyText);
+    });
+  });
+  it("passes compact= prop to a className");
+  it("passes active= prop to a className");
+  it("passes compact= prop to a className");
+  it("passes other className='s through to the element")
+  it("passes other props to the element");
+
+  describe("render= prop", () => {
+    it("is used for rendering if there's an item= prop also");
+    it("in dev environment, it suggests using a separate component to accept an item and return a <Card>");
+  });
   describe('card subclass', () => {
     class CardClass extends Card {
 
@@ -66,6 +91,5 @@ describe('Card layouts', () => {
         </div>
       }
     }
-
   });
 });
