@@ -88,20 +88,32 @@ p > .btn {
   margin-left: 2px;
   margin-right: 0.5rem;
   padding-left: 5px;
-  margin-bottom: 2px;
+  margin-bottom: 2px; &:last-of-type { margin-bottom: 0.5em }
+
   border-left: 4px solid #ccc;
   box-shadow: 2px 2px 0px #aaa, 4px 4px 0px #ccc;
 
+  //&:last-of-type { margin-bottom: 0.5em }
+
   p:last-child { margin-bottom: 0; }
+
+  &.compact {
+    margin-bottom: 0;
+    margin-right: 0;
+
+    .card-body {
+      padding: 0 0.33em 0 0 ;
+    }
+  }
 
   &:active:hover, &.active, &.focus-within {
     border-left: 7px solid #6060aa;
     padding-left: 2px;
   }
 
-  .card.active {
-    border-top: 1px solid #6060aa;
-    border-bottom: 1px solid #6060aa;
+  &.active {
+    border-top: 1px solid #7979c7;
+    border-bottom: 1px solid #7979c7;
   }
   &:not(:active):not(.active):not(.focus-within):hover {
     border-left: 7px solid #7681ff;
@@ -110,6 +122,17 @@ p > .btn {
   }
   h1, h2, h3, h4, h5, h6 {
     display: contents;
+  }
+
+  &.active .card-header .pop-left {
+    box-shadow:
+            -3px 0 1px #6060aa,
+            -1px 0 1px #999;
+  }
+  &:not(:active):not(.active):not(.focus-within):hover .card-header .pop-left {
+    box-shadow:
+            -2px 0 1px #7681ff,
+            -1px 0 1px #999;
   }
 
   .card-header {
@@ -172,6 +195,45 @@ p > .btn {
     }
   }
 }
+
+nav {
+  border-bottom: 1px solid #aaa;
+  box-shadow: 0 3px 2px #ccc;
+}
+.panel {
+  &.fixed-bottom-right {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+    min-height: 66vh;
+    max-height: 80vh;
+    width: 66vw;
+    background: inherit;
+
+
+    z-index: 10;
+    border-left: 4px solid $primary-color-light;
+    border-right: 1px solid #ccc;
+
+    margin: 0 1.5rem 1.5rem 0;
+    border-radius: 7px;
+    box-shadow:
+      -2px -2px rgba(204,204,204,0.6),
+      -4px -4px rgba(204,204,204,0.3),
+      2px 3px rgba(204,204,204,0.9),
+      4px 5px rgba(204,204,204,0.4);
+
+    & > .panel-title {
+      box-shadow: 0 2px 2px -2px #696;
+      padding: 0.5em;
+      h1, h2, h3, h4, h5, h6 { margin-bottom: 0 }
+    }
+    & > .panel-footer {
+      border-top: 1px dashed #ccc;
+    }
+  }
+}
+
 
 .mt-3 {
   margin-top:0.6rem;
