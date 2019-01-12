@@ -9,14 +9,13 @@ export default class AboutPlum extends Component {
 
       <p>A Posh Plum is a small library for React application development. Feel free to use more
         of it, or feel free to use less. Plum provides low-syntax, high-leverage semantic
-        components that are <i><b>easy to understand,
-          easy to reuse, and easy to maintain</b></i>.
+        components that are <i><b>easy to understand, easy to reuse, and easy to maintain</b></i>.
       </p>
       <CodeExample language="shell">{`> yarn add plum`}</CodeExample>
 
       <p>The <code>plum</code> package offers optional material design elements such
-        as cards and panels, with semantic stylesheets courtesy of Spectre.css. Plum's
-        UI elements all use its Layouts primitive and Spectre for styling. You can
+        as cards and panels, with semantic stylesheets courtesy of Spectre.css. Our
+        UI elements all use Plum's Layouts primitive, with Spectre for styling. You can
         use them as-is, or copy their pattern to help you refactor any existing UI code
         and improve your maintainability.
       </p>
@@ -32,8 +31,8 @@ import Card from 'plum/ui/card';`}
 
       <p>A Posh Plum seeks to be principle-based, but dogma-free 🚫🐕🤰. We believe in quality by
         design, in unit-testing and real-world results, and we reject cargo-cult rules.  As
-        Larry says: there's more than one way to do it.  We use language features where and
-        as useful, and you can too.
+        Larry says: there's more than one way to do it.  We use existing language- and library-level
+        features where they're useful, and you can too.
       </p>
 
       <p>Our target developer experience is for things to Just Work<sup>🇹️🇲</sup>.  Any disfunctional
