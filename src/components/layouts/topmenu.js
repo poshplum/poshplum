@@ -17,11 +17,11 @@ export default class TopMenuLayout extends Layout {
     // uses Spectre.css classes + Plum's style enhancements.
 
     return <div className="page">
-      <header id="#app-header" className={`panel-header navbar noPrint`}>
+      <nav id="#app-header" className={`panel-header navbar noPrint`}>
         <section className="navbar-section">
           {slots.Menu}
         </section>
-      </header>
+      </nav>
 
       <main>
         <h1>{slots.Title || "untitled page"}</h1>

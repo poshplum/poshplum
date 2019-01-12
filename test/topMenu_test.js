@@ -34,7 +34,7 @@ describe('Card layouts', () => {
       // console.log(component.html());
       expect(component.find("div.page-body").text()).toBe(bodyText);
       expect(component.find("h1").text()).toBe(titleText);
-      expect(component.find("header section a").text()).toBe(menuLink);
+      expect(component.find("nav section a").text()).toBe(menuLink);
     })
   })
 
