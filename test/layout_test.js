@@ -1,5 +1,5 @@
 import Layout from '../src/components/layout';
-import React from 'react';
+import React, {Component} from 'react';
 import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
 import toJson from 'enzyme-to-json';
@@ -7,34 +7,34 @@ import {getClassName} from "../src/helpers/ClassNames";
 
 
 describe('Layout', () => {
-  describe('slots', () => {
-    let name = "Mine";
-    let Mine = Layout.namedSlot(name);
-    let Body = Layout.defaultSlot("Body");
+  let name = "Mine";
+  let Mine = Layout.namedSlot(name);
+  let Body = Layout.defaultSlot("Body");
 
-    class TestSlots extends Layout {
-      static Mine = Mine;
-      static Body = Body;
-      static slots = {Mine, Body};
+  class TestSlots extends Layout {
+    static Mine = Mine;
+    static Body = Body;
+    static slots = {Mine, Body};
 
-      render() {
-        let {Mine, Body} = this.slots;
+    render() {
+      let {Mine, Body} = this.slots;
 
-        // console.log("render testSlots")
-        return <div>
-          <h1>template header</h1>
-          <div className="mine">
-            <div className="nested">
-              {Mine}
-            </div>
-          </div>
-          <div className="body">
-            {Body}
+      // console.log("render testSlots")
+      return <div>
+        <h1>template header</h1>
+        <div className="mine">
+          <div className="nested">
+            {Mine}
           </div>
         </div>
-      }
+        <div className="body">
+          {Body}
+        </div>
+      </div>
     }
+  }
 
+  describe('slots', () => {
     it('namedSlot - makes a minimal component with matching displayName', () => {
       let expectedName = "MyFunSlot";
       expect(Layout.namedSlot(expectedName).displayName).toBe(expectedName);
@@ -66,7 +66,7 @@ describe('Layout', () => {
         }
         mockConsole('warn');
         mount(<MyTestSlots />)
-        expect(console.warn).toBeCalledWith(expect.stringMatching(/Slot 'Mine' should be declared as a static member of MyTestSlots/))
+        expect(console.warn).toBeCalledWith(expect.stringMatching(/'Mine' is not declared as a static member/))
       });
 
       it("requires the layout to have a renderer", () => {
@@ -213,5 +213,31 @@ describe('Layout', () => {
     });
 
   });
+  describe("composed layout", () => {
+    let sharedMineContent = "MineSlot ";
 
+    class PackagedPage extends Component {
+      render() {
+        let {children} = this.props
+        return <TestSlots>
+          <Mine>{sharedMineContent}</Mine>
+          {children}
+        </TestSlots>
+      }
+    }
+
+    it("includes all instances of slot content from each composition layer", () => {
+      const localMineContent = "localContent";
+      const component = mount(
+        <PackagedPage>
+          <Mine>{localMineContent}</Mine>
+          <p>Other stuff</p> {/* needed to exercise children-as-array */}
+        </PackagedPage>
+      );
+      // console.log(component.html())
+      let mine = component.find(".mine .nested");
+      expect(mine.text()).toMatch(sharedMineContent)
+      expect(mine.text()).toMatch(localMineContent)
+    })
+  })
 });

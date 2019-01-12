@@ -4,6 +4,7 @@ import mapValues from 'lodash/mapValues';
 import map from 'lodash/map';
 import find from 'lodash/find';
 import {getClassName, myName} from "../helpers/ClassNames";
+import flatten from "lodash/flatten";
 
 function SlotContent({children}) {
   return children;
@@ -40,6 +41,10 @@ export default class Layout extends Component {
     return this.slots
   }
 
+  get debug() {
+    return this.props.debug
+  }
+
   // used for extracting children matching the slots defined in the layout.
   // returns a ready-to-use map of slot-names to rendered content.
   get slots() {
@@ -50,7 +55,7 @@ export default class Layout extends Component {
         // console.log("slot: ", k, slotName, slot );
         let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {
-          console.warn(`Slot '${slotName}' should be declared as a static member of ${myName(this)} to get good autocompletion`)
+          console.warn(`Layout: ${myName(this)}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
         }
       })
       this.constructor._slotsVerified = true;
@@ -59,6 +64,7 @@ export default class Layout extends Component {
     if (undefined === children.length) {
       children = [children];
     }
+    children = flatten(children)
 
     let defaultSlot = find(slots,slotType => slotType.isDefault);
     let defaultSlotName = defaultSlot && (defaultSlot.displayName || defaultSlot.name);
@@ -68,7 +74,7 @@ export default class Layout extends Component {
     let content = groupBy(children, (child) => {
       if (!child) return undefined;
 
-      // console.log("child:", child, child.type, child.type && child.type.displayName);
+      if(this.debug) console.log("child:", child, child.type, child.type && child.type.displayName);
 
       let foundSlot = find(slots,(slotType, key) => {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
@@ -101,7 +107,7 @@ export default class Layout extends Component {
       content[defaultSlotName] = React.createElement(defaultSlot, {children: content.default});
       delete content.default;
     }
-    // console.log({children, content});
+    if (this.debug) console.log({children, content});
     content = mapValues(content, (foundContents,key) => {
       let foundSlot = slots[key];
       // debugger
@@ -116,7 +122,7 @@ export default class Layout extends Component {
       return foundContents;
     });
 
-    // console.log(content);
+    if (this.debug) console.log("after value-mapping:", content);
     return content;
   }
 }
