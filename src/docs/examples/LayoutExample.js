@@ -29,13 +29,15 @@ export default class LayoutExample extends Component {
           <Card compact className="d-inline-block" style={{backgroundColor: "#f99"}}>Red card</Card> and
           <Card className="d-inline-block" compact style={{backgroundColor: "#99f"}}>Blue card</Card> have
           an inline className, a <code>compact</code> prop that translates to another className, and they use
-          inline styles for one-off treatment.  The Card layout gives you flexibility to do these kinds of things.
+          inline styles for one-off treatment.  The Card layout gives you flexibility to do any of these.
         </p>
 
         <h5>Panel Layout</h5>
 
         <p>This Layout Example panel - the same panel used for other examples, demonstrates another
           layout, with title, a scrollable body (when the content gets tall enough) and a footer area.
+          This layout comes with functionality including a route, a keyboard shortcut (Esc to close)
+          and open/close animations.  Layouts can do anything a React component can be made to do.
         </p>
 
         <p>When you make a layout, you can enforce utter consistency, or you can present differently

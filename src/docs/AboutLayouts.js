@@ -125,6 +125,20 @@ export default class AboutLayouts extends React.Component {
 </div>`}
         </CodeExample>
 
+        <h4>When to keep using render props</h4>
+
+        <p>You'll find render props can still be useful at times and can be applied
+          to any layout or non-layout component. Deferring React rendering until it's
+          contextually relevant, perhaps based on a dynamic item, is a case that
+          fits this mould well.
+        </p>
+
+        <p>On the other hand, early-rendering of hidden content using slots can be
+          combined with JS and/or CSS-triggered reveal, pushing down certain behaviors
+          to be handled directly by the browser.  Styling contents using :focus-within
+          or similar techniques can eliminate some React render loops, and reduce battery
+          consumption. It all depends on your use-case.
+        </p>
 
       </div>
 

@@ -38,7 +38,7 @@ export default class DocsIndex extends React.Component {
 
             <p>As UI developers, we have seen many of the same patterns of recurring challenges, year
               after year.  Software development may never be easy, but we think it's still too hard
-              to be productive when building web apps. </p>
+              to make web apps really great. </p>
 
             <p>Angular, Vue
               and React certainly address some aspects of low-level structuring of applications, yet
@@ -46,8 +46,8 @@ export default class DocsIndex extends React.Component {
               leaves a vacuum space that developers generally pay for on every project.
             </p>
 
-            <p>Higher-level patterns and best practices aren't trivial to do well; we're making it
-              easier to build awesome stuff.
+            <p>Higher-level patterns and best practices aren't easy to do well.  We're making it
+              easier to build apps that are truly excellent.
             </p>
           </div>
 
