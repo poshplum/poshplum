@@ -7,8 +7,9 @@ import {shallow,mount,render} from 'enzyme';
 import {getClassName} from "../src/helpers/ClassNames";
 import toJson from 'enzyme-to-json';
 
-describe('Card layouts', () => {
+describe('Top Menu Layout', () => {
   const {Menu, Title, Body} = TopMenu;
+
 
   let titleText = "title text";
   let menuLink = "MenuItem"

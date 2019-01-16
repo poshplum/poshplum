@@ -44,7 +44,12 @@ describe('Card layouts', () => {
       expect(component.find("div.chip.pop-right").text()).toBe(label);
     });
     it("doesn't have a .card-header without (title || icon || label) provided", () => {
-
+      const component = mount(
+        <Card>
+          empty body
+        </Card>
+      );
+      expect(component.find(".card-header")).toHaveLength(0)
     })
   });
   describe("link= prop", () => {
