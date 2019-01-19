@@ -43,12 +43,15 @@
 
 import React from "react";
 import * as ReactDOM from "react-dom";
-import {getClassName, inheritName, myName} from "../helpers/ClassNames";
+import {getClassName, inheritName, mashName, myName} from "../helpers/ClassNames";
 
 const elementInfo = (el) => {
   // debugger
-  const classNames = el.classList.toString().split(/ /).join('.');
-  return `<${el.constructor.name}.${classNames}#${el.id}@${el.key || "noKey"}>`;
+  function esc(inp) {
+    return inp.replace(/\./g, '\\.')
+  }
+  const classNames = el.classList.toString().split(/ /).map(esc).join('.');
+  return `<${el.constructor.name}.${classNames}#${esc(el.id)}@${el.key || "noKey"}>`;
 };
 
 const debugInt = (debug) => {
@@ -66,17 +69,83 @@ const Listener = (componentClass) => {
   return class Listener extends componentClass {
     static displayName = displayName;
 
+    listen(eventType, handler) {
+      const listening = this.listening = this.listening || [];
+      const newListener = this.myNode.addEventListener(eventType, this.wrapHandler(handler));
+      // console.log(listening);
+      listening.push([eventType, handler]);
+      // console.log(listening);
+    }
+
+    componentWillUnmount() {
+      super.componentWillUnmount();
+
+      console.log("unmounting Reactor and unlistening all...")
+      this.listening.forEach(
+        ([type,handler]) => this.myNode.removeEventListener(type, handler)
+      );
+    }
+
+    wrapHandler(handler) {
+      const reactor = this;
+      function wrappedHandler(event) {
+        const {debug} = (event.detail || {});
+
+        const dbg = debugInt(debug);
+        const moreDebug  = (dbg > 1);
+
+        event.handledBy = event.handledBy || [];
+        const listenerObj = handler.boundThis || Reactor.bindWarning;
+        let handled = {
+          reactor,
+          reactorNode: this,
+          listenerObj,
+          listenerFunction: handler.targetFunction || handler
+        };
+        if (!handled.reactorNode) debugger;
+
+        if(dbg) {
+          const msg = `Event: ${name} - calling handler`;
+          if(moreDebug) {
+            console.log(msg, handled);
+            debugger
+          } else {
+
+            debugger
+            console.log(msg, {
+              target: elementInfo(event.target),
+              reactor: myName(handled.reactor),
+              reactorEl: elementInfo(handled.reactorNode)
+            })
+          }
+        }
+        event.handledBy.push(handled);
+        handler.call(this,event); // retain event's `this` (target of event)
+      }
+      return function(e) {
+        let result;
+        try {
+          result = wrappedHandler.call(this,e); // retain event's `this` 
+        } catch(error) {
+          console.error(error)
+        }
+        return result;
+      }
+    }
   }
 }
 
 export const Actor = (componentClass) => {
-  const componentClassName = getClassName(componentClass);
-  let displayName = inheritName(componentClass, "Actor");
   if (!componentClass.prototype.name) {
     throw new Error("Actors require a name() method; this name identifies the actor's delegate name for its Reactor, and scopes its Actions");
   }
 
-  return class ActorInstance extends Listener(componentClass) {
+  const listenerClass = Listener(componentClass);
+
+  // const componentClassName = getClassName(componentClass);
+  let displayName = mashName(listenerClass, "Actor");
+
+  return class ActorInstance extends listenerClass {
     static displayName = displayName;
 
     constructor(props) {
@@ -89,13 +158,14 @@ export const Actor = (componentClass) => {
     }
 
     componentDidMount() {
-      console.log("Actor didMount");
+      console.log(`${myName(this)} didMount`);
       let {children, debug, ...handler} = this.props;
       let name = this.name();
 
       // if(foundKeys[0] == "action") debugger;
       this.myRef.current.dispatchEvent(Reactor.RegisterActor({name, actor:this, debug}))
     }
+
   }
 };
 
@@ -103,12 +173,13 @@ const Reactor = (componentClass) => {
   const listenerClass = Listener(componentClass)
   const componentClassName = getClassName(listenerClass);
   return class ReactorInstance extends listenerClass {
-    static displayName = inheritName(listenerClass, "Reactor");
+    static displayName = mashName(listenerClass, "Reactor");
+
 
     constructor() {
       super();
-      this.registerAction = this.registerAction.bind(this);
-      this.registerActor = this.registerActor.bind(this);
+      this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
+      this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
       this.actions = {};
       this.listening = [];
       this.actors = {};
@@ -147,48 +218,11 @@ const Reactor = (componentClass) => {
       }
 
       this.actions[name] = handler;
-      const reactor = this;
-      function wrappedHandler(e) {
-        e.handledBy = e.handledBy || [];
-        const listenerObj = handler.boundThis || Reactor.bindWarning;
-        let handled = {
-          reactor,
-          reactorNode: this,
-          listenerObj,
-          listenerFunction: handler.targetFunction || handler
-        };
-        if(dbg) {
-          const msg = `Event: ${name} - calling handler`;
-          if(moreDebug) {
-            console.log(msg, handled);
-            debugger
-          } else {
-            console.log(msg, {
-              target: elementInfo(e.target),
-              reactor: myName(handled.reactor),
-              reactorEl: elementInfo(handled.reactorNode)
-            })
-          }
-        }
-        e.handledBy.push(handled);
-        handler(e);
-      }
-      this.listen(name, wrappedHandler);
+
+
+      this.listen(name, handler);
     }
 
-    listen(eventType, handler) {
-      const listening = this.listening = this.listening || [];
-      const newListener = this.myNode.addEventListener(eventType, handler);
-      // console.log(listening);
-      listening.push([eventType, handler]);
-      // console.log(listening);
-    }
-    componentWillUnmount() {
-      console.log("unmounting Reactor and unlistening all...")
-      this.listening.forEach(
-        ([type,handler]) => this.myNode.removeEventListener(type, handler)
-      );
-    }
 
     componentDidMount() {
       if (super.componentDidMount) super.componentDidMount();
@@ -260,7 +294,8 @@ export class Action extends React.Component {
   }
 
   render() {
-    return <div className="action action-todo-addName" ref={this.myRef}></div>;
+    let {name} = this.props
+    return <div className={`action action-${name}`} ref={this.myRef}></div>;
   }
 
   componentDidMount() {

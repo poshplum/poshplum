@@ -8,6 +8,9 @@ export function getShortName(parentClass) {
 export function inheritName(parentClass, myName) {
   return `${myName}+${getClassName(parentClass)}`;
 }
+export function mashName(parentClass, myName) {
+  return `${myName}${getClassName(parentClass)}`;
+}
 export function composeName(parentClass, myName) {
   return `${myName}(${getClassName(parentClass)})`;
 }
