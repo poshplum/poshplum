@@ -6,6 +6,7 @@ import Portal from "../../helpers/Portal";
 import Panel from "../../components/Panel";
 import {Card} from "../../components/Cards";
 import Grid from "../../components/Grid";
+import {Link} from "react-router-dom";
 
 export default class LayoutExample extends Component {
   render() {
@@ -52,7 +53,7 @@ export default class LayoutExample extends Component {
         </p>
 
         <Panel.Footer>
-          <button className="btn btn-primary">More about Layouts</button>
+          <Link className="btn btn-primary" to="/layouts">More about Layouts</Link>
         </Panel.Footer>
       </Panel>
     </Portal>

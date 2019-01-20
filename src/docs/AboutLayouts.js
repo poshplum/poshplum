@@ -59,7 +59,6 @@ export default class AboutLayouts extends React.Component {
 
         <p>Each card here is rendered with a Card layout. See the JSX
           example <span className="hide-md">on the left</span><span className="show-md">above</span> for sample input.
-
         </p>
 
         <Card className="active">
@@ -90,11 +89,11 @@ export default class AboutLayouts extends React.Component {
         </Card>
         <br/>
 
-        <h4>How is my layout rendered?</h4>
+        <h4>How is a layout rendered?</h4>
 
         <p>A Layout is simply a component that places already-rendered semantic content into a JSX "envelope",
-          merging content with layout markup. Its code just categorizes the semantic contents so they're
-          all available for insertion to the layout's markup envelope. 💌️
+          merging your non-Layout content with layout markup. The layout's code just categorizes the semantic contents so they're
+          all available for insertion to its markup envelope. 💌️
         </p>
 
         <p>Plum's layouts reduce visual complexity of your code, making it easier to work on. You'll spend less time
@@ -127,17 +126,32 @@ export default class AboutLayouts extends React.Component {
 
         <h4>When to keep using render props</h4>
 
-        <p>You'll find render props can still be useful at times and can be applied
-          to any layout or non-layout component. Deferring React rendering until it's
-          contextually relevant, perhaps based on a dynamic item, is a case that
-          fits this mould well.
+        <p><b>TLDR: when it makes sense in your situation.  </b>With Layouts, you can
+          get a dynamic item into your component, and use it to render content within
+          a <code>{`<Layout><Slot/>...<Slot/></Layout>`}</code> block - in these cases,
+          it's simpler to skip the use of render props.
         </p>
 
-        <p>On the other hand, early-rendering of hidden content using slots can be
+        <p>Still, you may find render props can be useful at times and can be applied
+          to any layout or non-layout component. Deferring React rendering until it's
+          contextually relevant (perhaps based on layout usage conditions or during
+          interactions that are controlled by a layout's code) can be a case that
+          fits this mould well. Your callback would then build presentation elements
+          just in time for when it's needed.
+        </p>
+
+        <p>On the other hand, early-rendering of hidden content can be
           combined with JS and/or CSS-triggered reveal, pushing down certain behaviors
-          to be handled directly by the browser.  Styling contents using :focus-within
-          or similar techniques can eliminate some React render loops, and reduce battery
-          consumption. It all depends on your use-case.
+          to be handled directly by the browser, perhaps with a lightweight "add-class"
+          script.
+        </p>
+
+        <p><b>Running javascript for generating
+          React elements and reconciling DOM aren't free operations.</b>  Styling contents
+          to be shown/hidden (:focus-within, anyone?) using non-React techniques can
+          eliminate some React render loops and reduce battery consumption. Use-
+          cases can rule the day.  <i>When in doubt, run your profiling tool on your
+            use-cases.</i>
         </p>
 
       </div>
@@ -175,8 +189,8 @@ const Body = Layout.defaultSlot("Body");
           you render all the slot content in any way making sense for your layout. </p>
 
         <p>
-          See "How is my layout rendered?", <span className="hide-md">center column, </span>
-          <span className="show-md">above,&nbsp; </span>
+          See "How is a layout rendered?" <span className="hide-xl">, center column, </span>
+          <span className="show-xl">above&nbsp;</span>
           for JSX that might fit the 🦆 bill here.
         </p>
 
@@ -211,7 +225,7 @@ const {Title, Author} = Article;
           slot types.
           Here, they'll render with the layout's <code>{`{slots.Body}`}</code>
           <span className="hide-xl">&nbsp;(see center column).</span>
-          <span className="show-xl">&nbsp;(see "How is my layout rendered?", above).</span>
+          <span className="show-xl">&nbsp;(see "How is a layout rendered?", above).</span>
         </p>
 
         <h4>Custom Slot Rendering</h4>
