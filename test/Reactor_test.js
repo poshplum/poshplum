@@ -48,24 +48,48 @@ describe("Reactor", () => {
       expect(hiya).toHaveBeenCalledTimes(2);
       expect(component.instance().sayHello.targetFunction).toHaveBeenCalledTimes(1);
     });
+    it("removes its event listeners", () => {
+      const hiya = jest.fn();
 
-    it("rejects Actions with duplicate names", () => {
-      mockConsole('error');
-      const hi = jest.fn();
       const component = mount(<MyReactor>
-        <Action debug={1} informalGreeting={hi} />
-        <Action debug={1} informalGreeting={hi} />
+        <Action debug={0} informalGreeting={hiya} />
         <div className="event-source"></div>
       </MyReactor>);
 
-      expect(Object.keys(component.instance().actions).length).toBe(2);
+      const listeningNode = component.find(".myReactor").instance().parentNode;
+      component.unmount(); // critical
+      Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
+      expect(hiya).not.toHaveBeenCalled();
+      // debugger
+      // to confirm *all* listeners were really removed,
+      //   ...look at listeningNode[Symbol(impl)]._eventListeners (all entries in that object should be empty arrays)
+      // it'd be nice to have an api for accessing that info for test purposes but alas... not in jsdom 9.12.0 at least
+    });
+
+    it("rejects Actions with duplicate names", () => {
+      mockConsole(['error', 'warn']);
+      const hi = jest.fn();
+      const component = mount(<MyReactor>
+        <Action debug={0} informalGreeting={hi} />
+        <Action debug={0} informalGreeting={hi} />
+        <div className="event-source"></div>
+      </MyReactor>);
+
       // console.log(component.debug());
+
+      const actionCount = Object.keys(component.instance().actions).length;
+      if (actionCount !== 4) {
+        console.log(component.instance().actions);
+        expect(actionCount).toBe(4); // 2x registerX + 1x sayHello + 1x informalGreeting
+      }
+
       const eSrc = component.find(".event-source").instance();
       Reactor.dispatchTo(eSrc, new CustomEvent("informalGreeting", {bubbles:true}));
 
       expect(hi).toHaveBeenCalledTimes(1);
 
-      expect(console.error).toBeCalledWith(expect.stringMatching(/'informalGreeting' is already registered/), expect.anything());
+      expect(console.error).toBeCalledWith(expect.stringMatching(/'informalGreeting' is already registered/));
+      expect(console.warn).toBeCalledWith(expect.stringMatching(/existing handler/), expect.anything());
     });
 
     it("responds to actions triggered by or registered by deep children", () => {
@@ -111,23 +135,23 @@ describe("Reactor", () => {
     const mockData = [{some:stuff}];
 
     @Actor
-    class SomeCollectionActor extends React.Component {
+    class ToyDataActor extends React.Component {
       create = Reactor.bindWithBreadcrumb(jest.fn(), this);
       getData() { return mockData }
       name() { return "members" };
       render() {
         let {children} = this.props;
 
-        return <div className="some-collection-actor">
-          <Action debug={1} create={this.create} />
-          <Action debug={1} getData={this.getData} />
+        return <div className="some-toyData-actor">
+          <Action debug={0} create={this.create} />
+          <Action debug={0} getData={this.getData} />
           {children}
         </div>
       }
     }
     function mkComponent(...moreChildren) {
       return mount(<MyReactor>
-        <div className="event-sink"><SomeCollectionActor /></div>
+        <div className="event-sink"><ToyDataActor /></div>
         <div className="event-source"></div>
 
         {moreChildren}
@@ -137,24 +161,27 @@ describe("Reactor", () => {
     it("collects declared, collaborating actors: other (Re?)actors that publish their capabilities", () => {
       const component = mkComponent();
 
-      const collectionActor = component.find(SomeCollectionActor).instance();
-      expect(component.instance().actors.members).toBe(collectionActor);
+      const toyDataActor = component.find(ToyDataActor).instance();
+      expect(component.instance().actors.members).toBe(toyDataActor);
       expect(Object.keys(component.instance().actors).length).toBe(1);
     });
 
     it("rejects actors with duplicate names", () => {
-      mockConsole('error');
-      const component = mkComponent(<SomeCollectionActor key="duplicate" />);
+      mockConsole(['error', 'warn']);
+      const component = mkComponent(<ToyDataActor key="duplicate" />);
 
       expect(Object.keys(component.instance().actors).length).toBe(1);
-      expect(console.error).toBeCalledWith(expect.stringMatching(/'members' already registered/), expect.any(SomeCollectionActor));
+      expect(console.error).toBeCalledWith(expect.stringMatching(/'members' already registered/), expect.any(ToyDataActor));
+      expect(console.warn).toBeCalledWith(expect.stringMatching(/existing handler/), expect.anything());
+
     });
 
     it("lets children trigger collaborators' actions: allows cousin/uncle nodes to collaborate", () => {
       const component = mkComponent();
-      component.find(".event-source").instance().dispatchEvent(new CustomEvent("members.create", {bubbles:true}));
+      let eSrc = component.find(".event-source").instance();
+      Reactor.dispatchTo(eSrc, new CustomEvent("members:create", {bubbles:true, detail: {debug:0}}));
 
-      expect(component.find(SomeCollectionActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
+      expect(component.find(ToyDataActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
     });
 
     it("honors localized scope of nested non-collaborating reactors:\n    ...doesn't delegate triggered events to them, even with matching event names", () => {
@@ -164,36 +191,27 @@ describe("Reactor", () => {
 
         render() {
           return <div className="isolated">
-            <Action name="members.create" action={this.create} debug={1}/>
+            <Action name="members.create" action={this.create} debug={0}/>
           </div>
         }
       }
 
       const component = mkComponent(<IsolatedReactor key="isolated" />);
-      let collectionMock = component.find(SomeCollectionActor).instance().create.targetFunction.mock;
+      let toyDataMock = component.find(ToyDataActor).instance().create.targetFunction.mock;
       let isolatedMock = component.find(IsolatedReactor).instance().create.targetFunction.mock;
 
       const actual = {};
 
       component.find(".isolated").instance().dispatchEvent(new CustomEvent("members.create", {bubbles:true}));
-
-      actual.collectionCreatedZero = collectionMock.calls.length;
+      actual.toyDataCreatedZero = toyDataMock.calls.length;
       actual.isolatedCreatedOne = isolatedMock.calls.length;
 
-      // expect(component.find(IsolatedActor).instance().create.targetFunction).toHaveBeenCalledTimes(0);
-      // expect(component.find(SomeCollectionActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
-
       component.find(".event-source").instance().dispatchEvent(new CustomEvent("members.create", {bubbles:true}));
-
-      // actual.collectionCreatedOnce = collectionMock.calls.length;
       actual.isolatedCreatedStillOne = isolatedMock.calls.length;
 
-      // expect(component.find(IsolatedActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
-      // expect(component.find(SomeCollectionActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
       expect(actual).toEqual({
-        collectionCreatedZero: 0,
+        toyDataCreatedZero: 0,
         isolatedCreatedOne: 1,
-        // collectionCreatedOnce: 1,
         isolatedCreatedStillOne: 1
       });
     });
