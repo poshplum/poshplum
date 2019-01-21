@@ -47,9 +47,8 @@ export default class LayoutExample extends Component {
 
         <h5>Page-level and Composite Layouts</h5>
 
-        <p>Each page on this site uses a composite layout: a generic TopMenuLayout is combined with specific
-          links for the navigation bar, and each page calls into the composite layout with
-          a <code>{`<Title>`}</code> that's passed through to the generic layout.
+        <p>Each page on this site uses a TopMenuLayout, with layout composition for consistent
+          menu content across different pages.
         </p>
 
         <Panel.Footer>
