@@ -48,8 +48,10 @@ describe("Reactor", () => {
       expect(hiya).toHaveBeenCalledTimes(2);
       expect(component.instance().sayHello.targetFunction).toHaveBeenCalledTimes(1);
     });
-    it("removes its event listeners", () => {
+
+    it("removes its event listeners when unmounting", () => {
       const hiya = jest.fn();
+
 
       const component = mount(<MyReactor>
         <Action debug={0} informalGreeting={hiya} />
@@ -61,8 +63,8 @@ describe("Reactor", () => {
       Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
       expect(hiya).not.toHaveBeenCalled();
       // debugger
-      // to confirm *all* listeners were really removed,
-      //   ...look at listeningNode[Symbol(impl)]._eventListeners (all entries in that object should be empty arrays)
+      // to confirm *all* listeners were really removed, use node inspector...
+      //   ...browse into listeningNode[Symbol(impl)]._eventListeners (all entries in that object should be empty arrays)
       // it'd be nice to have an api for accessing that info for test purposes but alas... not in jsdom 9.12.0 at least
     });
 
