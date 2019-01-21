@@ -1,4 +1,8 @@
 {
+  "name": "poshplum",
+  "version": "0.6.0",
+  "license": "MIT",
+  "main": "index.js",
   "devDependencies": {
     "@neutrinojs/jest": "^8.3.0",
     "@neutrinojs/node": "^8.3.0",
@@ -14,13 +18,13 @@
     "react-test-renderer": "^16.6.0",
     "sass-loader": "^7.1.0",
     "source-map-support": "^0.5.9",
-    "spectre.css": "0.5.4"
+    "spectre.css": "0.5.4",
+    "jest-mock-console": "^0.4.2",
+    "react-mock-router": "^1.0.15"
   },
   "dependencies": {
-    "jest-mock-console": "^0.4.2",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
-    "react-mock-router": "^1.0.15",
     "react-responsive": "^6.0.1",
     "react-router-dom": "^4.3.1"
   },
@@ -29,7 +33,7 @@
     "start-debug": "node --inspect-brk node_modules/neutrino/bin/neutrino.js start",
     "test": "neutrino test --use @neutrinojs/node --color",
     "test-debug": "node --inspect node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --runInBand",
-    "testing": "neutrino test --use @neutrinojs/node --watch --color",
+    "testing": "neutrino test --use @neutrinojs/node --watchAll --color",
     "testing-debug": "node --inspect node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --watch --runInBand --color",
     "coverage": "neutrino test --coverage",
     "build": "neutrino build"

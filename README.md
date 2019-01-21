@@ -1,4 +1,4 @@
-# a-posh-plum
+# A Posh Plum
 
 A lightweight application shell giving clean, consistent UI to React apps.
 
@@ -27,7 +27,7 @@ WARNING - under construction - docs first.  This package is still pre-release.
 
 Getting started is easy:
 
-`> yarn add a-posh-plum`
+`> yarn add poshplum`
 
 ```
 // normal routing with React-router -
@@ -35,8 +35,8 @@ Getting started is easy:
 <Route path="/hello" component={Hello} />
 
 // in component files:
-import {Card} from 'plum/cards';
-import {TopMenuLayout} from 'plum/layouts';
+import {Card} from 'poshplum/cards';
+import {TopMenuLayout} from 'poshplum/layouts';
 
 class Home extends Component {
   render() {
@@ -145,7 +145,7 @@ together layout slots for easy reusability.
 
 ```
   // -- in MyLayout.jsx:
-  import {SideMenuLayout} from 'a-posh-plum/layouts';
+  import {SideMenuLayout} from 'poshplum/layouts';
   import {NavLink} from 'react-router-dom';
 
   // reusable section of an app
@@ -211,7 +211,7 @@ that people understand intuitively.
 #### Card
 
 ```
-import {Card} from 'a-posh-plum/cards'
+import {Card} from 'poshplum/cards'
 MyCard = () => <Card>
     <Card.Icon icon="icon-check"/>
     <Card.Title>My thing in a posh Card   </Card.Title>
@@ -264,7 +264,7 @@ On small screens, the nested workflow is shown in full-screen style;
 a Back button is expected in the upper-left.
 
 ```
-import {Panel} from 'a-posh-plum/layouts'
+import {Panel} from 'poshplum/layouts'
 
 class ThingEditor extends Component {
   render() { return <Panel>
@@ -284,7 +284,7 @@ you can use to make layouts of your own creation.  Note the use of defaultSlot f
 the Body section.
 
 ```
-import {namedSlot, Layout} from 'a-posh-plum/util`;
+import {namedSlot, Layout} from 'poshplum/util`;
 
 let Title = Layout.namedSlot("Title");
 let Sidebar = Layout.namedSlot("Sidebar");
