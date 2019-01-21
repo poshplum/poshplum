@@ -23,8 +23,7 @@ think at a higher level and concentrate on your results.
 
 ## Quick start:
 
-!!! WARNING - under construction - docs first.  We'll remove this warning once
-things are working as described. !!!
+WARNING - under construction - docs first.  This package is still pre-release.
 
 Getting started is easy:
 
