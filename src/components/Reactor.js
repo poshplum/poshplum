@@ -64,45 +64,14 @@ const debugInt = (debug) => {
 
 const Listener = (componentClass) => {
   const componentClassName = getClassName(componentClass);
-  let displayName = inheritName(componentClass, "👂⚡");
+  let displayName = inheritName(componentClass, "⚡‪👂");
 
   return class Listener extends componentClass {
     static displayName = displayName;
-    registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
     listening = [];
 
-    registerAction(event) {
-      const {debug, name, handler, ...moreDetails} = event.detail;
-
-      const dbg = debugInt(debug);
-      const moreDebug = (dbg > 1);
-      if (dbg) {
-        console.log(`${myName(this)} registering action '${name}': `,
-          moreDetails, `handler ${handler.name}`, moreDebug ? handler : "...(debug=2 for more)"
-        )
-        if (moreDebug) debugger;
-      }
-
-      const existingHandler = this.actions[name];
-      if (existingHandler) {
-        let info = {
-          listenerFunction: (existingHandler.targetFunction || existingHandler).name,
-          listenerTarget: (
-            ( existingHandler.boundThis && myName(existingHandler.boundThis) )
-            || Reactor.bindWarning
-          ),
-        }
-
-        const msg = `${myName(this)}: Action '${name}' is already registered with a handler`;
-        console.error(msg);
-        console.warn("existing handler info: ", info);
-        throw new Error(msg);
-      }
-
-      this.listen(name, handler);
-    }
     listen(eventName, handler) {
-      console.warn(`${myName(this)}: each Listener-ish should explicitly define listen(), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
+      console.warn(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler);
     }
     _listen(eventName, handler) {
@@ -111,6 +80,7 @@ const Listener = (componentClass) => {
       const newListener = this.myRef.current.addEventListener(eventName, wrappedHandler);
       // console.log(listening);
       listening.push([eventName, wrappedHandler]);
+      return wrappedHandler
       // console.log(listening);
     }
     componentDidMount() {
@@ -133,9 +103,13 @@ const Listener = (componentClass) => {
       if (dbg) {
         console.log(`${myName(this)}: unmounting and unlistening all...`)
       }
-      this.listening.forEach(
-        ([type,handler]) => this.myRef.current.removeEventListener(type, handler)
-      );
+      this.listening.forEach(this.unlisten.bind(this));
+    }
+
+    unlisten(typeAndHandler) {
+      let [type,handler] = typeAndHandler;
+      this.myRef.current.removeEventListener(type, handler)
+      typeAndHandler[1] = null;
     }
 
     _wrapHandler(handler) {
@@ -254,15 +228,16 @@ export const Actor = (componentClass) => {
         console.log(`${myName(this)} didMount`);
       }
       let name = this.name();
+      this.listen(Reactor.Events.registerAction, this.registerAction);
 
       // if(foundKeys[0] == "action") debugger;
       this.myRef.current.dispatchEvent(Reactor.RegisterActor({name, actor:this, debug}))
 
-      this.listen(Reactor.Events.registerAction, this.registerAction);
       this.setState({_reactorDidMount: true});
     }
   }
 };
+
 
 const Reactor = (componentClass) => {
   const listenerClass = Listener(componentClass)
@@ -270,22 +245,85 @@ const Reactor = (componentClass) => {
 
   return class ReactorInstance extends listenerClass {
     static displayName = mashName(listenerClass, "Reactor");
+    // registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
 
     constructor() {
       super();
       this.myRef = React.createRef();
 
-      // this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
+      this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
+
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
-      this.actions = {};
+      this.registerPublishedEvent = Reactor.bindWithBreadcrumb(this.registerPublishedEvent, this);
+      this.registerSubscriber = Reactor.bindWithBreadcrumb(this.registerSubscriber, this);
+      this.removePublishedEvent = Reactor.bindWithBreadcrumb(this.removePublishedEvent, this);
+      this.removeSubscriber = Reactor.bindWithBreadcrumb(this.removeSubscriber, this);
       this.listening = [];
-      this.actors = {};
+
+      this.actions = {}; // known direct actions
+      this.events = {};  // known direct events
+      this.actors = {};  // registered actors
+      this.registeredSubscribers = {}; // registered listening agents
     }
     registerAction(event) {
-      super.registerAction(event);
+      const {debug, name, handler, ...moreDetails} = event.detail;
 
+      const dbg = debugInt(debug);
+      const moreDebug = (dbg > 1);
+      if (dbg) {
+        console.log(`${myName(this)} registering action '${name}': `,
+          moreDetails, `handler ${handler.name}`, moreDebug ? handler : "...(debug=2 for more)"
+        )
+        if (moreDebug) debugger;
+      }
+
+      const existingHandler = this.actions[name];
+      if (existingHandler) {
+        let info = {
+          listenerFunction: (existingHandler.targetFunction || existingHandler).name,
+          listenerTarget: (
+            ( existingHandler.boundThis && myName(existingHandler.boundThis) )
+            || Reactor.bindWarning
+          ),
+        }
+
+        const msg = `${myName(this)}: Action '${name}' is already registered with a handler`;
+        console.error(msg);
+        console.warn("existing handler info: ", info);
+        throw new Error(msg);
+      }
+
+      this.listen(name, handler);
       event.stopPropagation();
     }
+    //
+    // registerAction(event) {
+    //   // if (!event.handledBy)
+    //     super.registerAction(event);
+    //
+    //   // event.handledBy = this;
+    //   event.stopPropagation();
+    // }
+    registerPublishedEvent(event) {
+      let {name, debug} = event.detail;
+      if (debug) console.warn("registering published event", name)
+      if (this.events[name]) {
+        console.error(`Event '${name}' already registered by`, this.events[name])
+      } else {
+        this.events[name] = event.target;
+      }
+    }
+    removePublishedEvent(event) {
+      let {name, actor, debug} = event.detail;
+      console.error("test me")
+      // !!! check for registeredListeners to this event, issue a orphanedListener event
+      if (!this.events[name]) {
+        console.error(`can't removePublishedEvent '${name}' (not registered)`);
+      } else {
+        delete this.events[name];
+      }
+    }
+
     registerActor(event) {
       let {name, actor, debug} = event.detail;
       if(this.actors[name]) {
@@ -295,9 +333,63 @@ const Reactor = (componentClass) => {
       }
     }
 
+    registerSubscriber(event) {
+      let {eventName, listener, debug} = event.detail;
+      if (debug) console.warn("registering subscriber for ", event.detail);
+
+      if (!this.events[eventName]) {
+        this.myRef.current.dispatchEvent(
+          Reactor.UnknownEvent({eventName: this.eventName})
+        )
+      }
+
+      let subscriberFanout;
+      if (subscriberFanout = this.registeredSubscribers[eventName]) {
+        subscriberFanout.subscribers.push(listener);
+        return;
+      }
+
+      subscriberFanout = this.registeredSubscribers[eventName] =
+        this.registeredSubscribers[eventName] || {
+          fn: (event) => {
+            if (debug) console.warn(`got event ${eventName}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
+            // if (debug) console.warn(listenerFanout.listeners);
+            subscriberFanout.subscribers.forEach((subscriberFunc) => {
+              subscriberFunc(event);
+              // ?? honor stopPropagation[immediate] ?
+            });
+          },
+          subscribers: [listener]
+        };
+
+      subscriberFanout._fan = this.listen(eventName, subscriberFanout.fn);
+    }
+    removeSubscriber(event) {
+      let {eventName, listener, debug} = event.detail;
+
+      let subscriberFanout = this.registeredSubscribers[eventName];
+      if (!subscriberFanout) {
+        console.error(`unknownEvent ${eventName}`)
+      }
+      const before = subscriberFanout.subscribers.length;
+      subscriberFanout.subscribers = subscriberFanout.subscribers.filter((f) => f === listener);
+      const after = subscriberFanout.subscribers.length;
+
+      if (before === after) {
+        console.warn(`no suscribers removed for ${eventName}`)
+      } else if(debug)
+          console.warn(`removed a subscriber for ${eventName}; ${after} remaining` );
+
+
+      if (after === 0) {
+        this.unlisten([eventName, subscriberFanout._fan]);
+        delete this.registeredSubscribers[eventName];
+      }
+    }
+
     listen(eventName, handler) { // satisfy listener
       this.actions[eventName] = handler;
-      this._listen(eventName, handler);
+      return this._listen(eventName, handler);
     }
 
     componentDidMount() {
@@ -306,6 +398,10 @@ const Reactor = (componentClass) => {
       // this.myNode = ReactDOM.findDOMNode(this);
       this.listen(Reactor.Events.registerAction, this.registerAction);
       this.listen(Reactor.Events.registerActor, this.registerActor);
+      this.listen(Reactor.Events.publishEvent, this.registerPublishedEvent);
+      this.listen(Reactor.Events.unPublishEvent, this.removePublishedEvent);
+      this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber);
+      this.listen(Reactor.Events.unRegisterSubscriber, this.removeSubscriber);
 
       this.setState({_reactorDidMount: true});
     }
@@ -335,7 +431,12 @@ Reactor.bindWithBreadcrumb = function(fn, boundThis) {
 
 Reactor.Events = {
   registerAction: "registerAction",
-  registerActor: "registerActor"
+  registerActor: "registerActor",
+  publishEvent: "publishEvent",
+  unPublishEvent: "unPublishEvent",
+  registerSubscriber: "registerSubscriber",
+  unRegisterSubscriber: "unRegisterSubscriber",
+  unknownEvent: "unknownEvent"
 };
 Reactor.EventFactory = (type) => {
   const t = typeof type;
@@ -359,6 +460,11 @@ Reactor.EventFactory = (type) => {
 };
 Reactor.RegisterAction = Reactor.EventFactory(Reactor.Events.registerAction)
 Reactor.RegisterActor = Reactor.EventFactory(Reactor.Events.registerActor)
+Reactor.PublishEvent = Reactor.EventFactory(Reactor.Events.publishEvent);
+Reactor.unPublishEvent = Reactor.EventFactory(Reactor.Events.unPublishEvent);
+Reactor.SubscribeToEvent = Reactor.EventFactory(Reactor.Events.registerSubscriber);
+Reactor.StopSubscribing = Reactor.EventFactory(Reactor.Events.unRegisterSubscriber);
+Reactor.UnknownEvent = Reactor.EventFactory(Reactor.Events.unknownEvent);
 Reactor.elementInfo = elementInfo;
 
 export default Reactor;
@@ -392,5 +498,71 @@ export class Action extends React.Component {
     this.myRef.current.dispatchEvent(Reactor.RegisterAction({name, handler, debug}))
   }
 };
-
 Reactor.Action = Action;
+
+export class Publish extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+
+  render() {
+    let {name} = this.props
+    return <div className={`published-event event-${name}`} ref={this.myRef}></div>;
+  }
+
+  componentDidMount() {
+    // console.log("Publish didMount");
+    let {children, name, debug, ...handler} = this.props;
+
+    const foundKeys = Object.keys(handler);
+    if (foundKeys.length > 0) {
+      throw new Error("<Publish name=\"eventName\" /> events should only have a single prop - the event 'name'. ('debug' prop is also allowed)\n");
+    }
+
+    // if(foundKeys[0] == "action") debugger;
+    this.myRef.current.dispatchEvent(Reactor.PublishEvent({name, debug}))
+  }
+};
+Reactor.Publish = Publish;
+
+export class Subscribe extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+  componentDidMount() {
+    if (super.componentDidMount) super.componentDidMount();
+
+    // this.myNode = ReactDOM.findDOMNode(this);
+    this.myRef.current.dispatchEvent(
+      Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
+    );
+  }
+  componentWillUnmount() {
+    this.myRef.current.dispatchEvent(
+      Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
+    );
+  }
+  render() {
+    let {children, debug, ...handler} = this.props;
+
+    const foundKeys = Object.keys(handler);
+    if (foundKeys.length > 1) {
+      throw new Error("<Subscribe eventName={notifyFunction} /> events should only have a single prop - the eventName to subscribe. ('debug' prop is also allowed)\n");
+    }
+    this.eventName = foundKeys[0]
+    this.debug = debug;
+    if (this.listenerFunc && this.listenerFunc !== handler[this.eventName]) {
+      throw new Error(
+        `<Subscribe ${this.eventName} has changed event handlers, which is not supported. `+
+        `... this can commonly be caused by doing ${this.eventName}={this.someHandler.bind(this)} on a component class.  A good fix can be to bind the function exactly once, perhaps in a constructor.`
+      );
+    }
+    this.listenerFunc = handler[this.eventName];
+
+    return <div className={`listen listen-${this.eventName}`} ref={this.myRef}></div>
+  }
+
+
+}
