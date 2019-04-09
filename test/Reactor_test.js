@@ -54,7 +54,7 @@ describe("Reactor", () => {
       </MyReactor>);
 
       const actionCount = Object.keys(component.instance().actions).length;
-      expect(actionCount).toBe(8); // 4x registerX, unPublishEvent, unListen, sayHello, informalGreeting
+      expect(actionCount).toBe(10); // 4x registerX, 4x removeX, sayHello, informalGreeting
 
       const eSrc = component.find(".event-source").instance();
       Reactor.dispatchTo(eSrc, new CustomEvent("sayHello", {bubbles:true}));
@@ -87,6 +87,51 @@ describe("Reactor", () => {
       // it'd be nice to have an api for accessing that info for test purposes but alas... not in jsdom 9.12.0 at least
     });
 
+    it("removes actions when their tags are unmounted", async () => {
+      @Reactor
+      class UnmountTest extends React.Component {
+        thing1 = jest.fn();
+        thing2 = jest.fn();
+        mkRenderPromise() {
+          return new Promise((res) => {this.resolveRender = res});
+        }
+        addActions() {
+          let t = this.mkRenderPromise();
+          this.setState({add:1});
+          return t
+        }
+        removeExtraAction() {
+          let t = this.mkRenderPromise();
+          this.setState({remove:1});
+          return t
+        }
+        componentDidUpdate() {
+          if (this.resolveRender) {
+            let resolve = this.resolveRender;
+            this.resolveRender = null;
+            resolve();
+          }
+        }
+        render() {
+          let {add, remove} = this.state || {};
+          return <div>
+            {add && <Action thing1={this.thing1} />}
+            {add && !remove && <Action thing2={this.thing2} />}
+          </div>
+        }
+      }
+
+      let component = mount(<UnmountTest />);
+      let instance = component.instance();
+      let baseLength = Object.keys(instance.actions).length;
+      await instance.addActions();
+
+      expect(Object.keys(instance.actions).length).toBe(baseLength+2);
+      await instance.removeExtraAction();
+
+      expect(Object.keys(instance.actions).length).toBe(baseLength+1);
+    });
+
     it("rejects Actions with duplicate names", () => {
       mockConsole(['error', 'warn']);
       const hi = jest.fn();
@@ -101,7 +146,7 @@ describe("Reactor", () => {
       const actionCount = Object.keys(component.instance().actions).length;
       if (actionCount !== 8) {
         // console.log(component.instance().actions);
-        expect(actionCount).toBe(8); // 4x registerX, unPublishEvent, unListen, sayHello, informalGreeting
+        expect(actionCount).toBe(10); // 4x registerX, 4x removeX, sayHello, informalGreeting
       }
 
       const eSrc = component.find(".event-source").instance();
@@ -325,6 +370,66 @@ describe("Reactor", () => {
       Reactor.dispatchTo(eSrc, new CustomEvent("members:create", {bubbles:true, detail: {debug:0}}));
 
       expect(component.find(ToyDataActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
+    });
+
+    it("removes actors and their actions, when the actors unmount", async () => {
+      @Actor
+      class UnmountActorTest extends React.Component {
+        name() { return "me" }
+        foo = jest.fn()
+        render() {
+          return <div>
+            <Action foo={this.foo} />
+          </div>
+        }
+      }
+      class AnotherActor extends UnmountActorTest {
+        name() { return "another" }
+      }
+      @Reactor
+      class UnmountTest extends React.Component {
+        thing1 = jest.fn();
+        thing2 = jest.fn();
+        mkRenderPromise() {
+          return new Promise((res) => {this.resolveRender = res});
+        }
+        addActors() {
+          let t = this.mkRenderPromise();
+          this.setState({add:1});
+          return t
+        }
+        removeExtraActor() {
+          let t = this.mkRenderPromise();
+          this.setState({remove:1});
+          return t
+        }
+        componentDidUpdate() {
+          if (this.resolveRender) {
+            let resolve = this.resolveRender;
+            this.resolveRender = null;
+            resolve();
+          }
+        }
+        render() {
+          let {add, remove} = this.state || {};
+          return <div>
+            {add && <UnmountActorTest />}
+            {add && !remove && <AnotherActor />}
+          </div>
+        }
+      }
+
+      let component = mount(<UnmountTest />);
+      let instance = component.instance();
+      let baseLength = Object.keys(instance.actions).length;
+      await instance.addActors();
+
+      expect(Object.keys(instance.actions).length).toBe(baseLength+2);
+      expect(Object.keys(instance.actors).length).toBe(2);
+      await instance.removeExtraActor();
+
+      expect(Object.keys(instance.actors).length).toBe(1);
+      expect(Object.keys(instance.actions).length).toBe(baseLength+1);
     });
 
     it("honors localized scope of nested non-collaborating reactors:\n    ...doesn't delegate triggered events to them, even with matching event names", () => {

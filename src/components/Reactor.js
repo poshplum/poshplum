@@ -179,10 +179,16 @@ export const Actor = (componentClass) => {
       super(props);
       this.myRef = React.createRef();
       this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
+      this.removeAction = Reactor.bindWithBreadcrumb(this.removeAction, this);
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
     }
     registerActor() {
       throw new Error("nested Actors not currently supported.  If you have a use-case, please create a pull req demonstrating it")
+    }
+    removeAction(removalEvent) {
+      let {name} = removalEvent.detail;
+      let newName = `${this.name()}:${name}`
+      removalEvent.detail.name = newName
     }
     registerAction(registrationEvent) {
       if(!registrationEvent.detail) {
@@ -215,7 +221,7 @@ export const Actor = (componentClass) => {
     render() {
       let {_reactorDidMount: mounted} = (this.state || {});
       return <div className={`actor actor-for-${displayName}`} ref={this.myRef}>
-        {mounted && super.render()}
+        {mounted && super.render && super.render()}
       </div>;
     }
 
@@ -229,12 +235,23 @@ export const Actor = (componentClass) => {
       }
       let name = this.name();
       this.listen(Reactor.Events.registerAction, this.registerAction);
+      this.listen(Reactor.Events.removeAction, this.removeAction);
 
       // if(foundKeys[0] == "action") debugger;
       this.myRef.current.dispatchEvent(Reactor.RegisterActor({name, actor:this, debug}))
 
       this.setState({_reactorDidMount: true});
     }
+
+    componentWillUnmount() {
+      let name = this.name();
+
+      this.myRef.current.dispatchEvent(
+        Reactor.RemoveActor({name})
+      );
+
+    }
+
   }
 };
 
@@ -252,11 +269,15 @@ const Reactor = (componentClass) => {
       this.myRef = React.createRef();
 
       this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
+      this.removeAction = Reactor.bindWithBreadcrumb(this.removeAction, this);
 
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
+      this.removeActor = Reactor.bindWithBreadcrumb(this.removeActor, this);
+
       this.registerPublishedEvent = Reactor.bindWithBreadcrumb(this.registerPublishedEvent, this);
-      this.registerSubscriber = Reactor.bindWithBreadcrumb(this.registerSubscriber, this);
       this.removePublishedEvent = Reactor.bindWithBreadcrumb(this.removePublishedEvent, this);
+
+      this.registerSubscriber = Reactor.bindWithBreadcrumb(this.registerSubscriber, this);
       this.removeSubscriber = Reactor.bindWithBreadcrumb(this.removeSubscriber, this);
       this.listening = [];
 
@@ -265,6 +286,26 @@ const Reactor = (componentClass) => {
       this.actors = {};  // registered actors
       this.registeredSubscribers = {}; // registered listening agents
     }
+    componentDidMount() {
+      if (super.componentDidMount) super.componentDidMount();
+
+      // this.myNode = ReactDOM.findDOMNode(this);
+      this.listen(Reactor.Events.registerAction, this.registerAction);
+      this.listen(Reactor.Events.removeAction, this.removeAction);
+
+      this.listen(Reactor.Events.registerActor, this.registerActor);
+      this.listen(Reactor.Events.removeActor, this.removeActor);
+
+      this.listen(Reactor.Events.publishEvent, this.registerPublishedEvent);
+      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent);
+
+      this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber);
+      this.listen(Reactor.Events.removeSubscriber, this.removeSubscriber);
+
+      this.setState({_reactorDidMount: true});
+    }
+
+
     registerAction(event) {
       const {debug, name, handler, ...moreDetails} = event.detail;
 
@@ -295,6 +336,18 @@ const Reactor = (componentClass) => {
 
       this.listen(name, handler);
       event.stopPropagation();
+    }
+
+    removeAction(event) {
+      const {debug, name, handler, ...moreDetails} = event.detail;
+      // console.error("test me", event.detail);
+
+      if (!this.actions[name]) {
+        console.error(`can't removePublishedEvent '${name}' (not registered)`);
+      } else {
+        this.unlisten([name, this.actions[name]])
+        delete this.actions[name];
+      }
     }
     //
     // registerAction(event) {
@@ -330,6 +383,15 @@ const Reactor = (componentClass) => {
         console.error(`Actor named '${name}' already registered`, this.actors[name])
       } else {
         this.actors[name] = actor;
+      }
+    }
+
+    removeActor(event) {
+      let {name} = event.detail;
+      if(this.actors[name]) {
+        delete this.actors[name]
+      } else {
+        console.error(`ignoring removeActor event for name '${name}' (not registered)`)
       }
     }
 
@@ -389,21 +451,8 @@ const Reactor = (componentClass) => {
 
     listen(eventName, handler) { // satisfy listener
       this.actions[eventName] = handler;
+      // console.warn("+listen ", eventName, handler, {t:{t:this}}, this.actions)
       return this._listen(eventName, handler);
-    }
-
-    componentDidMount() {
-      if (super.componentDidMount) super.componentDidMount();
-
-      // this.myNode = ReactDOM.findDOMNode(this);
-      this.listen(Reactor.Events.registerAction, this.registerAction);
-      this.listen(Reactor.Events.registerActor, this.registerActor);
-      this.listen(Reactor.Events.publishEvent, this.registerPublishedEvent);
-      this.listen(Reactor.Events.unPublishEvent, this.removePublishedEvent);
-      this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber);
-      this.listen(Reactor.Events.unRegisterSubscriber, this.removeSubscriber);
-
-      this.setState({_reactorDidMount: true});
     }
 
     render() {
@@ -431,11 +480,13 @@ Reactor.bindWithBreadcrumb = function(fn, boundThis) {
 
 Reactor.Events = {
   registerAction: "registerAction",
+  removeAction: "removeAction",
   registerActor: "registerActor",
+  removeActor: "removeActor",
   publishEvent: "publishEvent",
-  unPublishEvent: "unPublishEvent",
+  removePublishedEvent: "removePublishedEvent",
   registerSubscriber: "registerSubscriber",
-  unRegisterSubscriber: "unRegisterSubscriber",
+  removeSubscriber: "removeSubscriber",
   unknownEvent: "unknownEvent"
 };
 Reactor.EventFactory = (type) => {
@@ -459,11 +510,17 @@ Reactor.EventFactory = (type) => {
   }
 };
 Reactor.RegisterAction = Reactor.EventFactory(Reactor.Events.registerAction)
+Reactor.RemoveAction = Reactor.EventFactory(Reactor.Events.removeAction)
+
 Reactor.RegisterActor = Reactor.EventFactory(Reactor.Events.registerActor)
+Reactor.RemoveActor = Reactor.EventFactory(Reactor.Events.removeActor)
+
 Reactor.PublishEvent = Reactor.EventFactory(Reactor.Events.publishEvent);
-Reactor.unPublishEvent = Reactor.EventFactory(Reactor.Events.unPublishEvent);
+Reactor.RemovePublishedEvent = Reactor.EventFactory(Reactor.Events.removePublishedEvent);
+
 Reactor.SubscribeToEvent = Reactor.EventFactory(Reactor.Events.registerSubscriber);
-Reactor.StopSubscribing = Reactor.EventFactory(Reactor.Events.unRegisterSubscriber);
+Reactor.StopSubscribing = Reactor.EventFactory(Reactor.Events.removeSubscriber);
+
 Reactor.UnknownEvent = Reactor.EventFactory(Reactor.Events.unknownEvent);
 Reactor.elementInfo = elementInfo;
 
@@ -492,10 +549,28 @@ export class Action extends React.Component {
     }
     const foundName = foundKeys[0];
     handler = handler[foundName];
+    if (this.handler && (this.handler !== handler[foundName]) ) {
+      const message = "handler can't be changed without unmount/remount of an Action";
+      console.error(message, this);
+      throw new Error(message)
+    }
+    this.handler = handler;
     name = name || foundName;
 
     // if(foundKeys[0] == "action") debugger;
     this.myRef.current.dispatchEvent(Reactor.RegisterAction({name, handler, debug}))
+  }
+  componentWillUnmount() {
+    let {children, name, debug, ...handlers} = this.props;
+
+    const foundKeys = Object.keys(handlers);
+    const foundName = foundKeys[0];
+    const handler = handlers[foundName];
+
+    // console.warn("unmounting action", this)
+    this.myRef.current.dispatchEvent(
+      Reactor.RemoveAction({name: foundName, handler})
+    );
   }
 };
 Reactor.Action = Action;
