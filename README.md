@@ -27,7 +27,7 @@ WARNING - under construction - docs first.  This package is still pre-release.
 
 Getting started is easy:
 
-`> yarn add poshplum`
+`$ yarn add poshplum`
 
 ```
 // normal routing with React-router -
