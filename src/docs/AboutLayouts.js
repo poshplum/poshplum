@@ -92,8 +92,8 @@ export default class AboutLayouts extends React.Component {
         <h4>How is a layout rendered?</h4>
 
         <p>A Layout is simply a component that places already-rendered semantic content into a JSX "envelope",
-          merging your non-Layout content with layout markup. The layout's code just categorizes the semantic contents so they're
-          all available for insertion to its markup envelope. 💌️
+          merging your non-Layout content with layout markup. The layout's internal code simply categorizes the
+          semantic contents so they're all available for insertion to your markup envelope. 💌️
         </p>
 
         <p>Plum's layouts reduce visual complexity of your code, making it easier to work on. You'll spend less time
@@ -184,7 +184,7 @@ const Body = Layout.defaultSlot("Body");
 }
 `}</CodeExample>
 
-        <p>The layout is just a React component. Use hooks or component lifecycle methods as you like.
+        <p>The layout is just a React component.
           In the render() method, <code>this.slots</code> contains the slotted content. Make sure
           you render all the slot content in any way making sense for your layout. </p>
 
@@ -237,7 +237,7 @@ const {Title, Author} = Article;
 
         <p>Separating the markup for individual
           layout slots can help keep things easy to manage as your markup size and/or team size
-          increases. Layout's <code>withMarkup()</code> helper conspires 🕵️ to make this case
+          increases. Layout's <code>withMarkup()</code> helper conspires 🕵️🕵️ to make this case
           easy. Our Card component uses this technique - check 'em out with React Devtools!
         </p>
 
@@ -253,6 +253,11 @@ const {Title, Author} = Article;
         <p>Remember to render the <code>{'{'}children{'}'}</code>. The layout will need <code>Byline</code> in
           its <code>static slots</code> declaration and <code>{`{Byline}`}</code> somewhere in
           its <code>render()</code> function.</p>
+
+        <p>In this example, the <code>{`<`}Byline /{`>`}</code> functional component applies the "fancy"
+          markup at each point of usage, then the result is inserted efficiently into the Layout's envelope
+          at just the right spot.
+        </p>
       </div>
     </div>
     </DocsLayout>

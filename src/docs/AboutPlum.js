@@ -11,7 +11,7 @@ export default class AboutPlum extends Component {
         of it, or feel free to use less. Plum provides low-syntax, high-leverage semantic
         components that are <i><b>easy to understand, easy to reuse, and easy to maintain</b></i>.
       </p>
-      <CodeExample language="shell">{`> yarn add plum`}</CodeExample>
+      <CodeExample language="shell">{`$ yarn add plum`}</CodeExample>
 
       <p>The <code>plum</code> package offers optional material design elements such
         as cards and panels, with semantic stylesheets courtesy of Spectre.css. Our
@@ -29,7 +29,7 @@ import Panel from 'plum/ui/panel';
 import Card from 'plum/ui/card';`}
       </CodeExample>
 
-      <p>A Posh Plum seeks to be principle-based, but dogma-free 🚫🐕🤰. We believe in quality by
+      <p>A Posh Plum seeks to be principle-based, but dogma-free 🐕‍🚫‍🤰. We believe in quality by
         design, in unit-testing and real-world results, and we reject cargo-cult rules.  As
         Larry says: there's more than one way to do it.  We use existing language- and library-level
         features where they're useful, and you can too.

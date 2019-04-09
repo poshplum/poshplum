@@ -35,9 +35,9 @@ export default class LayoutExample extends Component {
 
         <h5>Panel Layout</h5>
 
-        <p>This Layout Example panel - the same panel used for other examples, demonstrates another
+        <p>This panel (also used for the other examples) demonstrates another
           layout, with title, a scrollable body (when the content gets tall enough) and a footer area.
-          This layout comes with functionality including a route, a keyboard shortcut (Esc to close)
+          This layout comes with functionality including a keyboard shortcut (Esc to close)
           and open/close animations.  Layouts can do anything a React component can be made to do.
         </p>
 

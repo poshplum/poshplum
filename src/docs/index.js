@@ -41,13 +41,13 @@ export default class DocsIndex extends React.Component {
               to make web apps really great. </p>
 
             <p>Angular, Vue
-              and React certainly address some aspects of low-level structuring of applications, yet
-              higher-level considerations are often left to other libraries, or just left out.  This
-              leaves a vacuum space that developers generally pay for on every project.
+              and React do a good job of addressing low-level structuring of applications, yet
+              higher-level considerations are left to other libraries, or just left out.  Developers
+              pay the costs of fill the gaps on each project.
             </p>
 
-            <p>Higher-level patterns and best practices aren't easy to do well.  We're making it
-              easier to build apps that are truly excellent.
+            <p>Higher-level patterns and best practices aren't easy to do well.  That's why we made
+              it easier to build apps that are truly excellent.
             </p>
           </div>
 

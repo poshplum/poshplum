@@ -9,7 +9,7 @@ export default class DocsLayout extends Component {
     let {children} = this.props;
     return <TopMenuLayout>
       <Menu>
-        <Link to="/"><img src="./aPoshPlum.svg" style={{height: "2em"}} /></Link>
+        <Link to="/"><img src="/aPoshPlum.svg" style={{height: "2em"}} /></Link>
         <Link to="/layouts">Layouts</Link>
       </Menu>
 
