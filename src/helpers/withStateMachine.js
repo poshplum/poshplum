@@ -71,7 +71,7 @@ export const withStateMachine = (baseClass) => {
       map(found, (state) => {
         let {
           name,
-          transitions,
+          transitions = [],
           path,
           children
         } = state.props;
@@ -161,13 +161,16 @@ export const withStateMachine = (baseClass) => {
       this.setState({currentState: nextState});
     }
     render() {
-      let result = super.render();
+      let inner = super.render();
 
-      let {children} = result.props;
+      let {children} = inner.props;
       let {name} = this.constructor;
 
       this.states = this.findStates(children);
       let {currentState} = this.state || {};
+      let stateDefinition = this.states[currentState];
+      let transitions = stateDefinition && stateDefinition.transitions;
+
       if (this.debugState) {
         console.log(this.constructor.name, `rendering: (state=${currentState || '(default)'})`, this.states);
         if (this.debugState > 1) debugger
@@ -176,16 +179,23 @@ export const withStateMachine = (baseClass) => {
       if (!keys(this.states).length) {
         console.warn("hot loading can't match states by subclass :(")
         return <div>
-          <Action transition={this.doTransition} />
           <div className="toast toast-error">Dev error: No <code>{"<"}State{">"}</code> components defined. <br/>... in {name}</div>
           <div className="toast toast-success">Get the State component with this pattern:&nbsp;
             <code>const {"{"}State{"}"} = this.constructor</code>
           </div>
-          {result}
+          {inner}
         </div>
       }
+      return <div className="stateMachine">
+        {transitions && Object.entries(transitions).map( ([transitionName, target]) => {
+          let actionArgs = {
+            [transitionName]: this.mkTransition(transitionName)
+          };
+          return <Action key={transitionName} {...actionArgs} />
+        })}
 
-      return result;
+        {inner}
+      </div>
     }
   });
   return enhancedClass
