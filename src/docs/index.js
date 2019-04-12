@@ -146,19 +146,35 @@ class LayoutExampleCard extends React.Component {
     // if (!this.knownUrl) { // first mount
       if (this.isLocationAtTargetPath() && history.length == 1) {
         console.warn("opening panel via bookmark");
+
         history.replace(routeContext);
         Reactor.dispatchTo(this._stateRef.current, new CustomEvent("open", {bubbles:true, detail: {debug:0}}));
       // }
-    } else { // if(this.knownUrl !== currentUrl) { // url is changing
-      console.warn("url changed to", currentUrl);
-      if (currentUrl == routeContext && this.hasState("open")) {
-        Reactor.dispatchTo(this._stateRef.current, new CustomEvent("back", {bubbles:true, detail: {debug:0}}));
-      } else if (this.isLocationAtTargetPath() && !this.hasState("open")) {
-        Reactor.dispatchTo(this._stateRef.current, new CustomEvent("open", {bubbles:true, detail: {debug:0}}));
-      }
-      console.log({prevProps, prevState});
-      console.log({props: this.props, state:this.state});
+    } else {
+      let priorPath = this.getPath(prevProps.location);
+      let nextPath = this.getPath(this.props.location);
+      let {currentState} = this.state || {};
 
+      let priorState = prevState.currentState;
+      let nextState = this.state.currentState;
+
+      let stateDidChange = (!priorState || priorState !== nextState);
+      if (stateDidChange) console.log(`state is changing ${priorState} -> ${nextState}`);
+
+      let pathDidChange = (!this.knownUrl || priorPath !== nextPath)
+      if (pathDidChange) {
+        console.log("path changing", {nextPath, currentState});
+
+        if (this.isLocationAtTargetPath(prevProps.location) && this.hasState("open")) {
+          Reactor.dispatchTo(this._stateRef.current, new CustomEvent("back", {bubbles:true, detail: {debug:0}}));
+        } else if (this.isLocationAtTargetPath() && !this.hasState("open")) {
+          Reactor.dispatchTo(this._stateRef.current, new CustomEvent("open", {bubbles:true, detail: {debug:0}}));
+        }
+      } else {
+        console.log("path NOT changing", {priorPath, nextPath, currentState, knownUrl: this.knownUrl})
+      }
+      // console.log({prevProps, prevState});
+      // console.log({props: this.props, state:this.state});
     }
     this.knownUrl = currentUrl;
   }
@@ -185,7 +201,7 @@ class LayoutExampleCard extends React.Component {
   openCard = (event) => {
     const {history} = this.props;
     if (!this.isLocationAtTargetPath()) {
-      history.push(this.targetUrl());
+        history.push(this.targetUrl());
     }
   };
 
@@ -196,8 +212,7 @@ class LayoutExampleCard extends React.Component {
     }
   };
   closeOnPageClick = (e) => {
-    console.warn("hey ho", e, this);
-    debugger
+    this.transition("back")
   }
 
   debugState = 0;
@@ -206,11 +221,12 @@ class LayoutExampleCard extends React.Component {
     const {match, location, history} = this.props;
 
     console.log({history});
-    let open = [this.openCard, "open"]
+    let open = [null, "open", this.openCard]
     return <div>
-      {this.hasState("open") && <Subscribe debug={1} pageClicked={this.closeOnPageClick} />}
       <State name="default" transitions={{click: open, "open": open}} />
-      <State name="open" transitions={{back: [ this.closeCard, "default" ]}} />
+      <State name="open" transitions={{back: [ null, "default", this.closeCard ]}} />
+      {this.hasState("open") && <Subscribe debug={1} pageClicked={this.closeOnPageClick} />}
+
       <Card>
         Layouts - {this.state.currentState}
       </Card>

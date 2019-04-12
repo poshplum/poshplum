@@ -422,7 +422,6 @@ const Reactor = (componentClass) => {
 
     registerSubscriber(event) {
       let {eventName, listener, debug} = event.detail;
-      if (debug) console.warn("registering subscriber for ", event.detail);
 
       if (!this.events[eventName]) {
         if (this.isEventCatcher) {
@@ -431,14 +430,22 @@ const Reactor = (componentClass) => {
             Reactor.UnknownEvent({eventName: this.eventName, calledBy: "registerSubscriber", callStack: new Error("stack"), listener})
           )
         }
+        if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         return
+      } else {
+        if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, event.detail);
       }
-
       event.stopPropagation();
 
+      setTimeout(() => {
+        this.addSubscriberEvent(eventName, listener, debug);
+      }, 1)
+    }
+    addSubscriberEvent(eventName, listener, debug) {
       let subscriberFanout;
       if (subscriberFanout = this.registeredSubscribers[eventName]) {
         subscriberFanout.subscribers.push(listener);
+
         return;
       }
 
@@ -459,20 +466,26 @@ const Reactor = (componentClass) => {
     }
     removeSubscriber(event) {
       let {eventName, listener, debug} = event.detail;
-      event.stopPropagation();
 
       let subscriberFanout = this.registeredSubscribers[eventName];
       if (!subscriberFanout) {
-        console.error(`unknownEvent ${eventName}`)
+        if (this.isEventCatcher) {
+          console.warn(`${this.constructor.name} in removeSubscriber: unknown event ${eventName}`);
+          this._listenerRef.current.dispatchEvent(
+            Reactor.UnknownEvent({eventName: this.eventName, calledBy: "registerSubscriber", callStack: new Error("stack"), listener})
+          )
+        }
+        return
       }
+      event.stopPropagation();
       const before = subscriberFanout.subscribers.length;
       subscriberFanout.subscribers = subscriberFanout.subscribers.filter((f) => f === listener);
       const after = subscriberFanout.subscribers.length;
 
       if (before === after) {
-        console.warn(`no suscribers removed for ${eventName}`)
+        console.warn(`${this.constructor.name}: no suscribers removed for ${eventName}`)
       } else if(debug)
-          console.warn(`removed a subscriber for ${eventName}; ${after} remaining` );
+          console.warn(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining` );
 
 
       if (after === 0) {
@@ -535,7 +548,7 @@ Reactor.EventFactory = (type) => {
   return ({...eventProps}) => {
     const {debug} = eventProps;
     const dbg = debugInt(debug);
-    if (dbg > 1) console.log(`Event: ${type}: `, eventProps);
+    if (true || dbg > 1) console.log(`Event: ${type}: `, eventProps);
     if (dbg > 2) debugger;
     return new CustomEvent(type, {
       debug,
