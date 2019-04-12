@@ -2,7 +2,7 @@ import React from "react";
 import {render} from "react-dom";
 import TopMenuLayout, {Menu, Title} from "../components/layouts/topmenu";
 import AboutLayouts from "./AboutLayouts";
-import {Switch} from "react-router-dom";
+import {Switch, withRouter} from "react-router-dom";
 import DocsLayout from "./DocsLayout";
 import AboutPlum from "./AboutPlum";
 import {Card} from "../components/Cards";
@@ -11,6 +11,9 @@ import RelativeRoute from "../helpers/RelativeRoute";
 import Portal from "../helpers/Portal";
 import {Panel} from "../components/Panel";
 import LayoutExample from "./examples/LayoutExample";
+import withStateMachine from "../components/withStateMachine";
+import Reactor, {Subscribe} from "../components/Reactor";
+import Redirect from "react-router-dom/es/Redirect";
 
 
 export default class DocsIndex extends React.Component {
@@ -54,10 +57,8 @@ export default class DocsIndex extends React.Component {
           <div className="column col-12">
             <h5>Examples</h5>
             <Grid width="15em">
-              <Card link="/example/layout">
-                Layouts
-                <RelativeRoute exact path="/example/layout" component={LayoutExample} />
-              </Card>
+              <LayoutExampleCard path="example/layout" />
+
               <Card>
                 UI Components
               </Card>
@@ -111,3 +112,109 @@ function Giants() {
   </div>
 }
 
+@withRouter
+@withStateMachine
+class LayoutExampleCard extends React.Component {
+  // x it detects its "base route" - as matched by a parent router
+  // x it has a (relative) 'path' prop, used for route-detection and opening its matched panel
+  // x it detects when being opened in a new tab, pushing the context-path into history and triggering an Open event
+  // x it pushes the target path into history when Opening
+  // ? it does history.back() during a Close transition, if the path is still current
+  // it detects when a route-change is closing the panel, triggering a Close event
+
+  static keyboard = { // only to do this when the card is open
+    esc: {
+      priority: 1,
+      handler(e) {
+        if (this.hasState("open")) {
+          Reactor.dispatchTo(this._stateRef.current, new CustomEvent("back", {bubbles:true, detail: {debug:0}}));
+        }
+      }
+    }
+  };
+
+  componentDidUpdate(prevProps, prevState) {
+    const {
+      history,
+      match:{path:routeContext},  // the matched part of the current url (route nesting context)
+    } = this.props;
+    const {path} = this.props;
+
+    const currentUrl = this.getPath();
+    // const myTargetUrl = routeContext + path;
+
+    // if (!this.knownUrl) { // first mount
+      if (this.isLocationAtTargetPath() && history.length == 1) {
+        console.warn("opening panel via bookmark");
+        history.replace(routeContext);
+        Reactor.dispatchTo(this._stateRef.current, new CustomEvent("open", {bubbles:true, detail: {debug:0}}));
+      // }
+    } else { // if(this.knownUrl !== currentUrl) { // url is changing
+      console.warn("url changed to", currentUrl);
+      if (currentUrl == routeContext && this.hasState("open")) {
+        Reactor.dispatchTo(this._stateRef.current, new CustomEvent("back", {bubbles:true, detail: {debug:0}}));
+      } else if (this.isLocationAtTargetPath() && !this.hasState("open")) {
+        Reactor.dispatchTo(this._stateRef.current, new CustomEvent("open", {bubbles:true, detail: {debug:0}}));
+      }
+      console.log({prevProps, prevState});
+      console.log({props: this.props, state:this.state});
+
+    }
+    this.knownUrl = currentUrl;
+  }
+  isLocationAtTargetPath(location=this.props.location) {
+    const myTargetUrl = this.targetUrl();
+
+    return (this.getPath(location).indexOf(myTargetUrl) === 0)
+  }
+
+  getPath(location=this.props.location) {
+    const {pathname, search, hash} = location;
+    const p = pathname + search + hash;
+
+    return p;
+  }
+
+  targetUrl() {
+    const {path, match:{path:routeContext}} = this.props;
+    const myTargetUrl = routeContext + path;
+
+    return myTargetUrl;
+  }
+
+  openCard = (event) => {
+    const {history} = this.props;
+    if (!this.isLocationAtTargetPath()) {
+      history.push(this.targetUrl());
+    }
+  };
+
+  closeCard = () => {
+    const {history} = this.props;
+    if (this.isLocationAtTargetPath()) {
+      history.go(-1);
+    }
+  };
+  closeOnPageClick = (e) => {
+    console.warn("hey ho", e, this);
+    debugger
+  }
+
+  debugState = 0;
+  render() {
+    const {State} = this.constructor;
+    const {match, location, history} = this.props;
+
+    console.log({history});
+    let open = [this.openCard, "open"]
+    return <div>
+      {this.hasState("open") && <Subscribe debug={1} pageClicked={this.closeOnPageClick} />}
+      <State name="default" transitions={{click: open, "open": open}} />
+      <State name="open" transitions={{back: [ this.closeCard, "default" ]}} />
+      <Card>
+        Layouts - {this.state.currentState}
+      </Card>
+      <RelativeRoute path="/example/layout" component={LayoutExample} />
+    </div>
+  }
+}

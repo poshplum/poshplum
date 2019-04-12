@@ -71,7 +71,6 @@ describe("Reactor", () => {
     it("removes its event listeners when unmounting", () => {
       const hiya = jest.fn();
 
-
       const component = mount(<MyReactor>
         <Action debug={0} informalGreeting={hiya} />
         <div className="event-source"></div>
@@ -117,19 +116,34 @@ describe("Reactor", () => {
           return <div>
             {add && <Action thing1={this.thing1} />}
             {add && !remove && <Action thing2={this.thing2} />}
+            {this.props.children}
           </div>
         }
       }
 
-      let component = mount(<UnmountTest />);
-      let instance = component.instance();
-      let baseLength = Object.keys(instance.actions).length;
-      await instance.addActions();
+      let component = mount(<UnmountTest>
+        <div className="nested"><UnmountTest /></div>
+      </UnmountTest>);
 
-      expect(Object.keys(instance.actions).length).toBe(baseLength+2);
-      await instance.removeExtraAction();
+      let instance1 = component.instance();
 
-      expect(Object.keys(instance.actions).length).toBe(baseLength+1);
+      let baseLength = Object.keys(instance1.actions).length;
+      await instance1.addActions();
+      // console.warn(instance1.actions)
+      expect(Object.keys(instance1.actions).length).toBe(baseLength+2);
+
+      // -- make sure it doesn't remove matching action names from nested reactors
+      let instance2 = component.find(".nested").find(UnmountTest).instance();
+      await instance2.addActions();
+      await instance2.removeExtraAction();
+      expect(Object.keys(instance2.actions).length).toBe(baseLength+1);
+      // --
+      // console.warn(instance1.actions)
+
+      expect(Object.keys(instance1.actions).length).toBe(baseLength+2);
+      await instance1.removeExtraAction();
+
+      expect(Object.keys(instance1.actions).length).toBe(baseLength+1);
     });
 
     it("rejects Actions with duplicate names", () => {
@@ -187,14 +201,14 @@ describe("Reactor", () => {
       expect(gotNoActorFound).toHaveBeenCalledTimes(1);
     })
 
-    describe("Defined events", () => {
+    describe("<Publish> events", () => {
       it("can declare events that it will emit", async () => {
         const component = mount(<MyReactor>
           <Publish debug={0} name="imOK" />
         </MyReactor>);
 
         const eventCount = Object.keys(component.instance().events).length;
-        expect(eventCount).toBe(1);
+        expect(eventCount).toBe(2);  // imOK plus unknownEvent
 
         // const eSrc = component.find(".event-source").instance();
         // Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
@@ -238,7 +252,7 @@ describe("Reactor", () => {
         ListeningElement.verifyCool.mockReset()
         ListeningElement.alsoVerifyCool.mockReset()
       });
-      it("allows any components to listen for declared events", async () => {
+      it("allows any components to <Subscribe> for declared events", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
             <Publish debug={0} name="imWayCool" />
@@ -251,9 +265,26 @@ describe("Reactor", () => {
         const eSrc = component.find(".publisher").instance();
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
         expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(1);
+        component.instance().trigger("imWayCool")
+        expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(2);
       });
 
-      it("allows multiple listeners", async () => {
+
+      it("triggers an 'unknownEvent' if trigger(eventName) has an unknown event name", async () => {
+        const unknown = jest.fn()
+        const component = mount(<MyReactor>
+          <Subscribe debug={1} unknownEvent={unknown} />
+        </MyReactor>);
+
+        component.instance().trigger("someWeirdEvent")
+
+        // this._listenerRef.current.dispatchEvent(
+        //   Reactor.UnknownEvent({eventName: this.eventName})
+        // )
+        expect(unknown).toHaveBeenCalled();
+      });
+
+      it("allows multiple <Subscribe>rs", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
             <Publish debug={0} name="imWayCool" />
@@ -294,14 +325,25 @@ describe("Reactor", () => {
         expect(ListeningElement.alsoVerifyCool).toHaveBeenCalledTimes(0);
       });
 
-      it("triggers an 'unknownEvent' event if an unknown event is Subscribe'd", async () => {
+      it("a reactor with isEventCatcher=true triggers an 'unknownEvent' event if an unknown event is Subscribe'd", async () => {
         const unknown = jest.fn();
 
-        const component = mount(<MyReactor>
-          <Subscribe unknownEvent={unknown} />
+        @Reactor
+        class Catcher extends React.Component {
+          isEventCatcher = true;
+          render() {
+            return <div>{this.props.children}</div>
+          }
+        }
 
-          <ListeningElement />
-        </MyReactor>);
+        const component = mount(<Catcher debug={1}>
+          <Subscribe debug={1} unknownEvent={unknown} />
+
+          <div>
+            <Subscribe debug={1} crazyEvent={() => {}} />
+          </div>
+
+        </Catcher>);
 
         expect(unknown).toHaveBeenCalled();
       });
@@ -346,6 +388,7 @@ describe("Reactor", () => {
       </MyReactor>);
     }
 
+
     it("collects declared, collaborating actors: other (Re?)actors that publish their capabilities", () => {
       const component = mkComponent();
 
@@ -354,7 +397,7 @@ describe("Reactor", () => {
       expect(Object.keys(component.instance().actors).length).toBe(1);
     });
 
-    it("rejects actors with duplicate names", () => {
+     it("rejects actors with duplicate names", () => {
       mockConsole(['error', 'warn']);
       const component = mkComponent(<ToyDataActor key="duplicate" />);
 

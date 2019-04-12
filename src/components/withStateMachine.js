@@ -5,8 +5,8 @@ import map from 'lodash/map';
 import keys from 'lodash/keys';
 import find from 'lodash/find';
 
-import {getClassName, inheritName, inheritShortName} from "./ClassNames";
-import Reactor, {Action} from "../components/Reactor";
+import {getClassName, inheritName} from "../helpers/ClassNames";
+import Reactor, {Action} from "./Reactor";
 
 function matchChildType(typeName, children, klass) {
   return React.Children.map(children, (child) => {
@@ -57,14 +57,16 @@ export class State extends React.Component {
 
 
 export const withStateMachine = (baseClass) => {
-  let dName = inheritName(baseClass,`withStateMachine`);
-  let shortName = inheritShortName(baseClass,`wFSM`);
+  let dName = inheritName(baseClass,`FSM`);
 
-  const enhancedClass = Reactor(class withStateMachine extends baseClass {
-    static get name() { return dName };
-    static shortName = shortName;
+  const enhancedBaseClass = class withStateMachine extends baseClass {
+    constructor() {
+      super();
+      this._stateRef = React.createRef();
+    }
     static State = State;
     state = {currentState: "default"}
+
     findStates(children) {
       let found = matchChildType("State", children, State);
       let states = {};
@@ -145,7 +147,7 @@ export const withStateMachine = (baseClass) => {
         throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
 
       if (this.debugState) {
-        console.warn(this.constructor.name, "TRANSITION", currentState, "->", nextState, (predicate ? [`after verification via function '${predicate.name}'`, predicate] : "(immediate)"));
+        console.warn(this.constructor.name, `'${name}'⭞`, currentState, "->", nextState, (predicate ? [`after verification via function '${predicate.name}'`, predicate] : "(immediate)"));
         console.warn("...with stack trace", new Error("trace"));
       }
       if (predicate) {
@@ -172,13 +174,14 @@ export const withStateMachine = (baseClass) => {
       let transitions = stateDefinition && stateDefinition.transitions;
 
       if (this.debugState) {
-        console.log(this.constructor.name, `rendering: (state=${currentState || '(default)'})`, this.states);
+        console.log(this.constructor.name, `rendering: (currentState=${currentState || '(default)'})`, this.states);
+        console.log(this.constructor.name, `transitions: `, transitions);
         if (this.debugState > 1) debugger
       }
 
       if (!keys(this.states).length) {
         console.warn("hot loading can't match states by subclass :(")
-        return <div>
+        return <div ref={this._stateRef}>
           <div className="toast toast-error">Dev error: No <code>{"<"}State{">"}</code> components defined. <br/>... in {name}</div>
           <div className="toast toast-success">Get the State component with this pattern:&nbsp;
             <code>const {"{"}State{"}"} = this.constructor</code>
@@ -186,18 +189,19 @@ export const withStateMachine = (baseClass) => {
           {inner}
         </div>
       }
-      return <div className="stateMachine">
+      return <div className="stateMachine" ref={this._stateRef}>
         {transitions && Object.entries(transitions).map( ([transitionName, target]) => {
           let actionArgs = {
             [transitionName]: this.mkTransition(transitionName)
           };
-          return <Action key={transitionName} {...actionArgs} />
+          return <Action debug={1} client={this} key={`action-${transitionName}`} {...actionArgs} />
         })}
 
         {inner}
       </div>
     }
-  });
-  return enhancedClass
-}
+  }
+  Object.defineProperty(enhancedBaseClass, "name", {value: dName});
+  return Reactor(enhancedBaseClass);
+};
 export default withStateMachine;

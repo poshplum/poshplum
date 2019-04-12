@@ -53,22 +53,36 @@ describe('Card layouts', () => {
     })
   });
   describe("link= prop", () => {
-    it("linkifies the card", function () {
-      const bodyText = "bodyText";
-      const component = mount(
-        <MockRouter>
+    const push = jest.fn();
+    const bodyText = "bodyText";
+    let component;
+    let href = (h) => {
+      // console.warn("href", h);
+      return h.pathname;
+    };
+    beforeEach(async () => {
+
+      component = mount(
+        <MockRouter push={push} createHref={href}>
           <Card link="/hi">
             {bodyText}
           </Card>
         </MockRouter>
       );
-
-      expect(component.find("a").text()).toBe(bodyText);
     });
+    it("adds a link to the card", function () {
+      // console.warn(component.find("a").instance())
+      // console.warn(component.find("a").at(0).props());
+      expect(component.find("a").at(0).props().href).toBe("/hi");
+    });
+    it("navigates to the link on click of the card", async () => {
+      component.simulate('click', { preventDefault() {}});
+      expect(push).toHaveBeenCalledWith(`/hi`)
+    });
+
   });
   it("passes compact= prop to a className");
   it("passes active= prop to a className");
-  it("passes compact= prop to a className");
   it("passes other className='s through to the element")
   it("passes other props to the element");
 

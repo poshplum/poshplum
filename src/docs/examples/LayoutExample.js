@@ -38,7 +38,7 @@ export default class LayoutExample extends Component {
         <p>This panel (also used for the other examples) demonstrates another
           layout, with title, a scrollable body (when the content gets tall enough) and a footer area.
           This layout comes with functionality including a keyboard shortcut (Esc to close)
-          and open/close animations.  Layouts can do anything a React component can be made to do.
+          and open/close animations.
         </p>
 
         <p>When you make a layout, you can enforce utter consistency, or you can present differently
@@ -52,7 +52,7 @@ export default class LayoutExample extends Component {
         </p>
 
         <Panel.Footer>
-          <Link className="btn btn-primary" to="/layouts">More about Layouts</Link>
+          <Link tabIndex="0" className="btn btn-primary" to="/layouts">More about Layouts</Link>
         </Panel.Footer>
       </Panel>
     </Portal>

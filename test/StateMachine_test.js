@@ -1,4 +1,4 @@
-import withStateMachine from "../src/helpers/withStateMachine";
+import withStateMachine from "../src/components/withStateMachine";
 import * as React from "react";
 import {mount} from "enzyme/build";
 
@@ -11,7 +11,7 @@ describe("component withStateMachine", () => {
     it("has a hasState(stateName) method for checking the current state during render");
     it("is its own Reactor");
     it("exposes all transitions as named Actions, to allow control from outside the component");
-    it("can be updated to emit StateChanged events, to allow observation from outside the component");
+    it("if needed, can be updated to emit StateChanged events, to allow observation from outside the component");
   });
 
   @withStateMachine

@@ -51,8 +51,12 @@ export class Card extends Layout {
   static Label = Label;
   static slots = {Title, Icon, Body, Footer, Label};
 
+  constructor() {
+    super()
+    this._link = React.createRef()
+  }
   render() {
-    let {active, compact, item, debug, match, children, className="", link, render, ...otherProps} = this.props;
+    let {active, compact, tabIndex="0", onClick, item, debug, match, children, className="", link, render, ...otherProps} = this.props;
     if (render) {
       if(!item) {
         throw new Error("Cards.Card requires an 'item' prop when using the 'render' prop.")
@@ -63,20 +67,25 @@ export class Card extends Layout {
     let {Title, Icon, Body, Footer, Label} = this.slots;
 
     if (compact) className += " compact";
+    if (link && !onClick) {
+      onClick = () => {
+        this._link.current && this._link.current.context.router.history.push(link)
+    } };
 
     // let clickFn = (e) => { if (cardItemClicked) cardItemClicked(item) };
-    let card = <div {...otherProps} className={`card ${className} ${active ? "active" : ""}`}>
+    const showScreaderLink = link && <Link to={link} ref={this._link} className="screader">{Title || "open card"}</Link>;
+    let card = <div {...otherProps} tabIndex={tabIndex} onClick={onClick} className={`card ${className} ${active ? "active" : ""}`}>
       { (Icon || Title || Label ) && <div key="header" className="card-header">
         {Icon}
         {Label}
         {Title}
+        {link && Title && showScreaderLink}
       </div> || null}
       {Body}
+      {link && !Title && showScreaderLink}
       {Footer}
-    </div>;
-    if (link) {
-      return <Link to={link}>{card}</Link>
-    }
+    </div >;
+
     return card;
   }
 };
