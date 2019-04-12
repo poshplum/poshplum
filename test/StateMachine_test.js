@@ -8,6 +8,7 @@ describe("component withStateMachine", () => {
     it("has a list of named states");
     it("each state has named transitions that lead to other named states");
     it("each transition can have a predicate - a function which can block the transition");
+    it("each transition can have a effect function that reacts after the state change is performed");
     it("has a hasState(stateName) method for checking the current state during render");
     it("is its own Reactor");
     it("exposes all transitions as named Actions, to allow control from outside the component");
@@ -24,6 +25,7 @@ describe("component withStateMachine", () => {
       // console.warn("allowing close? ", this.allowed)
       return !!this.allowed
     };
+    didExpand = () => {};
     update() {
       const promise = new Promise((res) => {this.resolveRender = res});
       this.setState({updated:1})
@@ -37,10 +39,15 @@ describe("component withStateMachine", () => {
       }
     }
 
+
     render() {
       let {State} = this.constructor;
       return <div>
-        <State name="default" transitions={{"open": "opened"}} />
+        <State name="default" transitions={{
+          "open": "opened",
+          "expand": [null, "detail", this.didExpand]
+        }} />
+        <State name="detail" transitions={{"close": [this.canClose, "default"]}} />
         <State name="opened" transitions={{"close": [this.canClose, "default"]}} />
       </div>
     }
@@ -53,7 +60,7 @@ describe("component withStateMachine", () => {
       instance = component.instance();
     });
     it("extracts the State's found as children", async () => {
-      expect(Object.keys(instance.states).length).toBe(2);
+      expect(Object.keys(instance.states).length).toBe(3);
     });
 
     it("has state.currentState='default' after mounting", async () => {
@@ -86,6 +93,12 @@ describe("component withStateMachine", () => {
       expect(instance.state.currentState).toBe("default");
     });
 
+    it("triggers the effect function when specified", async () => {
+      instance.didExpand = jest.fn();
+      await instance.update();
+      instance.transition("expand");
+      expect(instance.didExpand).toHaveBeenCalled();
+    });
   });
   
 

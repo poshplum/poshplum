@@ -129,17 +129,18 @@ export const withStateMachine = (baseClass) => {
     }
     transition(name) {
       let {currentState="default"} = (this.state || {});
+      console.group(`${this.constructor.name}: '${name}'⭞ transition `)
 
       let thisState = this.states[currentState];
       let nextState = thisState.transitions[name];
       let goodTransitions = keys(thisState.transitions);
-      let predicate;
+      let predicate, effectFn;
       if (nextState instanceof Array) {
         [predicate=() => {
           let e = new Error(`missing predicate definition for transition '${name}' from state '${currentState}'`)
           e.name = "warning";
-          console.warn(e)
-        }, nextState] = nextState;
+          console.warn(e);
+        }, nextState, effectFn] = nextState;
       }
       if (!nextState)
         throw new Error(`${this.constructor.name}: INVALID transition('${name}') from state '${currentState} (try ${goodTransitions.join(' | ')})}'`);
@@ -159,8 +160,12 @@ export const withStateMachine = (baseClass) => {
         }
       }
       if (this.debugState > 1) debugger;
-
       this.setState({currentState: nextState});
+      if (effectFn) {
+        effectFn();
+      }
+      console.log(`${this.constructor.name}: '${name}'⭞\` done`);
+      console.groupEnd();
     }
     render() {
       let inner = super.render();
