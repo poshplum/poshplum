@@ -1,6 +1,7 @@
 import {mount} from "enzyme/build";
 import Reactor, {Actor, Action, Publish, Subscribe} from "../src/components/Reactor";
 import * as React from "react";
+import delay from "./helpers/delay";
 
 //      https://github.com/airbnb/enzyme/issues/426
 
@@ -215,8 +216,8 @@ describe("Reactor", () => {
       });
 
           class ListeningElement extends React.Component {
-            static verifyCool = jest.fn();
-            static alsoVerifyCool = jest.fn();
+            verifyCool = jest.fn();
+            alsoVerifyCool = jest.fn();
             another() {
               const promise = new Promise((res) => {this.resolveRender = res});
               this.setState({another: true})
@@ -242,16 +243,12 @@ describe("Reactor", () => {
               let {another, none} = (this.state || {});
 
               return <div className="event-listener">
-                {!none && <Subscribe debug={0} imWayCool={ListeningElement.verifyCool} />}
-                {!none && another && <Subscribe debug={0} imWayCool={ListeningElement.alsoVerifyCool} />}
+                {!none && <Subscribe debug={0} imWayCool={this.verifyCool} />}
+                {!none && another && <Subscribe debug={0} imWayCool={this.alsoVerifyCool} />}
               </div>
             }
           }
 
-      beforeEach(async () => {
-        ListeningElement.verifyCool.mockReset()
-        ListeningElement.alsoVerifyCool.mockReset()
-      });
       it("allows any components to <Subscribe> for declared events", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
@@ -261,21 +258,25 @@ describe("Reactor", () => {
         </MyReactor>);
 
         const listeners = component.instance().registeredSubscribers['imWayCool'];
+        const listenerInstance = component.find(ListeningElement).instance();
 
         const eSrc = component.find(".publisher").instance();
+        await delay(1);
+
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
-        expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(1);
+        expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(1);
         component.instance().trigger("imWayCool")
-        expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(2);
+        expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(2);
       });
 
 
       it("triggers an 'unknownEvent' if trigger(eventName) has an unknown event name", async () => {
         const unknown = jest.fn()
         const component = mount(<MyReactor>
-          <Subscribe debug={1} unknownEvent={unknown} />
+          <Subscribe debug={0} unknownEvent={unknown} />
         </MyReactor>);
 
+        await delay(1);
         component.instance().trigger("someWeirdEvent")
 
         // this._listenerRef.current.dispatchEvent(
@@ -298,9 +299,10 @@ describe("Reactor", () => {
         const listener = component.find(ListeningElement).instance();
         await listener.another();
 
+        await delay(1);
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
-        expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(1);
-        expect(ListeningElement.alsoVerifyCool).toHaveBeenCalledTimes(1);
+        expect(listener.verifyCool).toHaveBeenCalledTimes(1);
+        expect(listener.alsoVerifyCool).toHaveBeenCalledTimes(1);
       });
 
       it("stops listening when <Subscribe> is unmounted", async () => {
@@ -311,18 +313,27 @@ describe("Reactor", () => {
           <ListeningElement />
         </MyReactor>);
 
-        const listeners = component.instance().registeredSubscribers['imWayCool'];
+        let instance = component.instance();
+        await delay(1)
+        expect(instance.registeredSubscribers.imWayCool).toBeTruthy();
+
+
+        let listenerInstance = component.find(ListeningElement).instance();
+
+        expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(0);
+        expect(listenerInstance.alsoVerifyCool).toHaveBeenCalledTimes(0);
 
         const eSrc = component.find(".publisher").instance();
         const listener = component.find(ListeningElement).instance();
-        await listener.another();
-        await listener.none();
 
-        expect(component.instance().registeredSubscribers.imWayCool).toBeFalsy();
+        await listener.none();
+        await delay(1)
+
+        expect(instance.registeredSubscribers.imWayCool).toBeFalsy();
 
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
-        expect(ListeningElement.verifyCool).toHaveBeenCalledTimes(0);
-        expect(ListeningElement.alsoVerifyCool).toHaveBeenCalledTimes(0);
+        expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(0);
+        expect(listenerInstance.alsoVerifyCool).toHaveBeenCalledTimes(0);
       });
 
       it("a reactor with isEventCatcher=true triggers an 'unknownEvent' event if an unknown event is Subscribe'd", async () => {
@@ -335,17 +346,25 @@ describe("Reactor", () => {
             return <div>{this.props.children}</div>
           }
         }
+        class Tester extends React.Component {
+          update = () => {this.setState({updated:1})}
+          render() {
+            let {updated} = this.state || {}
+            return <Catcher>
+              <Subscribe unknownEvent={unknown} />
 
-        const component = mount(<Catcher debug={1}>
-          <Subscribe debug={1} unknownEvent={unknown} />
+              {updated && <Subscribe crazyEvent={() => {}} />}
+            </Catcher>
+          }
+        }
+        mockConsole(['warn']);
 
-          <div>
-            <Subscribe debug={1} crazyEvent={() => {}} />
-          </div>
-
-        </Catcher>);
+        const component = mount(<Tester />);
+        await delay(1);
+        component.instance().update();
 
         expect(unknown).toHaveBeenCalled();
+        expect(console.warn).toBeCalledWith(expect.stringMatching(/registerSubscriber: unknown event crazyEvent/));
       });
 
     });
@@ -398,7 +417,7 @@ describe("Reactor", () => {
     });
 
      it("rejects actors with duplicate names", () => {
-      mockConsole(['error', 'warn']);
+       mockConsole(['error', 'warn']);
       const component = mkComponent(<ToyDataActor key="duplicate" />);
 
       expect(Object.keys(component.instance().actors).length).toBe(1);
