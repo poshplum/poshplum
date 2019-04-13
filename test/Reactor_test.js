@@ -79,7 +79,11 @@ describe("Reactor", () => {
 
       const listeningNode = component.find(".myReactor").instance().parentNode;
       component.unmount(); // critical
+      mockConsole(['error'])
       Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
+      expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*informalGreeting/),
+          expect.anything(), expect.anything(), expect.anything());
+
       expect(hiya).not.toHaveBeenCalled();
       // debugger
       // to confirm *all* listeners were really removed, use node inspector...
@@ -189,23 +193,10 @@ describe("Reactor", () => {
       function SomeOtherChild({}) { return <div><Action deepAction={deepAction} /></div> }
     });
 
-    it("issues NoActorFound when an event is unhandled", () => {
-      const gotNoActorFound = jest.fn();
-      const component = mount(<MyReactor>
-        <Action debug={0} NoActorFound={gotNoActorFound} />
-        <div className="event-source"></div>
-      </MyReactor>);
-
-      const eSrc = component.find(".event-source").instance();
-      Reactor.dispatchTo(eSrc, new CustomEvent("unknownAction", {bubbles:true}));
-
-      expect(gotNoActorFound).toHaveBeenCalledTimes(1);
-    })
-
     describe("<Publish> events", () => {
       it("can declare events that it will emit", async () => {
         const component = mount(<MyReactor>
-          <Publish debug={0} name="imOK" />
+          <Publish debug={0} event="imOK" />
         </MyReactor>);
 
         const eventCount = Object.keys(component.instance().events).length;
@@ -252,7 +243,7 @@ describe("Reactor", () => {
       it("allows any components to <Subscribe> for declared events", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
-            <Publish debug={0} name="imWayCool" />
+            <Publish debug={0} event="imWayCool" />
           </div>
           <ListeningElement />
         </MyReactor>);
@@ -288,7 +279,7 @@ describe("Reactor", () => {
       it("allows multiple <Subscribe>rs", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
-            <Publish debug={0} name="imWayCool" />
+            <Publish debug={0} event="imWayCool" />
           </div>
           <ListeningElement />
         </MyReactor>);
@@ -308,10 +299,11 @@ describe("Reactor", () => {
       it("stops listening when <Subscribe> is unmounted", async () => {
         const component = mount(<MyReactor>
           <div className="publisher">
-            <Publish debug={0} name="imWayCool" />
+            <Publish debug={0} event="imWayCool" />
           </div>
           <ListeningElement />
         </MyReactor>);
+
 
         let instance = component.instance();
         await delay(1)
@@ -331,7 +323,11 @@ describe("Reactor", () => {
 
         expect(instance.registeredSubscribers.imWayCool).toBeFalsy();
 
+        mockConsole(['error'])
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
+        expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*imWayCool/),
+          expect.anything(), expect.anything(), expect.anything());
+
         expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(0);
         expect(listenerInstance.alsoVerifyCool).toHaveBeenCalledTimes(0);
       });
@@ -364,10 +360,81 @@ describe("Reactor", () => {
         component.instance().update();
 
         expect(unknown).toHaveBeenCalled();
-        expect(console.warn).toBeCalledWith(expect.stringMatching(/registerSubscriber: unknown event crazyEvent/));
+        expect(console.warn).toBeCalledWith(expect.stringMatching(/registerSubscriber: no published.*crazyEvent/));
       });
 
     });
+  });
+  describe("Reactor.dispatchTo() aka trigger()", async () => {
+    it("requires a DOM node for triggering", async () => {
+      expect(Reactor.dispatchTo).toBe(Reactor.trigger);
+      expect(Reactor.dispatchTo).toThrow(/required.*DOM node/)
+    });
+
+    @Reactor
+    class DispatchTest extends React.Component {
+      unknownEvent = jest.fn(({detail}) => { if(0) console.error("unknown:", detail) });
+      customEvent1 = jest.fn(() => { if(0) console.warn("custom event 1") });
+      // customEvent2 = jest.fn(() => { console.warn("custom event 2") });
+      render() {
+        return <div>
+          <Publish debug={0} event="myCustomEvent1" />
+
+          {/*<Publish event="myCustomEvent2" />*/}
+          <Subscribe debug={0} unknownEvent={this.unknownEvent} />
+          <Subscribe debug={0} myCustomEvent1={this.customEvent1} />
+          {/*<Subscribe debug={1} myCustomEvent2={this.customEvent2} />*/}
+
+          <div className="eSrc"></div>
+        </div>
+      }
+    }
+    describe("with a named event in arg 2", () => {
+      let component, instance, eSrc;
+      beforeEach(async () => {
+        component = mount(<DispatchTest debug={1} />);
+        instance = component.instance();
+        await delay(1)
+        eSrc = component.find(".eSrc").instance();
+        Reactor.trigger(eSrc, "myCustomEvent1", {good:"things"})
+      });
+      it("dispatches a custom event matching the name", async () => {
+        expect(instance.customEvent1).toHaveBeenCalled()
+      });
+      it("includes the event details given in arg 3", async () => {
+        const args = instance.customEvent1.mock.calls[0];
+        // console.warn("args", args);
+        expect(args[0].detail).toEqual(expect.objectContaining({
+          good:"things"
+        }));
+      });
+    });
+
+    describe("with a CustomEvent in arg 2", async() => {
+      it("directly dispatches the event", async () => {
+        const component = mount(<DispatchTest debug={1} />);
+        const instance = component.instance();
+        const eSrc = component.find(".eSrc").instance();
+        await delay(1);
+        Reactor.trigger(eSrc, new CustomEvent("myCustomEvent1", {bubbles: true, detail:{debug:0}}));
+        expect(instance.customEvent1).toHaveBeenCalled()
+      });
+    });
+
+
+    it("issues unknownAction when an event is unhandled", async () => {
+      const component = mount(<DispatchTest debug={1} />);
+      const instance = component.instance();
+      const eSrc = component.find(".eSrc").instance();
+      await delay(1);
+
+      Reactor.dispatchTo(eSrc, "nothingGood", {foo:"bar"});
+      const args = instance.unknownEvent.mock.calls[0];
+      // console.warn("args", args);
+      expect(args[0].detail).toEqual(expect.objectContaining({
+          foo:"bar", eventName:"nothingGood"
+      }));
+    })
 
   });
 

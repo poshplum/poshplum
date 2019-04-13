@@ -145,13 +145,15 @@ const Listener = (componentClass) => {
               triggeredAt: elementInfo(event.target),
               reactor: myName(handled.reactor),
               reactorEl: elementInfo(handled.reactorNode),
-              listenerTarget: myName(handler.boundThis),
+              listenerTarget: handler.boundThis && myName(handler.boundThis),
               listenerFunction: (handler.targetFunction || handler).name
             })
           }
         }
-        event.handledBy.push(handled);
-        handler.call(this,event); // retain event's `this` (target of event)
+        const result = handler.call(this,event); // retain event's `this` (target of event)
+        if (result === undefined || !!result) {
+          event.handledBy.push(handled);
+        }
       }
       return function(e) {
         let result;
@@ -350,7 +352,7 @@ const Reactor = (componentClass) => {
       // debugger
 
       if (!this.actions[name]) {
-        console.warn(`can't removePublishedEvent '${name}' (not registered)`);
+        console.warn(`can't removeAction '${name}' (not registered)`);
       } else {
         // debugger
         event.stopPropagation();
@@ -425,21 +427,23 @@ const Reactor = (componentClass) => {
 
       if (!this.events[eventName]) {
         if (this.isEventCatcher) {
-          console.warn(`${this.constructor.name}: in registerSubscriber: unknown event ${eventName}`)
+          console.warn(`${this.constructor.name}: in registerSubscriber: no published '${eventName}' event`)
           this._listenerRef.current.dispatchEvent(
             Reactor.UnknownEvent({eventName: eventName, detail:event.detail, calledBy: "registerSubscriber", callStack: new Error("stack"), listener})
           );
+          return true
         } else {
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         }
-        return
+        return false
       } else {
         if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, event.detail);
       }
       event.stopPropagation();
-      if (debug) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
+      if (debug > 1) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       setTimeout(() => {
+        debugger
         this.addSubscriberEvent(eventName, listener, debug);
       }, 1)
     }
@@ -520,10 +524,24 @@ const Reactor = (componentClass) => {
   Object.defineProperty(clazz, 'name', { value: reactorName})
   return clazz;
 };
-Reactor.dispatchTo = function dispatchWithHandledDetection(target, event) {
+Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(target, event, {bubbles=true,...detail}={}) {
+  if (!(target instanceof Element)) throw new Error("Reactor.dispatchTo: missing required arg1 (must be a DOM node)");
+
+  if (!(event instanceof Event)) {
+    event = new CustomEvent(event, {bubbles, detail});
+  }
+
   target.dispatchEvent(event);
-  if (!event.handledBy) {
-    target.dispatchEvent(new CustomEvent('NoActorFound', {bubbles:true}));
+  if (!event.handledBy || !event.handledBy.length) {
+    const unk = new CustomEvent('unknownEvent', {bubbles:true, detail: {
+        // debug:1,
+        eventName:event.type,
+        ...detail
+      }});
+    target.dispatchEvent(unk);
+    if (!unk.handledBy || !unk.handledBy.length) {
+      console.error(`unknown event '${event.type}' and no unknownEvent handler to surface it into the UI.  Event detail:`, detail, "\n", new Error("Backtrace:"))
+    }
   }
 };
 
@@ -644,7 +662,7 @@ export class Publish extends React.Component {
   }
 
   render() {
-    let {name} = this.props;
+    let {event:name} = this.props;
     return <div className={`published-event event-${name}`} ref={this._pubRef}></div>;
   }
 
@@ -652,11 +670,11 @@ export class Publish extends React.Component {
     // console.log("Publish didMount");
     if (super.componentDidMount) super.componentDidMount();
 
-    let {children, name, debug, ...handler} = this.props;
+    let {children, event:name, debug, ...handler} = this.props;
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 0) {
-      throw new Error("<Publish name=\"eventName\" /> events should only have a single prop - the event 'name'. ('debug' prop is also allowed)\n");
+      throw new Error("<Publish event=\"eventName\" /> events should only have a single prop - the 'event' name. ('debug' prop is also allowed)\n");
     }
 
     // if(foundKeys[0] == "action") debugger;
@@ -674,9 +692,13 @@ export class Subscribe extends React.Component {
     if (super.componentDidMount) super.componentDidMount();
 
     // this.myNode = ReactDOM.findDOMNode(this);
-    this._subRef.current.dispatchEvent(
-      Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
-    );
+    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
+    this._subRef.current.dispatchEvent(subscriberReq);
+    if (!subscriberReq.handledBy || !subscriberReq.handledBy.length) {
+      console.error(`<Subscribe>: invalid event name '${this.eventName}', and nobody listening for unknownEvent(?)`)
+    // } else {
+    //   console.warn("Subscribe", this.eventName, "handled by", subscriberReq.handledBy)
+    }
   }
   componentWillUnmount() {
     this._subRef.current.dispatchEvent(
