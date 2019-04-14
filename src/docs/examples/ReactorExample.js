@@ -22,13 +22,8 @@ export default class ReactorExample extends Component {
 
         <p>Reactors are React components that provide event-oriented services for use by other components.  The Reactor
           itself is a container that recognizes <code>{`<`}Action/{`>`}</code>s and <code>{`<`}Actor/{`>`}</code>s within
-          its subtree, and facilitates other components to have access to those actions.  And it provides <code>{`<`}Publish/{`>`}</code>
-          and <code>{`<`}Subscribe/{`>`}</code>, to be used by actors and other components, respectively, allowing your
-          components to take direct action to non-stateful events from an actor.
-        </p>
-
-        <p>You can think of Reactors as providing application-level event services - events that are similar and complementary
-          to UI-events (like the click event), but for application-level functionality.
+          its subtree, and facilitates other components to have access to those actions.  Reactors facilitate application-level
+          services using events.
         </p>
 
         <h5>Example: State Machine</h5>
@@ -48,8 +43,11 @@ export default class ReactorExample extends Component {
           can have its own Reactor.
         </p>
 
-
         <h5>Example: Data Loading</h5>
+          <p>Reactor also provides <code>{`<`}Publish/{`>`}</code>
+            and <code>{`<`}Subscribe/{`>`}</code>, used by actors to inform other components about asynchronous
+            events.  The data-loading example triggers the books:dataUpdated event when books:load has completed:
+          </p>
         <CodeExample>
 {`@Actor
 class BookFetcher extends React.Component {
@@ -72,7 +70,7 @@ class BookFetcher extends React.Component {
   //... some other component that uses setState() or hooks...
   let {search, pageNumber, results} = this.state || {};
   return <Reactor>
-    <Subscribe dataUpdated={this.updateResults} />
+    <Subscribe books$dataUpdated={this.updateResults} />
     <BookFetcher/>
     <button onClick={() => Reactor.dispatchTo(this.myRef, 'books:load',{search,pageNumber})}>Search</button>
       {results.map(...)}
@@ -82,21 +80,24 @@ class BookFetcher extends React.Component {
 </CodeExample>
         <p>
           Reactor events leverage the browser's (or jsdom's) CustomEvent and other event infrastructure,
-          so they flow through the DOM tree in exactly the same way as any other event.  Reactor includes a
-          built-in event registry, so unknown event names can raise red flags instead of being silently
-          ignored.
+          so they flow through the DOM tree the same way as browser-native events.  Reactor additionally
+          includes a built-in event registry, so unknown event names can raise red flags instead of being
+          silently ignored.  This makes troubleshooting ever so much easier.
         </p>
 
         <p>With Actors and Reactors, you can create high-level application services defined
-          in their own easily-tested modules, without extra lines of boilerplate.  Your UI code can then
-          access either central or one-off service instances with minimal coupling.  With Reactors, your
-          application doesn't need any global state, which can make memory management easy.
+          in their own easily-tested modules, without extra boilerplate.  Your UI code can create
+          one-off service instances or trigger centralized services with minimal coupling.  With
+          Reactors, your application doesn't need any global state, which can make memory management
+          much easier.
         </p>
 
-        <p><i>Reactor also provides an event hub, so that components can reliably use actions or
-          subscribe to events declared in actors - even those defined in completely different DOM subtrees.  Some of the purposes filled by Reactors have similarity to some of the purposes filled by Redux, but Reactors
-          are distinct from Redux and can coexist with a Redux-based application if you wish.  Since Plum's Reactors are
-          entirely component-based, they can be mounted and unmounted, automatically.</i>
+        <p><i>Reactor provides an event hub, so that components can reliably use actions or
+          subscribe to trigger events declared in actors defined in completely different DOM
+          subtrees.  Some of the purposes filled by Reactors have similarity to some of the
+          purposes filled by Redux, but Reactors are distinct from Redux and can coexist with
+          a Redux-based application if you wish.  Since Plum's Reactors are
+          entirely component-based, they are easily mounted and unmounted.</i>
         </p>
 
 
