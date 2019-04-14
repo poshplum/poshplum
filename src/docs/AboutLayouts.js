@@ -179,7 +179,13 @@ const Body = Layout.defaultSlot("Body");
     // get instance-level slot content
     let slots = this.slots;  // these were already rendered
 
-    {/* return your markup that lays out the slot content */}
+    // your markup that lays out the slot content
+    return <div>
+      <div class="float-right"><h4>Author: {slots.Author}</h4></div>
+      <h2>{slots.Heading}</h2>
+      <h3>{slots.Subhead}</h3>
+      {slots.Body}
+    </div>
   }
 }
 `}</CodeExample>
@@ -244,7 +250,9 @@ const {Title, Author} = Article;
         <CodeExample language="jsx">
           {`const Byline = namedSlot("Byline").withMarkup(
   (props) => <div>
-    {/* all the markup needed for this slot */}
+    {/* all the markup needed for this slot, so it doesn't have to
+      contribute to bloat within Article's render() method
+    */}
     <div className="fancy" data-fu={props.bar}>{children}</div>
   </div>
 )`}
@@ -258,6 +266,12 @@ const {Title, Author} = Article;
           markup at each point of usage, then the result is inserted efficiently into the Layout's envelope
           at just the right spot.
         </p>
+        <CodeExample>
+{`<Article>
+  <Author>Abraham Lincoln</Author>
+  <Byline>Our favorite president</Byline>
+</Article>`}</CodeExample>
+
       </div>
     </div>
     </DocsLayout>

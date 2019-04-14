@@ -443,7 +443,6 @@ const Reactor = (componentClass) => {
       if (debug > 1) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       setTimeout(() => {
-        debugger
         this.addSubscriberEvent(eventName, listener, debug);
       }, 1)
     }

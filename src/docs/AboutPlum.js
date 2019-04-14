@@ -29,9 +29,9 @@ import Panel from 'plum/ui/panel';
 import Card from 'plum/ui/card';`}
       </CodeExample>
 
-      <p>A Posh Plum seeks to be principle-based, but dogma-free 🐕‍🚫‍🤰. We believe in quality by
+      <p>A Posh Plum seeks to be principle-based, but dogma-free 🚫🐕‍🤰. We believe in quality by
         design, in unit-testing and real-world results, and we reject cargo-cult rules.  As
-        Larry says: there's more than one way to do it.  We use existing language- and library-level
+        Larry says: there's more than one way to do it.  We use existing platform-, language- and library-level
         features where they're useful, and you can too.
       </p>
 
