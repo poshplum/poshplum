@@ -27,6 +27,7 @@ describe("Reactor", () => {
 
   @Reactor
   class MyReactor extends React.Component {
+    isEventCatcher = true
     constructor() {
       super();
       this.sayHello = Reactor.bindWithBreadcrumb(jest.fn(), this);
@@ -264,7 +265,7 @@ describe("Reactor", () => {
       it("triggers an 'unknownEvent' if trigger(eventName) has an unknown event name", async () => {
         const unknown = jest.fn()
         const component = mount(<MyReactor>
-          <Subscribe debug={0} unknownEvent={unknown} />
+          <Action debug={0} unknownEvent={unknown} />
         </MyReactor>);
 
         await delay(1);
@@ -321,12 +322,12 @@ describe("Reactor", () => {
         await listener.none();
         await delay(1)
 
-        expect(instance.registeredSubscribers.imWayCool).toBeFalsy();
+        // expect(instance.registeredSubscribers.imWayCool).toBeFalsy();
 
         mockConsole(['error'])
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
-        expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*imWayCool/),
-          expect.anything(), expect.anything(), expect.anything());
+        // expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*imWayCool/),
+        //   expect.anything(), expect.anything(), expect.anything());
 
         expect(listenerInstance.verifyCool).toHaveBeenCalledTimes(0);
         expect(listenerInstance.alsoVerifyCool).toHaveBeenCalledTimes(0);
@@ -347,7 +348,7 @@ describe("Reactor", () => {
           render() {
             let {updated} = this.state || {}
             return <Catcher>
-              <Subscribe unknownEvent={unknown} />
+              <Action unknownEvent={unknown} />
 
               {updated && <Subscribe crazyEvent={() => {}} />}
             </Catcher>
@@ -373,7 +374,6 @@ describe("Reactor", () => {
 
     @Reactor
     class DispatchTest extends React.Component {
-      unknownEvent = jest.fn(({detail}) => { if(0) console.error("unknown:", detail) });
       customEvent1 = jest.fn(() => { if(0) console.warn("custom event 1") });
       // customEvent2 = jest.fn(() => { console.warn("custom event 2") });
       render() {
@@ -381,7 +381,6 @@ describe("Reactor", () => {
           <Publish debug={0} event="myCustomEvent1" />
 
           {/*<Publish event="myCustomEvent2" />*/}
-          <Subscribe debug={0} unknownEvent={this.unknownEvent} />
           <Subscribe debug={0} myCustomEvent1={this.customEvent1} />
           {/*<Subscribe debug={1} myCustomEvent2={this.customEvent2} />*/}
 
@@ -423,13 +422,19 @@ describe("Reactor", () => {
 
 
     it("issues unknownAction when an event is unhandled", async () => {
-      const component = mount(<DispatchTest debug={1} />);
-      const instance = component.instance();
+      const unknown = jest.fn();
+      const component = mount(<MyReactor>
+        <Action debug={0} unknownEvent={unknown} />
+
+        <DispatchTest debug={1} />
+      </MyReactor>);
+      const instance = component.find(DispatchTest).instance();
       const eSrc = component.find(".eSrc").instance();
       await delay(1);
 
       Reactor.dispatchTo(eSrc, "nothingGood", {foo:"bar"});
-      const args = instance.unknownEvent.mock.calls[0];
+      expect(unknown).toHaveBeenCalled();
+      const args = unknown.mock.calls[0];
       // console.warn("args", args);
       expect(args[0].detail).toEqual(expect.objectContaining({
           foo:"bar", eventName:"nothingGood"

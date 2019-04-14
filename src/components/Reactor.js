@@ -377,6 +377,20 @@ const Reactor = (componentClass) => {
         console.error(`Event '${name}' already registered by`, this.events[name]);
       } else {
         this.events[name] = event.target;
+
+        let subscriberFanout = this.registeredSubscribers[name] = {
+          fn: (event) => {
+            if (debug) console.warn(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
+            // if (debug) console.warn(listenerFanout.listeners);
+            subscriberFanout.subscribers.forEach((subscriberFunc) => {
+              subscriberFunc(event);
+              // ?? honor stopPropagation[immediate] ?
+            });
+          },
+          subscribers: []
+        };
+
+        subscriberFanout._fan = this.listen(name, subscriberFanout.fn);
       }
       event.stopPropagation();
     }
@@ -393,6 +407,13 @@ const Reactor = (componentClass) => {
       let {name, actor, debug} = event.detail;
       console.error("test me");
       // !!! check for registeredListeners to this event, issue a orphanedListener event
+      const subscriberFanout = this.registeredSubscribers[name]
+      const foundSubscribers = subscriberFanout.subscribers.length;
+      if (foundSubscribers) {
+        console.error(`removing published event with ${foundSubscribers} orphaned subscribers`);
+      }
+      this.unlisten([name, subscriberFanout._fan]);
+
       if (!this.events[name]) {
         console.error(`can't removePublishedEvent '${name}' (not registered)`);
       } else {
@@ -452,22 +473,9 @@ const Reactor = (componentClass) => {
         subscriberFanout.subscribers.push(listener);
 
         return;
+      } else {
+        throw new Error("bad subscriber name")
       }
-
-      subscriberFanout = this.registeredSubscribers[eventName] =
-        this.registeredSubscribers[eventName] || {
-          fn: (event) => {
-            if (debug) console.warn(`got event ${eventName}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
-            // if (debug) console.warn(listenerFanout.listeners);
-            subscriberFanout.subscribers.forEach((subscriberFunc) => {
-              subscriberFunc(event);
-              // ?? honor stopPropagation[immediate] ?
-            });
-          },
-          subscribers: [listener]
-        };
-
-      subscriberFanout._fan = this.listen(eventName, subscriberFanout.fn);
     }
     removeSubscriber(event) {
       let {eventName, listener, debug} = event.detail;
@@ -501,8 +509,8 @@ const Reactor = (componentClass) => {
 
 
       if (after === 0) {
-        this.unlisten([eventName, subscriberFanout._fan]);
-        delete this.registeredSubscribers[eventName];
+        // this.unlisten([eventName, subscriberFanout._fan]);
+        // delete this.registeredSubscribers[eventName];
       }
     }
 
