@@ -539,7 +539,7 @@ Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(tar
       }});
     target.dispatchEvent(unk);
     if (!unk.handledBy || !unk.handledBy.length) {
-      console.error(`unknown event '${event.type}' and no unknownEvent handler to surface it into the UI.  Event detail:`, detail, "\n", new Error("Backtrace:"))
+      console.error(`unknown event '${event.type}' and no unknownEvent handler to surface it into the UI.`, event, "\n", new Error("Backtrace:"))
     }
   }
 };

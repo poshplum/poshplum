@@ -129,7 +129,7 @@ export const withStateMachine = (baseClass) => {
     }
     transition(name) {
       let {currentState="default"} = (this.state || {});
-      console.group(`${this.constructor.name}: '${name}'⭞ transition `)
+      if (this.debugState) console.group(`${this.constructor.name}: '${name}'⭞ transition `)
 
       let thisState = this.states[currentState];
       let nextState = thisState.transitions[name];
@@ -164,7 +164,7 @@ export const withStateMachine = (baseClass) => {
       if (effectFn) {
         effectFn();
       }
-      console.log(`${this.constructor.name}: '${name}'⭞\` done`);
+      if (this.debugState) console.log(`${this.constructor.name}: '${name}'⭞\` done`);
       console.groupEnd();
     }
     render() {
@@ -199,7 +199,7 @@ export const withStateMachine = (baseClass) => {
           let actionArgs = {
             [transitionName]: this.mkTransition(transitionName)
           };
-          return <Action debug={1} client={this} key={`action-${transitionName}`} {...actionArgs} />
+          return <Action debug={0} client={this} key={`action-${transitionName}`} {...actionArgs} />
         })}
 
         {inner}
