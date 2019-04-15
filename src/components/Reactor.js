@@ -62,6 +62,18 @@ const debugInt = (debug) => {
     : 0);
 };
 
+const stdHandlers = {
+  'registerAction': 1,
+  'removeAction': 1,
+  'registerActor': 1,
+  'removeActor': 1,
+  'publishEvent': 1,
+  'removePublishedEvent': 1,
+  'registerSubscriber': 1,
+  'removeSubscriber': 1,
+
+};
+
 const Listener = (componentClass) => {
   const componentClassName = getClassName(componentClass);
   let displayName = inheritName(componentClass, "👂");
@@ -72,10 +84,12 @@ const Listener = (componentClass) => {
       super()
       this._listenerRef = React.createRef();
     }
+    
     listen(eventName, handler) {
       console.warn(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler);
     }
+
     _listen(eventName, handler) {
       const listening = this.listening;
       // console.warn("_listen: ", eventName, handler);
@@ -86,6 +100,7 @@ const Listener = (componentClass) => {
       return wrappedHandler
       // console.log(listening);
     }
+
     componentDidMount() {
       if (super.componentDidMount) super.componentDidMount();
 
@@ -108,13 +123,37 @@ const Listener = (componentClass) => {
       if (dbg) {
         console.log(`${myName(this)}: unmounting and unlistening all...`)
       }
-      this.listening.forEach(this.unlisten.bind(this));
+      let el = this._listenerRef.current;
+      setTimeout(() => {
+
+        this.listening.forEach((listener) => {
+          let [type,handler] = listener;
+          if (!handler) return;
+          if (!stdHandlers[type])
+            console.warn(`unmounting (re?)Actor leaked '${type}' handler`)
+
+          this.unlisten(listener, el);
+        });
+      }, 10)
     }
 
-    unlisten(typeAndHandler) {
+    unlisten(typeAndHandler, el=this._listenerRef.current) {
       let [type,handler] = typeAndHandler;
-      this._listenerRef.current.removeEventListener(type, handler);
-      typeAndHandler[1] = null;
+      let foundListening = this.listening.find(([ltype, lhandler]) => {
+        return type == ltype
+      });
+      if (!foundListening) {
+        console.warn(`listener ${type} not found/matched in listeners`, this.listening);
+      } else if (!foundListening[1]) {
+        console.warn(`listener ${type} already removed`);
+      } else if (foundListening[1] !== handler) {
+        console.warn(`listener ${type} handler mismatch`);
+      }
+      if (!handler) return
+      if (!el) throw new Error(`no el to unlisten for ${type}` );
+
+      el.removeEventListener(type, handler);
+      if (foundListening) foundListening[1] = null;
     }
 
     _wrapHandler(handler) {
@@ -155,16 +194,18 @@ const Listener = (componentClass) => {
           event.handledBy.push(handled);
         }
       }
-      return function(e) {
+      let tryEventHandler = function(e) {
         let result;
         try {
-          result = wrappedHandler.call(this,e); // retain event's `this`
+          result = wrappedHandler.call(this, e); // retain event's `this`
         } catch(error) {
           console.error(error);
           throw(error)
         }
         return result;
       }
+      tryEventHandler.innerHandler = handler && handler.targetFunction || handler;
+      return tryEventHandler
     }
   }
   Object.defineProperty(clazz, "name", {value: displayName})
@@ -187,19 +228,15 @@ export const Actor = (componentClass) => {
     constructor(props) {
       super(props);
       this._actorRef = React.createRef();
-      this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
-      this.removeAction = Reactor.bindWithBreadcrumb(this.removeAction, this);
+      this.addActorNameToRegisteredAction = Reactor.bindWithBreadcrumb(this.addActorNameToRegisteredAction, this);
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
     }
+
     registerActor() {
       throw new Error("nested Actors not currently supported.  If you have a use-case, please create a pull req demonstrating it")
     }
-    removeAction(removalEvent) {
-      let {name} = removalEvent.detail;
-      let newName = `${this.name()}:${name}`
-      removalEvent.detail.name = newName
-    }
-    registerAction(registrationEvent) {
+
+    addActorNameToRegisteredAction(registrationEvent) {
       if(!registrationEvent.detail) {
         console.error(`${myName(this)}: registerAction: registration event has no details... :(`);
         debugger
@@ -218,6 +255,7 @@ export const Actor = (componentClass) => {
       // super.registerAction(registrationEvent);
       // registrationEvent.stopPropagation();
     }
+
     listen(eventName, handler) {
       let {debug} = this.props;
       let dbg = debugInt(debug);
@@ -243,19 +281,22 @@ export const Actor = (componentClass) => {
         console.log(`${myName(this)} didMount`);
       }
       let name = this.name();
-      this.listen(Reactor.Events.registerAction, this.registerAction);
-      this.listen(Reactor.Events.removeAction, this.removeAction);
+      this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction);
 
       // if(foundKeys[0] == "action") debugger;
-      this._listenerRef.current.dispatchEvent(Reactor.RegisterActor({name, actor:this, debug}));
+      Reactor.trigger(this._listenerRef.current,
+        Reactor.RegisterActor({name, actor:this, debug})
+      );
 
       this.setState({_reactorDidMount: true});
     }
 
     componentWillUnmount() {
-      let name = this.name();
+      if (super.componentWillUnmount) super.componentWillUnmount();
 
-      this._listenerRef.current.dispatchEvent(
+      let name = this.name();
+      // console.warn("Actor unmounting", name)
+      Reactor.trigger(this._listenerRef.current,
         Reactor.RemoveActor({name})
       );
 
@@ -296,8 +337,10 @@ const Reactor = (componentClass) => {
       this.actors = {};  // registered actors
       this.registeredSubscribers = {}; // registered listening agents
     }
+
     componentDidMount() {
       if (super.componentDidMount) super.componentDidMount();
+      this.el = this._listenerRef.current;
 
       // this.myNode = ReactDOM.findDOMNode(this);
       this.listen(Reactor.Events.registerAction, this.registerAction);
@@ -352,24 +395,17 @@ const Reactor = (componentClass) => {
       // debugger
 
       if (!this.actions[name]) {
-        console.warn(`can't removeAction '${name}' (not registered)`);
+        console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
       } else {
         // debugger
-        event.stopPropagation();
-        this.unlisten([name, this.actions[name]]);
+        this.unlisten([name, this.actions[name]], this.el);
         delete this.actions[name];
+        event.stopPropagation();
       }
-      event.stopPropagation();
+      // event.stopPropagation();
 
     }
-    //
-    // registerAction(event) {
-    //   // if (!event.handledBy)
-    //     super.registerAction(event);
-    //
-    //   // event.handledBy = this;
-    //   event.stopPropagation();
-    // }
+
     registerPublishedEvent(event) {
       let {name, debug} = event.detail;
       if (debug) console.warn("registering published event", name);
@@ -403,6 +439,7 @@ const Reactor = (componentClass) => {
         }));
       }
     }
+
     removePublishedEvent(event) {
       let {name, actor, debug} = event.detail;
       console.error("test me");
@@ -415,11 +452,11 @@ const Reactor = (componentClass) => {
       this.unlisten([name, subscriberFanout._fan]);
 
       if (!this.events[name]) {
-        console.error(`can't removePublishedEvent '${name}' (not registered)`);
+        console.warn(`can't removePublishedEvent '${name}' (not registered)`);
       } else {
         delete this.events[name];
+        event.stopPropagation();
       }
-      event.stopPropagation();
     }
 
     registerActor(event) {
@@ -437,10 +474,10 @@ const Reactor = (componentClass) => {
       let {name} = event.detail;
       if(this.actors[name]) {
         delete this.actors[name]
+        event.stopPropagation();
       } else {
         console.error(`ignoring removeActor event for name '${name}' (not registered)`)
       }
-      event.stopPropagation();
     }
 
     registerSubscriber(event) {
@@ -467,6 +504,7 @@ const Reactor = (componentClass) => {
         this.addSubscriberEvent(eventName, listener, debug);
       }, 1)
     }
+
     addSubscriberEvent(eventName, listener, debug) {
       let subscriberFanout;
       if (subscriberFanout = this.registeredSubscribers[eventName]) {
@@ -477,6 +515,7 @@ const Reactor = (componentClass) => {
         throw new Error("bad subscriber name")
       }
     }
+
     removeSubscriber(event) {
       let {eventName, listener, debug} = event.detail;
 
@@ -643,20 +682,26 @@ export class Action extends React.Component {
     this.handler = handler;
     name = name || foundName;
 
-    // if(foundKeys[0] == "action") debugger;
-    this._actionRef.current.dispatchEvent(Reactor.RegisterAction({name, handler, debug}));
+    let registerEvent = Reactor.RegisterAction({name, handler, debug})
+    Reactor.trigger(this._actionRef.current,
+      registerEvent
+    );
+    this.fullName = registerEvent.detail.name;
   }
+
   componentWillUnmount() {
+    if (super.componentWillUnmount) super.componentWillUnmount();
+
     let {children, client="<unknown>", name, debug, ...handlers} = this.props;
 
     const foundKeys = Object.keys(handlers);
     const foundName = foundKeys[0];
     if (debug) console.log(`Removing action '${foundName}' from client: `, client);
+
     const handler = handlers[foundName];
 
-    // console.warn("unmounting action", this)
-    this._actionRef.current.dispatchEvent(
-      Reactor.RemoveAction({name: foundName, handler})
+    Reactor.trigger(this._actionRef.current,
+      Reactor.RemoveAction({name: this.fullName, handler})
     );
   }
 }
@@ -683,10 +728,12 @@ export class Publish extends React.Component {
     if (foundKeys.length > 0) {
       throw new Error("<Publish event=\"eventName\" /> events should only have a single prop - the 'event' name. ('debug' prop is also allowed)\n");
     }
-
-    // if(foundKeys[0] == "action") debugger;
-    this._pubRef.current.dispatchEvent(Reactor.PublishEvent({name, debug}));
+    Reactor.trigger(this._pubRef.current,
+      Reactor.PublishEvent({name, debug})
+    );
   }
+
+  // !!! unpublish on unmount
 }
 Reactor.Publish = Publish;
 
@@ -697,21 +744,20 @@ export class Subscribe extends React.Component {
   }
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
+    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
 
     // this.myNode = ReactDOM.findDOMNode(this);
-    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
-    this._subRef.current.dispatchEvent(subscriberReq);
-    if (!subscriberReq.handledBy || !subscriberReq.handledBy.length) {
-      console.error(`<Subscribe>: invalid event name '${this.eventName}', and nobody listening for unknownEvent(?)`)
-    // } else {
-    //   console.warn("Subscribe", this.eventName, "handled by", subscriberReq.handledBy)
-    }
+    Reactor.trigger(this._subRef.current, subscriberReq);
   }
+
   componentWillUnmount() {
-    this._subRef.current.dispatchEvent(
+    if (super.componentWillUnmount) super.componentWillUnmount();
+
+    Reactor.trigger(this._subRef.current,
       Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
     );
   }
+
   render() {
     let {children, debug, ...handler} = this.props;
 

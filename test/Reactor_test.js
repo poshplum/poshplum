@@ -70,7 +70,7 @@ describe("Reactor", () => {
       expect(component.instance().sayHello.targetFunction).toHaveBeenCalledTimes(1);
     });
 
-    it("removes its event listeners when unmounting", () => {
+    it("removes its event listeners when unmounting", async() => {
       const hiya = jest.fn();
 
       const component = mount(<MyReactor>
@@ -80,11 +80,13 @@ describe("Reactor", () => {
 
       const listeningNode = component.find(".myReactor").instance().parentNode;
       component.unmount(); // critical
+      await delay(15); // wait for async unlisten
       mockConsole(['error'])
       Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
       expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*informalGreeting/),
           expect.anything(), expect.anything(), expect.anything());
 
+      await delay(100); // wait for async unlisten
       expect(hiya).not.toHaveBeenCalled();
       // debugger
       // to confirm *all* listeners were really removed, use node inspector...
@@ -563,6 +565,7 @@ describe("Reactor", () => {
       await instance.removeExtraActor();
 
       expect(Object.keys(instance.actors).length).toBe(1);
+      // console.warn(instance.actions)
       expect(Object.keys(instance.actions).length).toBe(baseLength+1);
     });
 
