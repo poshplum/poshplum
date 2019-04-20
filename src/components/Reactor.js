@@ -84,17 +84,20 @@ const Listener = (componentClass) => {
       super()
       this._listenerRef = React.createRef();
     }
-    
-    listen(eventName, handler) {
+    get unlistenDelay() {
+      throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups")
+    }
+    listen(eventName, handler, capture) {
+      logger(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       console.warn(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
-      return this._listen(eventName, handler);
+      return this._listen(eventName, handler, capture);
     }
 
-    _listen(eventName, handler) {
+    _listen(eventName, handler, capture) {
       const listening = this.listening;
       // console.warn("_listen: ", eventName, handler);
       const wrappedHandler = this._wrapHandler(handler);
-      const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler);
+      const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler, {capture});
       // console.log(listening);
       listening.push([eventName, wrappedHandler]);
       return wrappedHandler
@@ -359,7 +362,7 @@ const Reactor = (componentClass) => {
     }
 
     registerAction(event) {
-      const {debug, name, handler, ...moreDetails} = event.detail;
+      const {debug, name, capture, handler, ...moreDetails} = event.detail;
       const dbg = debugInt(debug);
       const moreDebug = (dbg > 1);
       if (dbg) {
@@ -385,7 +388,7 @@ const Reactor = (componentClass) => {
         throw new Error(msg);
       }
 
-      this.listen(name, handler);
+      this.listen(name, handler, capture);
       event.stopPropagation();
     }
 
@@ -553,8 +556,8 @@ const Reactor = (componentClass) => {
       }
     }
 
-    listen(eventName, handler) { // satisfy listener
-      let wrappedHandler = this._listen(eventName, handler);
+    listen(eventName, handler, capture) { // satisfy listener
+      let wrappedHandler = this._listen(eventName, handler, capture);
       this.actions[eventName] = wrappedHandler;
       // console.warn("+listen ", eventName, handler, {t:{t:this}}, this.actions)
       return wrappedHandler;
@@ -586,7 +589,8 @@ Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(tar
       }});
     target.dispatchEvent(unk);
     if (!unk.handledBy || !unk.handledBy.length) {
-      console.error(`unknown event '${event.type}' and no unknownEvent handler to surface it into the UI.`, event, "\n", new Error("Backtrace:"))
+      logger(`unhandled event '${event.type}'.  Add an unknownEvent handler to catch this for presentation in the UI. \n...at DOM Target:  `, (event.target && event.target.outerHTML), "\n", new Error("Backtrace:"))
+      console.error(`unhandled event '${event.type}'.  Add an unknownEvent handler to catch this for presentation in the UI. \n...at DOM Target:  `, (event.target && event.target.outerHTML), "\n", new Error("Backtrace:"))
     }
   }
 };
@@ -654,7 +658,7 @@ export class Action extends React.Component {
   }
 
   render() {
-    let {children, client, debug, ...handler} = this.props;
+    let {children, capture, id, client, debug, ...handler} = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
@@ -662,7 +666,7 @@ export class Action extends React.Component {
   }
 
   componentDidMount() {
-    let {children, name, client="<unknown>", debug, ...handler} = this.props;
+    let {children, id, capture, name, client="<unknown>", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
@@ -682,7 +686,7 @@ export class Action extends React.Component {
     this.handler = handler;
     name = name || foundName;
 
-    let registerEvent = Reactor.RegisterAction({name, handler, debug})
+    let registerEvent = Reactor.RegisterAction({name, capture, handler, debug})
     Reactor.trigger(this._actionRef.current,
       registerEvent
     );
