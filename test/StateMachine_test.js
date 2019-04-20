@@ -1,6 +1,6 @@
 import withStateMachine from "../src/components/withStateMachine";
 import * as React from "react";
-import {mount} from "enzyme/build";
+import {mount} from "enzyme";
 
 describe("component withStateMachine", () => {
   describe("purpose and behavior", () => {

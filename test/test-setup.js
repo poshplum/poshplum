@@ -1,12 +1,12 @@
-var enzyme = require('enzyme');
+import {configure} from 'enzyme';
 import 'raf/polyfill';
 import 'jest-mock-console/dist/setupTestFramework.js'
 import mockConsole from 'jest-mock-console';
 import doMockConsoleSetup from 'jest-mock-console/dist/setupTestFramework';
 
-
-var Adapter = require('enzyme-adapter-react-16');
-enzyme.configure({ adapter: new Adapter() });
+import {configure} from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+configure({ adapter: new Adapter() });
 
 global.mockConsole = mockConsole;
 
