@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
-import groupBy from 'lodash/groupBy';
-import mapValues from 'lodash/mapValues';
-import map from 'lodash/map';
-import find from 'lodash/find';
-import {getClassName, myName} from "../helpers/ClassNames";
-import flatten from "lodash/flatten";
+import groupBy from 'lodash-es/groupBy';
+import mapValues from 'lodash-es/mapValues';
+import map from 'lodash-es/map';
+import find from 'lodash-es/find';
+
+import flatten from "lodash-es/flatten";
 
 function SlotContent({children}) {
   return children;
@@ -37,7 +37,7 @@ export default class Layout extends Component {
 
   // returns the list of slots configured for the layout.
   static getSlots() {
-    if (!this.slots) throw new Error(`Layout ${getClassName(this)}: static slots not defined`);
+    if (!this.slots) throw new Error(`Layout ${this.constructor.name}: static slots not defined`);
     return this.slots
   }
 
@@ -51,11 +51,11 @@ export default class Layout extends Component {
     let slots = this.constructor.getSlots();
     if (!this.constructor._slotsVerified) {
       map(slots, (slot,k) => {
-        let slotName = getClassName(slot);
+        let slotName = slot.constructor.name;
         // console.log("slot: ", k, slotName, slot );
         let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {
-          console.warn(`Layout: ${myName(this)}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
+          console.warn(`Layout: ${this.constructor.name}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
         }
       })
       this.constructor._slotsVerified = true;

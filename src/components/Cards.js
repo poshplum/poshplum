@@ -1,10 +1,8 @@
 import React, {Component} from 'react';
 
-import map from 'lodash/map';
-import keys from 'lodash/keys';
+import map from 'lodash-es/map';
+import keys from 'lodash-es/keys';
 import {Link} from 'react-router-dom';
-
-import Respond from '../helpers/Responsive';
 
 // import {Route, withRouter, Link} from 'react-router-dom';
 import PropTypes from 'prop-types';
