@@ -1,4 +1,3 @@
-
 import PropTypes from "prop-types";
 import React from 'react';
 import map from 'lodash-es/map';
@@ -7,25 +6,7 @@ import find from 'lodash-es/find';
 
 import {inheritName} from "../helpers/ClassNames";
 import Reactor, {Action} from "./Reactor";
-
-function matchChildType(typeName, children, klass) {
-  return React.Children.map(children, (child) => {
-    const cType = child && child.type;
-
-    if (klass && cType &&
-      ( cType === klass))
-      return child;
-
-    if (klass && cType && cType.prototype && klass.prototype &&
-      (cType.prototype instanceof klass)
-    )
-      return child;
-
-    if (cType && cType.name == typeName) return child;
-    // displayName ok
-    if (cType && cType.displayName == typeName) return child
-  });
-}
+import matchChildType from "../helpers/matchChildType";
 
 
 // it decorates component classes

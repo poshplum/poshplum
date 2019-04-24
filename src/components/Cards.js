@@ -7,6 +7,7 @@ import {Link} from 'react-router-dom';
 // import {Route, withRouter, Link} from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Layout from "./layout";
+import matchChildType from "../helpers/matchChildType";
 
 let Title = Layout.namedSlot("Title").withMarkup(({className="", children, ...props}) => {
   return <div key="title" className={`mt--2 mr--4 card-title ${className}`} {...props}>
