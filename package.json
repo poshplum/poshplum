@@ -1,6 +1,6 @@
 {
   "name": "poshplum",
-  "version": "0.6.0",
+  "version": "0.6.2",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.4.3",
@@ -46,6 +46,6 @@
     "testing": "neutrino test --use @neutrinojs/node --watchAll --color",
     "testing:debug": "node --inspect-brk node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --watch --runInBand --color",
     "coverage": "neutrino test --coverage",
-    "build": "neutrino build"
+    "build": "rm dist/* ; rollup -c ; cp ./package.json dist/ ; ls -la dist/"
   }
 }
