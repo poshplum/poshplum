@@ -1,6 +1,4 @@
-import {Component} from "react";
-import {render} from "react-dom";
-import React from "react";
+import React, {Component} from "react";
 import CodeExample from "../../components/CodeExample";
 import Portal from "../../helpers/Portal";
 import Panel from "../../components/Panel";

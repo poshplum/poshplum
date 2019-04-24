@@ -4,7 +4,6 @@ import TopMenu from '../src/components/layouts/topmenu';
 import React from 'react';
 import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
-import {getClassName} from "../src/helpers/ClassNames";
 import toJson from 'enzyme-to-json';
 
 describe('Top Menu Layout', () => {

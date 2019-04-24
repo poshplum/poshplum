@@ -51,7 +51,7 @@ export default class Layout extends Component {
     let slots = this.constructor.getSlots();
     if (!this.constructor._slotsVerified) {
       map(slots, (slot,k) => {
-        let slotName = slot.constructor.name;
+        let slotName = slot.displayName;
         // console.log("slot: ", k, slotName, slot );
         let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {

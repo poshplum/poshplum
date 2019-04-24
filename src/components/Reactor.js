@@ -43,7 +43,9 @@
 
 import React from "react";
 import * as ReactDOM from "react-dom";
-import {composeName, getClassName, inheritName, myName} from "../helpers/ClassNames";
+import {inheritName} from "../helpers/ClassNames";
+import dbg from 'debug';
+const logger = dbg('reactor');
 
 const elementInfo = (el) => {
   // debugger
@@ -75,7 +77,7 @@ const stdHandlers = {
 };
 
 const Listener = (componentClass) => {
-  const componentClassName = getClassName(componentClass);
+  const componentClassName = componentClass.name;
   let displayName = inheritName(componentClass, "👂");
 
   const clazz = class Listener extends componentClass {
@@ -88,8 +90,8 @@ const Listener = (componentClass) => {
       throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups")
     }
     listen(eventName, handler, capture) {
-      logger(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
-      console.warn(`${myName(this)}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
+      logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
+      console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler, capture);
     }
 
@@ -108,12 +110,14 @@ const Listener = (componentClass) => {
       if (super.componentDidMount) super.componentDidMount();
 
       if (!this._listenerRef) {
-        let msg = `${myName(this)}: requires this._listenerRef to be set in constructor.`;
+        let msg = `${this.constructor.name}: requires this._listenerRef to be set in constructor.`;
+        logger(msg)
         console.error(msg);
         throw new Error(msg)
       }
       if (!this._listenerRef.current) {
-        let msg = `${myName(this)}: requires this._listenerRef.current to be set with ref={this._listenerRef}`;
+        let msg = `${this.constructor.name}: requires this._listenerRef.current to be set with ref={this._listenerRef}`;
+        logger(msg)
         console.error(msg);
         throw new Error(msg)
       }
@@ -123,8 +127,9 @@ const Listener = (componentClass) => {
       if (super.componentWillUnmount) super.componentWillUnmount();
       let {debug} = this.props;
       const dbg = debugInt(debug);
+      logger(`${this.constructor.name}: unmounting and deferred unlistening all...`)
       if (dbg) {
-        console.log(`${myName(this)}: unmounting and unlistening all...`)
+        console.log(`${this.constructor.name}: unmounting and deferred unlistening all...`)
       }
       let el = this._listenerRef.current;
       setTimeout(() => {
@@ -178,16 +183,15 @@ const Listener = (componentClass) => {
         };
         if (!handled.reactorNode) debugger;
         if(dbg) {
-          const msg = `${myName(reactor)}: Event: ${type} - calling handler`;
+          const msg = `${reactor.constuctor.name}: Event: ${type} - calling handler`;
+          logger(msg)
           if(moreDebug) {
             console.log(msg, handled);
             debugger
           } else {
             console.log(msg, {
               triggeredAt: elementInfo(event.target),
-              reactor: myName(handled.reactor),
-              reactorEl: elementInfo(handled.reactorNode),
-              listenerTarget: handler.boundThis && myName(handler.boundThis),
+              listenerTarget: handler.boundThis && handler.boundThis.constructor.name,
               listenerFunction: (handler.targetFunction || handler).name
             })
           }
@@ -222,7 +226,6 @@ export const Actor = (componentClass) => {
 
   const listenerClass = Listener(componentClass);
 
-  // const componentClassName = getClassName(componentClass);
   let displayName = inheritName(listenerClass, "Actor");
 
   return class ActorInstance extends listenerClass {
@@ -241,14 +244,16 @@ export const Actor = (componentClass) => {
 
     addActorNameToRegisteredAction(registrationEvent) {
       if(!registrationEvent.detail) {
-        console.error(`${myName(this)}: registerAction: registration event has no details... :(`);
+        logger(`${this.constructor.name}: registerAction: registration event has no details... :(`)
+        console.error(`${this.constructor.name}: registerAction: registration event has no details... :(`);
         debugger
       }
       let {name,debug} = registrationEvent.detail;
       let dbg = debugInt(debug);
       let moreDebug = (dbg > 1);
       let newName = `${this.name()}:${name}`;
-      if (dbg) console.log(`${myName(this)} delegating registerAction(${name}->${newName}) to upstream Reactor`);
+      logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`)
+      if (dbg) console.log(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (moreDebug) {
         console.log(event);
         debugger
@@ -262,8 +267,9 @@ export const Actor = (componentClass) => {
     listen(eventName, handler) {
       let {debug} = this.props;
       let dbg = debugInt(debug);
+      logger(`${this.constructor.name}: listening to ${eventName}`)
       if (dbg) {
-        console.log(`${myName(this)}: listening to ${eventName}`);
+        console.log(`${this.constructor.name}: listening to ${eventName}`);
       }
       return this._listen(eventName, handler);
     }
@@ -280,8 +286,9 @@ export const Actor = (componentClass) => {
       let {debug} = this.props;
 
       let dbg = debugInt(debug);
+      logger(`${this.constructor.name} didMount`)
       if (dbg) {
-        console.log(`${myName(this)} didMount`);
+        console.log(`${this.constructor.name} didMount`);
       }
       let name = this.name();
       this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction);
@@ -311,7 +318,7 @@ export const Actor = (componentClass) => {
 
 const Reactor = (componentClass) => {
   const listenerClass = Listener(componentClass);
-  const componentClassName = getClassName(componentClass);
+  const componentClassName = componentClass.name;
   const reactorName = inheritName(componentClass, "Rx");
 
   const clazz = class ReactorInstance extends listenerClass {
@@ -365,9 +372,10 @@ const Reactor = (componentClass) => {
       const {debug, name, capture, handler, ...moreDetails} = event.detail;
       const dbg = debugInt(debug);
       const moreDebug = (dbg > 1);
+      logger(`${this.constructor.name} registering action '${name}'`)
       if (dbg) {
-        console.log(`${myName(this)} registering action '${name}': `,
-          moreDetails, `handler ${handler.name}`, moreDebug ? handler : "...(debug=2 for more)"
+        console.log(`${this.constructor.name} registering action '${name}': `,
+          moreDetails, `handler=${handler.name}`, moreDebug ? handler : "...(debug=2 for more)"
         );
         if (moreDebug) debugger;
       }
@@ -377,12 +385,13 @@ const Reactor = (componentClass) => {
         let info = {
           listenerFunction: (existingHandler.targetFunction || existingHandler).name,
           listenerTarget: (
-            ( existingHandler.boundThis && myName(existingHandler.boundThis) )
+            ( existingHandler.boundThis && existingHandler.boundThis.constructor.name )
             || Reactor.bindWarning
           ),
         };
 
-        const msg = `${myName(this)}: Action '${name}' is already registered with a handler`;
+        const msg = `${this.constructor.name}: Action '${name}' is already registered with a handler`;
+        logger(msg)
         console.error(msg);
         console.warn("existing handler info: ", info);
         throw new Error(msg);

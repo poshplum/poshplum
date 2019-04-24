@@ -5,7 +5,6 @@ import React from 'react';
 import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
 import toJson from 'enzyme-to-json';
-import {getClassName} from "../src/helpers/ClassNames";
 import MockRouter from 'react-mock-router';
 
 describe('Card layouts', () => {

@@ -3,7 +3,6 @@ import React, {Component} from 'react';
 import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
 import toJson from 'enzyme-to-json';
-import {getClassName} from "../src/helpers/ClassNames";
 
 
 describe('Layout', () => {
