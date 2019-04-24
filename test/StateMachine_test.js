@@ -2,17 +2,18 @@ import withStateMachine from "../src/components/withStateMachine";
 import * as React from "react";
 import {mount} from "enzyme";
 
+const documented = () => {};
 describe("component withStateMachine", () => {
   describe("purpose and behavior", () => {
-    it("implements the State Machine pattern for any UI application");
-    it("has a list of named states");
-    it("each state has named transitions that lead to other named states");
-    it("each transition can have a predicate - a function which can block the transition");
-    it("each transition can have a effect function that reacts after the state change is performed");
-    it("has a hasState(stateName) method for checking the current state during render");
-    it("is its own Reactor");
-    it("exposes all transitions as named Actions, to allow control from outside the component");
-    it("if needed, can be updated to emit StateChanged events, to allow observation from outside the component");
+    it("implements the State Machine pattern for any UI application", documented);
+    it("has a list of named states", documented);
+    it("each state has named transitions that lead to other named states", documented);
+    it("each transition can have a predicate - a function which can block the transition", documented);
+    it("each transition can have a effect function that reacts after the state change is performed", documented);
+    it("has a hasState(stateName) method for checking the current state during render", documented);
+    it("is its own Reactor", documented);
+    it("exposes all transitions as named Actions, to allow control from outside the component", documented);
+    it("if needed, can be updated to emit StateChanged events, to allow observation from outside the component", documented);
   });
 
   @withStateMachine

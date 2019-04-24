@@ -73,7 +73,7 @@ const stdHandlers = {
   'removePublishedEvent': 1,
   'registerSubscriber': 1,
   'removeSubscriber': 1,
-
+  'getReactorNode':1,
 };
 
 const Listener = (componentClass) => {
@@ -132,17 +132,23 @@ const Listener = (componentClass) => {
         console.log(`${this.constructor.name}: unmounting and deferred unlistening all...`)
       }
       let el = this._listenerRef.current;
-      setTimeout(() => {
+      const stack = new Error("Backtrace");
 
+      setTimeout(() => {
+        logger(`${this.constructor.name} deferred unlisten running now`)
+        if (dbg) console.warn(`${this.constructor.name} deferred unlisten running now`)
         this.listening.forEach((listener) => {
           let [type,handler] = listener;
           if (!handler) return;
-          if (!stdHandlers[type])
-            console.warn(`unmounting (re?)Actor leaked '${type}' handler`)
+          if (!stdHandlers[type]) {
+            logger(`${this.constructor.name} unmounting (re?)Actor leaked '${type}' handler`)
+            console.warn(`${this.constructor.name} unmounting (re?)Actor leaked '${type}' handler`)
+            if(dbg) console.warn(stack)
+          }
 
           this.unlisten(listener, el);
         });
-      }, 10)
+      }, this.unlistenDelay)
     }
 
     unlisten(typeAndHandler, el=this._listenerRef.current) {
@@ -186,14 +192,15 @@ const Listener = (componentClass) => {
           const msg = `${reactor.constuctor.name}: Event: ${type} - calling handler`;
           logger(msg)
           if(moreDebug) {
-            console.log(msg, handled);
-            debugger
-          } else {
             console.log(msg, {
+              handled,
               triggeredAt: elementInfo(event.target),
               listenerTarget: handler.boundThis && handler.boundThis.constructor.name,
               listenerFunction: (handler.targetFunction || handler).name
             })
+            debugger
+          } else {
+            console.log(msg)
           }
         }
         const result = handler.call(this,event); // retain event's `this` (target of event)
@@ -207,6 +214,7 @@ const Listener = (componentClass) => {
           result = wrappedHandler.call(this, e); // retain event's `this`
         } catch(error) {
           console.error(error);
+          logger(error)
           throw(error)
         }
         return result;
@@ -229,7 +237,10 @@ export const Actor = (componentClass) => {
   let displayName = inheritName(listenerClass, "Actor");
 
   return class ActorInstance extends listenerClass {
-    static displayName = displayName;
+    static get name() { return displayName };
+    get unlistenDelay() {
+      return 50
+    }
 
     constructor(props) {
       super(props);
@@ -327,6 +338,8 @@ const Reactor = (componentClass) => {
       super();
       this.Name = reactorName;
 
+      this.getReactorNode = Reactor.bindWithBreadcrumb(this.getReactorNode, this);
+
       this.registerAction = Reactor.bindWithBreadcrumb(this.registerAction, this);
       this.removeAction = Reactor.bindWithBreadcrumb(this.removeAction, this);
 
@@ -353,6 +366,8 @@ const Reactor = (componentClass) => {
       this.el = this._listenerRef.current;
 
       // this.myNode = ReactDOM.findDOMNode(this);
+      this.listen(Reactor.Events.getReactorNode, this.getReactorNode);
+
       this.listen(Reactor.Events.registerAction, this.registerAction);
       this.listen(Reactor.Events.removeAction, this.removeAction);
 
@@ -366,6 +381,13 @@ const Reactor = (componentClass) => {
       this.listen(Reactor.Events.removeSubscriber, this.removeSubscriber);
 
       this.setState({_reactorDidMount: true});
+    }
+    get unlistenDelay() {
+      return 100
+    }
+
+    getReactorNode(event) {
+      event.detail.reactorNode = this.el;
     }
 
     registerAction(event) {
@@ -403,10 +425,12 @@ const Reactor = (componentClass) => {
 
     removeAction(event) {
       const {debug, name, handler, ...moreDetails} = event.detail;
-      if(debug) console.log("removing action:", event.detail);
+      logger(`${this.constructor.name}: removing action:`, event.detail)
+      if(debug) console.log(`${this.constructor.name}: removing action:`, event.detail);
       // debugger
 
       if (!this.actions[name]) {
+        logger(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
         console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
       } else {
         // debugger
@@ -420,14 +444,17 @@ const Reactor = (componentClass) => {
 
     registerPublishedEvent(event) {
       let {name, debug} = event.detail;
+      logger("registering published event", name)
       if (debug) console.warn("registering published event", name);
       if (this.events[name]) {
+        logger(`Event '${name}' already registered by`, this.events[name])
         console.error(`Event '${name}' already registered by`, this.events[name]);
       } else {
         this.events[name] = event.target;
 
         let subscriberFanout = this.registeredSubscribers[name] = {
           fn: (event) => {
+            logger(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`)
             if (debug) console.warn(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
             // if (debug) console.warn(listenerFanout.listeners);
             subscriberFanout.subscribers.forEach((subscriberFunc) => {
@@ -473,7 +500,8 @@ const Reactor = (componentClass) => {
 
     registerActor(event) {
       let {name, actor, debug} = event.detail;
-      if(debug) console.info(this.name(), "registering actor", name);
+      logger(this.constructor.name, `registering actor '${name}'`)
+      if(debug) console.info(this.constructor.name, `registering actor '${name}'`);
       if(this.actors[name]) {
         console.error(`Actor named '${name}' already registered`, this.actors[name])
       } else {
@@ -503,13 +531,16 @@ const Reactor = (componentClass) => {
           );
           return true
         } else {
+          logger(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         }
         return false
       } else {
+        logger(`${this.constructor.name}: registering subscriber for `, event.detail);
         if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, event.detail);
       }
       event.stopPropagation();
+      logger(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"))
       if (debug > 1) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       setTimeout(() => {
@@ -534,6 +565,7 @@ const Reactor = (componentClass) => {
       let subscriberFanout = this.registeredSubscribers[eventName];
       if (!subscriberFanout) {
         if (this.isEventCatcher) {
+          logger(`${this.constructor.name} in removeSubscriber: unknown event ${eventName}`)
           console.warn(`${this.constructor.name} in removeSubscriber: unknown event ${eventName}`);
           this._listenerRef.current.dispatchEvent(
             Reactor.UnknownEvent({eventName: this.eventName, calledBy: "registerSubscriber", callStack: new Error("stack"), listener})
@@ -543,6 +575,7 @@ const Reactor = (componentClass) => {
       }
       event.stopPropagation();
 
+      logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener);
       if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       const before = subscriberFanout.subscribers.length;
@@ -554,10 +587,13 @@ const Reactor = (componentClass) => {
 
 
       if (before === after) {
+        logger(`${this.constructor.name}: no subscribers removed for ${eventName}`)
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
-      } else if(debug)
+      } else {
+        logger(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
+        if(debug)
           console.warn(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining` );
-
+      }
 
       if (after === 0) {
         // this.unlisten([eventName, subscriberFanout._fan]);
@@ -583,9 +619,15 @@ const Reactor = (componentClass) => {
   return clazz;
 };
 Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(target, event, {bubbles=true,...detail}={}) {
-  if (!(target instanceof Element)) throw new Error("Reactor.dispatchTo: missing required arg1 (must be a DOM node)");
+  if (!(target instanceof Element)) {
+    const msg = "Reactor.dispatchTo: missing required arg1 (must be a DOM node)"
+    logger(msg)
+    const error = new Error(msg);
+    console.warn(error);
+    throw error;
+  }
 
-  if (!(event instanceof Event)) {
+    if (!(event instanceof Event)) {
     event = new CustomEvent(event, {bubbles, detail});
   }
 
@@ -613,6 +655,7 @@ Reactor.bindWithBreadcrumb = function(fn, boundThis) {
 };
 
 Reactor.Events = {
+  getReactorNode: "getReactorNode",
   registerAction: "registerAction",
   removeAction: "removeAction",
   registerActor: "registerActor",
@@ -634,7 +677,8 @@ Reactor.EventFactory = (type) => {
   return ({...eventProps}) => {
     const {debug} = eventProps;
     const dbg = debugInt(debug);
-    if (dbg > 1) console.log(`Event: ${type}: `, eventProps);
+    logger(`+Event: ${type}: `, eventProps)
+    if (dbg > 1) console.log(`+Event: ${type}: `, eventProps);
     if (dbg > 2) debugger;
     return new CustomEvent(type, {
       debug,
@@ -643,6 +687,9 @@ Reactor.EventFactory = (type) => {
     });
   }
 };
+
+Reactor.GetReactorNode = Reactor.EventFactory(Reactor.Events.getReactorNode);
+
 Reactor.RegisterAction = Reactor.EventFactory(Reactor.Events.registerAction);
 Reactor.RemoveAction = Reactor.EventFactory(Reactor.Events.removeAction);
 
@@ -671,7 +718,7 @@ export class Action extends React.Component {
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div className={`action action-${foundName}`} ref={this._actionRef} />;
+    return <div {...{id}} className={`action action-${foundName}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
@@ -680,12 +727,13 @@ export class Action extends React.Component {
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("Actions should only have a single prop - the action name. ('debug' prop is also allowed)\n"+
+      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id')\n"+
         "If your action name can't be a prop, specify it with name=, and the action function with action="
       );
     }
     const foundName = foundKeys[0];
     handler = handler[foundName];
+    logger(`Action '${foundName}' created by client:`, client);
     if (debug) console.log(`Action '${foundName}' created by client:`, client);
     if (this.handler && (this.handler !== handler[foundName]) ) {
       const message = "handler can't be changed without unmount/remount of an Action";
@@ -705,17 +753,37 @@ export class Action extends React.Component {
   componentWillUnmount() {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
-    let {children, client="<unknown>", name, debug, ...handlers} = this.props;
+    let {children, client, name, debug, ...handlers} = this.props;
 
     const foundKeys = Object.keys(handlers);
     const foundName = foundKeys[0];
-    if (debug) console.log(`Removing action '${foundName}' from client: `, client);
-
+    const stack = new Error("Backtrace");
     const handler = handlers[foundName];
 
-    Reactor.trigger(this._actionRef.current,
-      Reactor.RemoveAction({name: this.fullName, handler})
-    );
+    client = client || handler.name
+    const el = this._actionRef.current;
+    // console.warn(el.outerHTML)
+    if (!el) throw new Error("no el")
+
+    logger(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`)
+    if (debug) console.log(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
+    // setTimeout(() => {
+      logger(`${this.constructor.name}: removing action '${this.fullName}' from client: `, client)
+      if (debug) console.log(`${this.constructor.name}: removing action '${this.fullName}' from client: `, client);
+      logger("...from el", el.outerHTML, "with parent", elementInfo(el.parentNode));
+      if (debug) console.log("...from el", el.outerHTML, "with parent", elementInfo(el.parentNode))
+      if (debug > 1) console.log(stack);
+
+      try {
+        Reactor.trigger(el,
+          Reactor.RemoveAction({debug, name: this.fullName, handler})
+        );
+      } catch(e) {
+        console.error(`${this.constructor.name}: error while removing action:`, e)
+      }
+      logger(`<- Removing action '${this.fullName}'`);
+      if (debug) console.log(`<- Removing action '${this.fullName}'`)
+    // }, 2)
   }
 }
 Reactor.Action = Action;

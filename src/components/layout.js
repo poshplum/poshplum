@@ -57,7 +57,6 @@ export default class Layout extends Component {
         let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {
           console.warn(`Layout: ${this.constructor.name}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
-          console.error(new Error("Backtrace"), slot)
         }
       })
       this.constructor._slotsVerified = true;

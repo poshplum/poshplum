@@ -5,24 +5,25 @@ import delay from "./helpers/delay";
 
 //      https://github.com/airbnb/enzyme/issues/426
 
+const documented = () => {}
 
 describe("Reactor", () => {
   describe("Reactor: behaves as an Actor", () => {
-    it("gathers actions declared under its own tree");
-    it("listens for triggered events matching those actions");
-    it("defines its own RegisterAction event for registering actions");
+    it("gathers actions declared under its own tree", documented);
+    it("listens for triggered events matching those actions", documented);
+    it("defines its own RegisterAction event for registering actions", documented);
   });
   describe("Reactor: supervises other Actors", () => {
-    it("gathers actors, which are required to have names");
-    it("registers actors as named delegates");
-    it("listens for actorName:eventName events, providing a tree-spanning event hub");
+    it("gathers actors, which are required to have names", documented);
+    it("registers actors as named delegates", documented);
+    it("listens for actorName:eventName events, providing a tree-spanning event hub", documented);
   });
   describe("Actor", () => {
-    it("has a name");
-    it("gathers actions");
-    it("listens for the matching events");
-    it("registers itself by advertising its existence");
-    it("can advertise events that it will publish; other actors can listen for these")
+    it("has a name", documented);
+    it("gathers actions", documented);
+    it("listens for the matching events", documented);
+    it("registers itself by advertising its existence", documented);
+    it("can advertise events that it will publish; other actors can listen for these", documented)
   });
 
   @Reactor
@@ -56,7 +57,7 @@ describe("Reactor", () => {
       </MyReactor>);
 
       const actionCount = Object.keys(component.instance().actions).length;
-      expect(actionCount).toBe(10); // 4x registerX, 4x removeX, sayHello, informalGreeting
+      expect(actionCount).toBe(11); // 1x getReactorNode, 4x registerX, 4x removeX, sayHello, informalGreeting
 
       const eSrc = component.find(".event-source").instance();
       Reactor.dispatchTo(eSrc, new CustomEvent("sayHello", {bubbles:true}));
@@ -83,7 +84,7 @@ describe("Reactor", () => {
       await delay(15); // wait for async unlisten
       mockConsole(['error'])
       Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
-      expect(console.error).toBeCalledWith(expect.stringMatching(/unknown event.*informalGreeting/),
+      expect(console.error).toBeCalledWith(expect.stringMatching(/unhandled event.*informalGreeting/),
           expect.anything(), expect.anything(), expect.anything());
 
       await delay(100); // wait for async unlisten
@@ -120,36 +121,47 @@ describe("Reactor", () => {
           }
         }
         render() {
+          let {id} = this.props
           let {add, remove} = this.state || {};
           return <div>
-            {add && <Action thing1={this.thing1} />}
-            {add && !remove && <Action thing2={this.thing2} />}
+            {add && <Action debug={0} id={`${id}-thing1`} thing1={this.thing1} />}
+            {add && !remove && <Action debug={1} id={`${id}-thing2`} debug={0} thing2={this.thing2} />}
             {this.props.children}
           </div>
         }
       }
 
-      let component = mount(<UnmountTest>
-        <div className="nested"><UnmountTest /></div>
+      let component = mount(<UnmountTest id="outer">
+        <div className="nested"><UnmountTest id="inner"/></div>
       </UnmountTest>);
+      await delay(120);
 
       let instance1 = component.instance();
 
       let baseLength = Object.keys(instance1.actions).length;
       await instance1.addActions();
-      // console.warn(instance1.actions)
+      await delay(120);
       expect(Object.keys(instance1.actions).length).toBe(baseLength+2);
 
       // -- make sure it doesn't remove matching action names from nested reactors
       let instance2 = component.find(".nested").find(UnmountTest).instance();
       await instance2.addActions();
+      await delay(120);
+      // console.log(instance1.el.outerHTML);
+
       await instance2.removeExtraAction();
+      await delay(120);
+      // console.warn(instance2.actions);
+      // console.log(instance1.el.outerHTML)
       expect(Object.keys(instance2.actions).length).toBe(baseLength+1);
       // --
       // console.warn(instance1.actions)
 
       expect(Object.keys(instance1.actions).length).toBe(baseLength+2);
       await instance1.removeExtraAction();
+      await delay(120);
+      // console.warn(instance2.actions);
+
 
       expect(Object.keys(instance1.actions).length).toBe(baseLength+1);
     });
@@ -168,7 +180,7 @@ describe("Reactor", () => {
       const actionCount = Object.keys(component.instance().actions).length;
       if (actionCount !== 8) {
         // console.log(component.instance().actions);
-        expect(actionCount).toBe(10); // 4x registerX, 4x removeX, sayHello, informalGreeting
+        expect(actionCount).toBe(11); // getReactorNode, 4x registerX, 4x removeX, sayHello, informalGreeting
       }
 
       const eSrc = component.find(".event-source").instance();
@@ -359,8 +371,9 @@ describe("Reactor", () => {
         mockConsole(['warn']);
 
         const component = mount(<Tester />);
-        await delay(1);
+        await delay(100);
         component.instance().update();
+        await delay(100);
 
         expect(unknown).toHaveBeenCalled();
         expect(console.warn).toBeCalledWith(expect.stringMatching(/registerSubscriber: no published.*crazyEvent/));
@@ -370,6 +383,7 @@ describe("Reactor", () => {
   });
   describe("Reactor.dispatchTo() aka trigger()", async () => {
     it("requires a DOM node for triggering", async () => {
+      mockConsole(['warn']);
       expect(Reactor.dispatchTo).toBe(Reactor.trigger);
       expect(Reactor.dispatchTo).toThrow(/required.*DOM node/)
       const warning = console.warn.mock.calls[0][0]
@@ -604,22 +618,4 @@ describe("Reactor", () => {
     });
   });
 
-  describe("capturing page-level events", () => {
-    
-  });
-  
-  describe("is an event hub", () => {
-    it("ok: collects declared events - event sources that any child can subscribe to");
-    it("ok: collects listeners for events it is mediating");
-    it("ok: broadcasts triggered events to each listener");
-    it("allows listener requests to pass upstream, for events it doesn't mediate");
-    it("Each level emits a NoEventSourceFound event when a listener request doesn't match any event-source");
-  });
-  describe("- a localized actor hub", () => {
-    it("responds to its own actions")
-    it("collects local actors and responds to action events triggered under its scope")
-    it("allows all unrecognized events to trigger actions in higher-level scopes")
-    it("can react to any unrecognized events (e.g. notifying a developer that they happened and were uncaught) without interference")
-    it("can recognize and react to events that were not handled by a higher-level scope")
-  });
 });
