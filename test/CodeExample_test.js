@@ -6,7 +6,7 @@ import toJson from 'enzyme-to-json';
 
 
 describe('CodeExample', () => {
-  it("labels the example for ARIA")
-  it("labels the code language (jsx by default)");
-  it("shows the <code>");
+  test.todo("labels the example for ARIA")
+  test.todo("labels the code language (jsx by default)");
+  test.todo("shows the <code>");
 })

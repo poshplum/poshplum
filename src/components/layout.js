@@ -31,6 +31,7 @@ export default class Layout extends Component {
     slot.isPlain = true;
 
     slot.withMarkup = (RenderComponent) => this.withMarkup(slot, RenderComponent);
+    slot.withMarkup.displayName = name;
 
     return slot;
   }
@@ -51,11 +52,12 @@ export default class Layout extends Component {
     let slots = this.constructor.getSlots();
     if (!this.constructor._slotsVerified) {
       map(slots, (slot,k) => {
-        let slotName = slot.displayName;
+        let slotName = slot.displayName || slot.constructor.displayName || slot.name || slot.constructor.name;
         // console.log("slot: ", k, slotName, slot );
         let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {
           console.warn(`Layout: ${this.constructor.name}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
+          console.error(new Error("Backtrace"), slot)
         }
       })
       this.constructor._slotsVerified = true;

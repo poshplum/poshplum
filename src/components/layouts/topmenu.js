@@ -1,4 +1,4 @@
-import {Component} from "react";
+import React, {Component} from "react";
 import Layout from "../layout";
 
 export const Title = Layout.namedSlot("Title");

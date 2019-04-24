@@ -80,14 +80,14 @@ describe('Card layouts', () => {
     });
 
   });
-  it("passes compact= prop to a className");
-  it("passes active= prop to a className");
-  it("passes other className='s through to the element")
-  it("passes other props to the element");
+  test.todo("passes compact= prop to a className");
+  test.todo("passes active= prop to a className");
+  test.todo("passes other className='s through to the element")
+  test.todo("passes other props to the element");
 
   describe("render= prop", () => {
-    it("is used for rendering if there's an item= prop also");
-    it("in dev environment, it suggests using a separate component to accept an item and return a <Card>");
+    test.todo("is used for rendering if there's an item= prop also");
+    test.todo("in dev environment, it suggests using a separate component to accept an item and return a <Card>");
   });
   describe('card subclass', () => {
     class CardClass extends Card {

@@ -4,7 +4,6 @@ import 'jest-mock-console/dist/setupTestFramework.js'
 import mockConsole from 'jest-mock-console';
 import doMockConsoleSetup from 'jest-mock-console/dist/setupTestFramework';
 
-import {configure} from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 configure({ adapter: new Adapter() });
 

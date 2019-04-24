@@ -1,5 +1,4 @@
-import LayoutHelpers from './helpers/layoutHelper'
-import Panel from '../src/components/panel';
+import Panel from '../src/components/Panel';
 import TopMenu from "../src/components/layouts/topmenu";
 import {mount} from "enzyme/build";
 import React from "react";

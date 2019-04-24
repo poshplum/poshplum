@@ -372,6 +372,8 @@ describe("Reactor", () => {
     it("requires a DOM node for triggering", async () => {
       expect(Reactor.dispatchTo).toBe(Reactor.trigger);
       expect(Reactor.dispatchTo).toThrow(/required.*DOM node/)
+      const warning = console.warn.mock.calls[0][0]
+      expect(warning.message).toMatch(/required.*DOM node/)
     });
 
     @Reactor
