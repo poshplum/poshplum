@@ -188,19 +188,23 @@ const Listener = (componentClass) => {
           listenerFunction: handler.targetFunction || handler
         };
         if (!handled.reactorNode) debugger;
-        if(dbg) {
-          const msg = `${reactor.constuctor.name}: Event: ${type} - calling handler`;
-          logger(msg)
-          if(moreDebug) {
+
+        const listenerTarget = handler.boundThis && handler.boundThis.constructor.name;
+        const listenerFunction = (handler.targetFunction || handler).name;
+        if (dbg) {
+          const msg = `${reactor.constructor.name}: Event: ${type} - calling handler ${listenerTarget}.${listenerFunction}`;
+          logger(msg);
+
+          if (moreDebug) {
             console.log(msg, {
               handled,
               triggeredAt: elementInfo(event.target),
-              listenerTarget: handler.boundThis && handler.boundThis.constructor.name,
-              listenerFunction: (handler.targetFunction || handler).name
-            })
-            debugger
+              listenerTarget,
+              listenerFunction
+            });
+            debugger;
           } else {
-            console.log(msg)
+            console.log(msg);
           }
         }
         const result = handler.call(this,event); // retain event's `this` (target of event)
@@ -674,7 +678,9 @@ Reactor.EventFactory = (type) => {
     throw new Error(`EventFactory(type): ^^^ type must be a string, not ${t}`);
   }
 
-  return ({...eventProps}) => {
+
+  return (...args) => {
+    const [{ ...eventProps}={}] = args;
     const {debug} = eventProps;
     const dbg = debugInt(debug);
     logger(`+Event: ${type}: `, eventProps)

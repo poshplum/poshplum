@@ -6,10 +6,6 @@ import find from 'lodash-es/find';
 
 import flatten from "lodash-es/flatten";
 
-function SlotContent({children}) {
-  return children;
-}
-
 export default class Layout extends Component {
   static defaultSlot(name) {
     let slot = this.namedSlot(name);
@@ -17,7 +13,7 @@ export default class Layout extends Component {
     return slot;
   }
   static withMarkup(slot, RenderComponent) {
-    let componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}><SlotContent>{children}</SlotContent></RenderComponent>
+    let componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}>{children}</RenderComponent>
     componentWithMarkup.displayName = slot.displayName;
 
     if (slot.isDefault) componentWithMarkup.isDefault = slot.isDefault;
