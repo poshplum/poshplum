@@ -24,6 +24,7 @@ describe("Reactor", () => {
     it("listens for the matching events", documented);
     it("registers itself by advertising its existence", documented);
     it("can advertise events that it will publish; other actors can listen for these", documented)
+    it("has a trigger() method that calls Reactor.trigger(own-dom-node)", documented);
   });
 
   @Reactor
@@ -48,16 +49,16 @@ describe("Reactor", () => {
     }
   }
   describe("is an actor", () => {
-
-    it("collects declared actions: event sinks with handlers responding to those events", () => {
+    it("collects declared actions: event sinks with handlers responding to those events", async () => {
       const hiya = jest.fn();
       const component = mount(<MyReactor>
         <Action debug={0} informalGreeting={hiya} />
         <div className="event-source"></div>
       </MyReactor>);
+      await delay(10);
 
       const actionCount = Object.keys(component.instance().actions).length;
-      expect(actionCount).toBe(11); // 1x getReactorNode, 4x registerX, 4x removeX, sayHello, informalGreeting
+      expect(actionCount).toBe(2); // sayHello, informalGreeting
 
       const eSrc = component.find(".event-source").instance();
       Reactor.dispatchTo(eSrc, new CustomEvent("sayHello", {bubbles:true}));
@@ -82,10 +83,15 @@ describe("Reactor", () => {
       const listeningNode = component.find(".myReactor").instance().parentNode;
       component.unmount(); // critical
       await delay(15); // wait for async unlisten
+
       mockConsole(['error'])
+
       Reactor.dispatchTo(listeningNode, new CustomEvent("informalGreeting", {bubbles:true}));
       expect(console.error).toBeCalledWith(expect.stringMatching(/unhandled event.*informalGreeting/),
-          expect.anything(), expect.anything(), expect.anything());
+        null, expect.anything(),
+        expect.anything(), expect.anything(),
+        expect.anything()
+      );
 
       await delay(100); // wait for async unlisten
       expect(hiya).not.toHaveBeenCalled();
@@ -178,9 +184,9 @@ describe("Reactor", () => {
       // console.log(component.debug());
 
       const actionCount = Object.keys(component.instance().actions).length;
-      if (actionCount !== 8) {
+      if (actionCount !== 2) {
         // console.log(component.instance().actions);
-        expect(actionCount).toBe(11); // getReactorNode, 4x registerX, 4x removeX, sayHello, informalGreeting
+        expect(actionCount).toBe(2); // sayHello, informalGreeting
       }
 
       const eSrc = component.find(".event-source").instance();
@@ -215,7 +221,7 @@ describe("Reactor", () => {
         </MyReactor>);
 
         const eventCount = Object.keys(component.instance().events).length;
-        expect(eventCount).toBe(2);  // imOK plus unknownEvent
+        expect(eventCount).toBe(2);  // imOK plus error
 
         // const eSrc = component.find(".event-source").instance();
         // Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
@@ -276,10 +282,10 @@ describe("Reactor", () => {
       });
 
 
-      it("triggers an 'unknownEvent' if trigger(eventName) has an unknown event name", async () => {
+      it("triggers an 'error' if trigger(eventName) has an unknown event name", async () => {
         const unknown = jest.fn()
         const component = mount(<MyReactor>
-          <Action debug={0} unknownEvent={unknown} />
+          <Action debug={0} error={unknown} />
         </MyReactor>);
 
         await delay(1);
@@ -347,7 +353,7 @@ describe("Reactor", () => {
         expect(listenerInstance.alsoVerifyCool).toHaveBeenCalledTimes(0);
       });
 
-      it("a reactor with isEventCatcher=true triggers an 'unknownEvent' event if an unknown event is Subscribe'd", async () => {
+      it("a reactor with isEventCatcher=true triggers an 'error' event if an unknown event is Subscribe'd", async () => {
         const unknown = jest.fn();
 
         @Reactor
@@ -362,7 +368,7 @@ describe("Reactor", () => {
           render() {
             let {updated} = this.state || {}
             return <Catcher>
-              <Action unknownEvent={unknown} />
+              <Subscribe error={unknown} />
 
               {updated && <Subscribe crazyEvent={() => {}} />}
             </Catcher>
@@ -376,7 +382,7 @@ describe("Reactor", () => {
         await delay(100);
 
         expect(unknown).toHaveBeenCalled();
-        expect(console.warn).toBeCalledWith(expect.stringMatching(/registerSubscriber: no published.*crazyEvent/));
+        expect(console.warn).toBeCalledWith(expect.stringMatching(/Subscribe.*crazyEvent/));
       });
 
     });
@@ -439,23 +445,23 @@ describe("Reactor", () => {
     });
 
 
-    it("issues unknownAction when an event is unhandled", async () => {
+    it("issues 'error' event when an event is unhandled", async () => {
       const unknown = jest.fn();
       const component = mount(<MyReactor>
-        <Action debug={0} unknownEvent={unknown} />
+        <Subscribe debug={0} error={unknown} />
 
         <DispatchTest debug={1} />
       </MyReactor>);
+      await delay(1);
       const instance = component.find(DispatchTest).instance();
       const eSrc = component.find(".eSrc").instance();
-      await delay(1);
 
       Reactor.dispatchTo(eSrc, "nothingGood", {foo:"bar"});
       expect(unknown).toHaveBeenCalled();
       const args = unknown.mock.calls[0];
       // console.warn("args", args);
       expect(args[0].detail).toEqual(expect.objectContaining({
-          foo:"bar", eventName:"nothingGood"
+          foo:"bar", error: expect.stringMatching(/unhandled event.* nothingGood/)
       }));
     })
 

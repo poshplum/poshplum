@@ -42,9 +42,9 @@
     "start": "neutrino start",
     "start-debug": "node --inspect-brk node_modules/neutrino/bin/neutrino.js start",
     "test": "jest",
-    "test:debug": "node --inspect-brk node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --runInBand",
-    "testing": "neutrino test --use @neutrinojs/node --watchAll --color",
-    "testing:debug": "node --inspect-brk node_modules/neutrino/bin/neutrino.js test --use @neutrinojs/node --watch --runInBand --color",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "testing": "jest --watch",
+    "testing:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand --color",
     "coverage": "neutrino test --coverage",
     "build": "rm dist/* ; rollup -c ; cp ./package.json dist/ ; ls -la dist/"
   }
