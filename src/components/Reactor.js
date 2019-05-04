@@ -334,7 +334,10 @@ export const Actor = (componentClass) => {
 };
 
 
+const reactorTag = Symbol("Reactor");
 const Reactor = (componentClass) => {
+  if (componentClass[reactorTag]) return componentClass;
+
   const listenerClass = Listener(componentClass);
   const componentClassName = componentClass.name;
   const reactorName = inheritName(componentClass, "Rx");
@@ -646,6 +649,7 @@ const Reactor = (componentClass) => {
       </div>
     }
   }
+  Object.defineProperty(clazz, reactorTag, { value: true });
   Object.defineProperty(clazz, 'name', { value: reactorName})
   return clazz;
 };
