@@ -1,11 +1,12 @@
 import Layout from '../src/components/layout';
-import {Card} from '../src/components/Cards';
+import Cards, {Card} from '../src/components/Cards';
 
 import React from 'react';
 import renderer from 'react-test-renderer';
 import {shallow,mount,render} from 'enzyme';
 import toJson from 'enzyme-to-json';
 import MockRouter from 'react-mock-router';
+
 
 describe('Card layouts', () => {
   describe('card primitive', () => {
@@ -91,23 +92,63 @@ describe('Card layouts', () => {
   });
   describe('card subclass', () => {
     class CardClass extends Card {
-
       render() {
         let {Mine, Body} = this.slots;
+        let {thing} = this.props.item;
 
         // console.log("render testSlots")
         return <div>
-          <h1>template header</h1>
-          <div className="mine">
-            <div className="nested">
-              {Mine}
-            </div>
-          </div>
-          <div className="body">
-            {Body}
-          </div>
+          <Card.Body>{thing}</Card.Body>
         </div>
       }
     }
+
+    it("works when used in <Cards.List> as a slot", async () => {
+      let cardsList = mount(<Cards.List items={[{id:1, thing:"thing1"}, {id:2,thing:"thing2"}]} >
+        <CardClass />
+      </Cards.List>)
+
+      // await delay(1);
+      let thing2 = cardsList.find(CardClass).at(1) //.instance();
+      // console.error(thing2.debug())
+      expect(thing2.text()).toBe("thing2")
+    });
+  });
+  describe("<Cards.List>", () => {
+    let things;
+    beforeEach(async () => {
+      things = []
+    });
+    class CardClass extends Card {
+      render() {
+        let thing = this.props.item;
+
+        return <div>
+          <Card.Body>{thing.name}</Card.Body>
+        </div>
+      }
+    }
+    class ShowThings extends React.Component {
+      render() {
+        return <Cards.List items={things}>
+          <Cards.Empty>No things</Cards.Empty>
+
+          <CardClass />
+        </Cards.List>
+      }
+    }
+
+    it("shows the contents of <Cards.Empty> if there are no items", async () => {
+      let stuff = mount(<ShowThings />)
+      expect(stuff.text()).toBe("No things")
+    });
+
+    it("shows things, and not the <Cards.Empty> if there are things", async () => {
+      things = [{id:1, name:"something"},{id:2, name:"extra"}];
+      let stuff = mount(<ShowThings />);
+      expect(stuff.text()).not.toMatch(/No things/);
+      expect(stuff.find(CardClass).at(0).text()).toBe("something");
+      expect(stuff.find(CardClass).at(1).text()).toBe("extra");
+    });
   });
 });
