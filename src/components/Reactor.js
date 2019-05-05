@@ -251,10 +251,27 @@ export const Actor = (componentClass) => {
       this._actorRef = React.createRef();
       this.addActorNameToRegisteredAction = Reactor.bindWithBreadcrumb(this.addActorNameToRegisteredAction, this);
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
+      this.registerPublishedEventEvent = Reactor.bindWithBreadcrumb(this.registerPublishedEventEvent, this);
+      this.removePublishedEvent = Reactor.bindWithBreadcrumb(this.removePublishedEvent, this);
+
     }
 
     registerActor() {
       throw new Error("nested Actors not currently supported.  If you have a use-case, please create a pull req demonstrating it")
+    }
+    registerPublishedEventEvent(event) {  // doesn't handle the event; augments it with actor name
+      const {target, detail:{name, debug}} = event;
+
+      let newName = `${this.name()}:${name}`;
+      console.log("registering", newName)
+      event.detail.name = newName;
+    }
+
+    removePublishedEvent(event) {   // doesn't handle the event; augments it with actor name
+      let {name, actor, debug} = event.detail;
+      let newName = `${this.name()}:${name}`;
+      console.log("unregistering", newName)
+      event.detail.name = newName;
     }
 
     addActorNameToRegisteredAction(registrationEvent) {
@@ -313,6 +330,8 @@ export const Actor = (componentClass) => {
       }
       let name = this.name();
       this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction);
+      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent);
+      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent);
 
       // if(foundKeys[0] == "action") debugger;
       this.trigger(

@@ -393,10 +393,26 @@ describe("Reactor", () => {
             this.trigger("greeting", {hi:"hi"})
           }
           render() {
-            return <Publish event="greeting" />
+            return <Publish debug={1} event="greeting" />
           }
         }
 
+
+        it("adds the Actor name to the event name during <Publish> and trigger()", async () => {
+          const sayHi = jest.fn().mockImplementation( ({detail}) => {
+            expect(detail).toEqual(expect.objectContaining({hi:"hi"}));
+          } );
+          const dataService = mount(<MyReactor>
+            <PublishesEvent />
+            <Subscribe published＿greeting={sayHi} />
+          </MyReactor>);
+
+          await delay(1);
+
+          dataService.find(PublishesEvent).instance().greet();
+          expect(sayHi).toHaveBeenCalled()
+
+        });
 
          it("defers listening long enough for simultaneously-mounted Actors to <Publish> their events", async () => {
           const sayHi = jest.fn()
