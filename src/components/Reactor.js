@@ -238,7 +238,7 @@ export const Actor = (componentClass) => {
 
   const listenerClass = Listener(componentClass);
 
-  let displayName = inheritName(listenerClass, "Actor");
+  let displayName = inheritName(componentClass, "Actor");
 
   return class ActorInstance extends listenerClass {
     static get name() { return displayName };
@@ -263,7 +263,8 @@ export const Actor = (componentClass) => {
       const {target, detail:{name, debug}} = event;
 
       let newName = `${this.name()}:${name}`;
-      console.log("registering", newName)
+      console.log("registering", newName);
+      event.detail.actor = this;
       event.detail.name = newName;
     }
 
@@ -491,15 +492,16 @@ const Reactor = (componentClass) => {
 
     }
     registerPublishedEventEvent(event) {
-      const {target, detail:{name, debug}} = event;
-      this.registerPublishedEvent({name,debug, target})
+      const {target, detail:{name, debug, actor}} = event;
+      this.registerPublishedEvent({name,debug, target, actor})
 
       event.stopPropagation();
     }
 
-    registerPublishedEvent({name, debug, target}) {
-      logger("registering published event", name)
-      if (debug) console.warn("registering published event", name);
+    registerPublishedEvent({name, debug, target, actor}) {
+      const message = `registering event '${name}'` + (actor ? ` published by ${actor.constructor.name}` : "");
+      logger(message)
+      if (debug) console.warn(message);
       if (this.events[name]) {
         logger(`Event '${name}' already registered by`, this.events[name])
         console.error(`Event '${name}' already registered by`, this.events[name]);
