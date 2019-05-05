@@ -296,8 +296,11 @@ export const Actor = (componentClass) => {
       </div>;
     }
 
-    trigger(event) {
-      return Reactor.trigger(this._listenerRef.current, event);
+    trigger(event, detail) {
+      if (!(event instanceof Event)) {
+        event = `${this.name()}:${event}`;
+      }
+      return Reactor.trigger(this._listenerRef.current, event, detail);
     }
     componentDidMount() {
       if (super.componentDidMount) super.componentDidMount();
@@ -360,7 +363,7 @@ const Reactor = (componentClass) => {
       this.removePublishedEvent = Reactor.bindWithBreadcrumb(this.removePublishedEvent, this);
 
       this.registerSubscriber = Reactor.bindWithBreadcrumb(this.registerSubscriber, this);
-      this.removeSubscriber = Reactor.bindWithBreadcrumb(this.removeSubscriber, this);
+      this.removeSubscriberEvent = Reactor.bindWithBreadcrumb(this.removeSubscriberEvent, this);
       this.listening = [];
 
       this.actions = {}; // known direct actions
@@ -388,7 +391,7 @@ const Reactor = (componentClass) => {
       this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent);
 
       this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber);
-      this.listen(Reactor.Events.removeSubscriber, this.removeSubscriber);
+      this.listen(Reactor.Events.removeSubscriber, this.removeSubscriberEvent);
 
       this.setState({_reactorDidMount: true});
     }
@@ -559,8 +562,9 @@ const Reactor = (componentClass) => {
     }
 
     registerSubscriber(event) {
-      let {eventName, listener, debug} = event.detail;
 
+      let {eventName, listener, debug} = event.detail;
+      eventName = eventName.replace(/\u{ff3f}/u, ':');
       if (!this.events[eventName]) {
         if (this.isEventCatcher) {
           const message = `${this.constructor.name}: <Subscribe ${eventName}>: no '${eventName}' event is <Publish>'d`;
@@ -576,8 +580,8 @@ const Reactor = (componentClass) => {
         }
         return false
       } else {
-        logger(`${this.constructor.name}: registering subscriber for `, event.detail);
-        if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, event.detail);
+        logger(`${this.constructor.name}: registering subscriber for `, {eventName, debug, listener});
+        if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, {eventName, debug, listener});
       }
       event.stopPropagation();
       logger(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"))
@@ -599,8 +603,9 @@ const Reactor = (componentClass) => {
       }
     }
 
-    removeSubscriber(event) {
+    removeSubscriberEvent(event) {
       let {eventName, listener, debug} = event.detail;
+      eventName = eventName.replace(/\u{ff3f}/u, ':');
 
       let subscriberFanout = this.registeredSubscribers[eventName];
       if (!subscriberFanout) {
@@ -615,9 +620,16 @@ const Reactor = (componentClass) => {
         return
       }
       event.stopPropagation();
+      this.removeSubscriber(eventName, listener, debug);
+    }
+
+    removeSubscriber(eventName, listener, debug) {
+      let subscriberFanout = this.registeredSubscribers[eventName];
 
       logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener);
-      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener, new Error("...stack trace"));
+      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener,
+        new Error("...stack trace")
+      );
 
       const before = subscriberFanout.subscribers.length;
       subscriberFanout.subscribers = subscriberFanout.subscribers.filter((f) => {
@@ -632,8 +644,8 @@ const Reactor = (componentClass) => {
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
       } else {
         logger(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
-        if(debug)
-          console.warn(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining` );
+        if (debug)
+          console.warn(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
       }
 
       if (after === 0) {
@@ -888,7 +900,9 @@ export class Subscribe extends React.Component {
     let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
 
     // this.myNode = ReactDOM.findDOMNode(this);
-    Reactor.trigger(this._subRef.current, subscriberReq);
+    setTimeout(() => {
+      Reactor.trigger(this._subRef.current, subscriberReq);
+    }, 1)
   }
 
   componentWillUnmount() {

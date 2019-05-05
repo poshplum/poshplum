@@ -385,6 +385,36 @@ describe("Reactor", () => {
         expect(console.warn).toBeCalledWith(expect.stringMatching(/Subscribe.*crazyEvent/));
       });
 
+      describe("<Subscribe> in an @Actor", () => {
+        @Actor
+        class PublishesEvent extends React.Component {
+          name() { return "published" }
+          greet() {
+            this.trigger("greeting", {hi:"hi"})
+          }
+          render() {
+            return <Publish event="greeting" />
+          }
+        }
+
+
+         it("defers listening long enough for simultaneously-mounted Actors to <Publish> their events", async () => {
+          const sayHi = jest.fn()
+          const unknown = jest.fn();
+          const dataService = mount(<MyReactor>
+            <Action debug={0} error={unknown} />
+
+              <PublishesEvent />
+              <Subscribe published＿greeting={sayHi} />
+          </MyReactor>);
+
+          await delay(1);
+
+          dataService.find(PublishesEvent).instance().greet();
+          expect(unknown).not.toHaveBeenCalled()
+          expect(sayHi).toHaveBeenCalled()
+        });
+      });
     });
   });
   describe("Reactor.dispatchTo() aka trigger()", async () => {
