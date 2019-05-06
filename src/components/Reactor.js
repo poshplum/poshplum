@@ -686,7 +686,11 @@ const Reactor = (componentClass) => {
   Object.defineProperty(clazz, 'name', { value: reactorName})
   return clazz;
 };
-Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(target, event, {bubbles=true,...detail}={}) {
+Reactor.dispatchTo =
+  Reactor.trigger = function dispatchWithHandledDetection(
+    target, event, {bubbles=true,...detail}={},
+    onUnhandled
+    ) {
   if (!(target instanceof Element)) {
     const msg = "Reactor.dispatchTo: missing required arg1 (must be a DOM node)"
     logger(msg)
@@ -699,7 +703,10 @@ Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(tar
     event = new CustomEvent(event, {bubbles, detail});
   }
   target.dispatchEvent(event);
-  if (event.handledBy && event.handledBy.length) return;
+  if (event.handledBy && event.handledBy.length)
+      return;
+  if (onUnhandled)
+      return onUnhandled(event);
 
   throwUnhandled.bind(this)(event);
 
