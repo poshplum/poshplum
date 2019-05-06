@@ -263,7 +263,7 @@ export const Actor = (componentClass) => {
       const {target, detail:{name, debug}} = event;
 
       let newName = `${this.name()}:${name}`;
-      console.log("registering", newName);
+      logger("registering", newName);
       event.detail.actor = this;
       event.detail.name = newName;
     }
@@ -271,7 +271,7 @@ export const Actor = (componentClass) => {
     removePublishedEvent(event) {   // doesn't handle the event; augments it with actor name
       let {name, actor, debug} = event.detail;
       let newName = `${this.name()}:${name}`;
-      console.log("unregistering", newName)
+      logger("unregistering", newName)
       event.detail.name = newName;
     }
 
