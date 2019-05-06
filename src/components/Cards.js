@@ -104,7 +104,7 @@ Cards.List = class CardsList extends Component {
   empty() {
     return null;
   }
-  render() {
+  render(props = this.props) {
     let {
       items,
       data={},
@@ -117,7 +117,7 @@ Cards.List = class CardsList extends Component {
       pages,
       pagesize,
       ...moreProps
-    } = this.props;
+    } = props;
 
     if (!items && data.items) items = data.items;
     // if (!items) throw new Error("no items");
