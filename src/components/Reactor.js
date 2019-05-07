@@ -918,6 +918,7 @@ export class Subscribe extends React.Component {
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
     let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
+    let {optional = false} = this.props;
 
     // defer registering the subscriber for just 1ms, so that
     // any <Publish>ed events from Actors will have their chance
@@ -926,6 +927,9 @@ export class Subscribe extends React.Component {
       // skip subscriber registration if already unmounted
       if (this._subRef.current) {
         Reactor.trigger(this._subRef.current, subscriberReq, {},
+          optional ? (unhandledEvent) => {
+              console.warn(`unhandled subscribe to '${this.eventName}' was optional, so no error event.`)
+          } : undefined
         );
       } else {
         console.warn(`Subscribe:${this.eventName} didn't get a chance to register before being unmounted.  In tests, prevent this with await delay(1) after mounting `)
@@ -936,17 +940,18 @@ export class Subscribe extends React.Component {
   componentWillUnmount() {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
+    if (this.failedOptional) return;
     Reactor.trigger(this._subRef.current,
       Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
     );
   }
 
   render() {
-    let {children, debug, ...handler} = this.props;
+    let {children, optional, debug, ...handler} = this.props;
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("<Subscribe eventName={notifyFunction} /> events should only have a single prop - the eventName to subscribe. ('debug' prop is also allowed)\n");
+      throw new Error("<Subscribe eventName={notifyFunction} /> events should only have a single prop - the eventName to subscribe. ('optional' and 'debug' props also allowed)\n");
     }
     this.eventName = foundKeys[0];
     this.debug = debug;

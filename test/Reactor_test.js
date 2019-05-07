@@ -385,7 +385,18 @@ describe("Reactor", () => {
         expect(console.warn).toBeCalledWith(expect.stringMatching(/Subscribe.*crazyEvent/));
       });
 
-      describe("<Subscribe> in an @Actor", () => {
+      describe("optional Subscribe", () => {
+        let error = jest.fn()
+
+        it("does not throw an error event", async () => {
+          let thing = mount(<MyReactor>
+            <Subscribe error={error} />
+            <Subscribe optional someWildEvent={() => "whatever"} />
+          </MyReactor>);
+          expect(error).not.toHaveBeenCalled()
+        });
+      });
+      describe("<Subscribe> to event <Publish>ed in an @Actor", () => {
         @Actor
         class PublishesEvent extends React.Component {
           name() { return "published" }
