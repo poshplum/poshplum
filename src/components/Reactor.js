@@ -919,9 +919,17 @@ export class Subscribe extends React.Component {
     if (super.componentDidMount) super.componentDidMount();
     let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
 
-    // this.myNode = ReactDOM.findDOMNode(this);
+    // defer registering the subscriber for just 1ms, so that
+    // any <Publish>ed events from Actors will have their chance
+    // to be mounted and registered:
     setTimeout(() => {
-      Reactor.trigger(this._subRef.current, subscriberReq);
+      // skip subscriber registration if already unmounted
+      if (this._subRef.current) {
+        Reactor.trigger(this._subRef.current, subscriberReq, {},
+        );
+      } else {
+        console.warn(`Subscribe:${this.eventName} didn't get a chance to register before being unmounted.  In tests, prevent this with await delay(1) after mounting `)
+      }
     }, 1)
   }
 
