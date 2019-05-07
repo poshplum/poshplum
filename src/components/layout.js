@@ -58,7 +58,7 @@ export default class Layout extends Component {
       this.constructor._slotsVerified = true;
     }
     let {children=[]} = this.props;
-    if (undefined === children.length) {
+    if (!Array.isArray(children)) {
       children = [children];
     }
     children = flatten(children)

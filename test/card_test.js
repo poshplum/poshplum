@@ -30,18 +30,27 @@ describe('Card layouts', () => {
           <Title>{titleText}</Title>
           <Label>{label}</Label>
 
-          {bodyText}
+          card content
 
           <Footer>{footerText}</Footer>
         </Card>
       );
-
 
       expect(component.find("div.card-body").text()).toBe(bodyText);
       expect(component.find("div.card-title").text()).toBe(titleText);
       expect(component.find("div.chip.pop-left").text()).toBe(iconText);
       expect(component.find("div.card-footer").text()).toBe(footerText);
       expect(component.find("div.chip.pop-right").text()).toBe(label);
+    });
+    it("keeps text together", async () => {
+      const component = mount(
+        <Card>
+          text
+        </Card>
+      )
+      const body = component.instance().slots.Body;
+
+      expect(body.props.children.length).toBe(1);
     });
     it("doesn't have a .card-header without (title || icon || label) provided", () => {
       const component = mount(
