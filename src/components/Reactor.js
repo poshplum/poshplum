@@ -94,6 +94,12 @@ const Listener = (componentClass) => {
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler, capture);
     }
+    trigger(event, detail) {
+      if (!(event instanceof Event)) {
+        event = this.eventPrefix() + event;
+      }
+      return Reactor.trigger(this._listenerRef.current, event, detail);
+    }
 
     _listen(eventName, handler, capture) {
       const listening = this.listening;
@@ -245,6 +251,7 @@ export const Actor = (componentClass) => {
     get unlistenDelay() {
       return 50
     }
+    eventPrefix() { return `${this.name()}:` }
 
     constructor(props) {
       super(props);
@@ -314,12 +321,6 @@ export const Actor = (componentClass) => {
       </div>;
     }
 
-    trigger(event, detail) {
-      if (!(event instanceof Event)) {
-        event = `${this.name()}:${event}`;
-      }
-      return Reactor.trigger(this._listenerRef.current, event, detail);
-    }
     componentDidMount() {
       if (super.componentDidMount) super.componentDidMount();
       let {debug} = this.props;
@@ -530,16 +531,7 @@ const Reactor = (componentClass) => {
         subscriberFanout._fan = this.listen(name, subscriberFanout.fn);
       }
     }
-    trigger(eventName) {
-      if (this.events[eventName]) {
-        Reactor.dispatchTo(this._listenerRef.current, new CustomEvent(eventName, {bubbles:true}));
-      } else {
-        Reactor.dispatchTo(this._listenerRef.current, Reactor.ErrorEvent({
-          error: `trigger(eventType): unknown event type ${eventName}`,
-          backtrace: new Event("stack")
-        }));
-      }
-    }
+    eventPrefix() { return "" }
 
     removePublishedEvent(event) {
       let {name, actor, debug} = event.detail;
