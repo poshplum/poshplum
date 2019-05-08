@@ -3,6 +3,7 @@ const commonjs = require("rollup-plugin-commonjs")
 const resolve = require("rollup-plugin-node-resolve")
 const babel = require("rollup-plugin-babel")
 const fg = require('fast-glob');
+import scss from 'rollup-plugin-scss'
 
 const components = fg.sync(["./src/components/**/*.js"]);
 const helpers = fg.sync(["./src/helpers/**/*.js"]);
@@ -23,7 +24,7 @@ function external(id) {
 }
 
 module.exports = [{
-  input: [...components, ...helpers],
+  input: [...components, ...helpers, "./src/plum-defaults.scss"],
   external,
   output: {
     dir: "dist/",
@@ -51,6 +52,10 @@ function plugins() {
       exclude: 'node_modules/**'
     }),
     commonjs(),
+    scss({
+      output: "dist/plum.css",
+      failOnError: true,
+    })
   ]
 }
 
