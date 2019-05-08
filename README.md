@@ -30,6 +30,10 @@ Getting started is easy:
 `$ yarn add poshplum`
 
 ```
+// import global CSS rules if you want to use Plum's
+//   styles based on Spectre.css.  
+import "poshplum/plum.css"
+
 // normal routing with React-router -
 <Route exact path="/" component={Home} />
 <Route path="/hello" component={Hello} />
@@ -135,6 +139,15 @@ baked right in.
   > _And said, "what a good boy am I!"_
 -- [Mother Goose](https://www.poetryfoundation.org/poems/46973/little-jack-horner-56d2271c5917a)
 
+## Bundle size
+
+Plum takes less than 3kB, compressed, for `import poshplum/layout`, letting you create
+your own layouts.  Adding the material UI in Cards and Panel bring the total to less
+than 7kB compressed javascript and about 13kB of compressed CSS.
+
+Reactor and State machine add less than 10kB compressed javascript, bringing the grand total
+to right at 30kB, if you use all the things.
+
 ## Extra Posh
 
 ### Blended layout slots 
@@ -207,6 +220,16 @@ UI that appears to be made with material like paper or cardstock.  You can
 place your application's conceptual objects into Plum's UI components, making them
 tangible to your app's users.  This gives your app a simple touch-ready interface 
 that people understand intuitively.
+
+Be sure to configure webpack with e.g. MiniCssExtractPlugin and HtmlWebpackPlugin, 
+to include the styles in your project's output files.  `import "poshplum/plum.css"` 
+from your app's entrypoint, and the plugins should bundle and insert the styles
+in the the page.
+
+If you want to customize the Spectre.css SCSS defaults and compile the scss in 
+your own project's build, we'll gladly take a PR and/or a sponsor for exposing the 
+bundled plum-defaults.scss + spectre's .scss as an output from the Rollup build.  
+
 
 #### Card
 
@@ -310,13 +333,13 @@ class MyLayout extends Layout {
 }
 ```
 
-This example doesn't specify much styling, but when you make a 
-layout, you can control exactly the HTML and styles you want.  
+This example doesn't specify much styling, but when you make a layout, you can 
+control exactly the HTML and styles you want.  
 
-You might think of a layout as an 
-envelope for page-level content; in the layout component above, you can configure
-exactly the layout of the envelope, and when you insert pages into the 
-envelope, the page content shows through the envelope sections ("slots"). 
+You might think of a layout as an envelope for page-level content; in the layout 
+component above, you can configure exactly the layout of the envelope, and when 
+you insert pages into the envelope, the page content shows through the envelope 
+sections ("slots"). 
 
 You can make as many slots as needed for your layout.  Here's a layout that includes
 a right-side `<ContextPanel>` area, which can be controlled by your page-level 
@@ -358,20 +381,219 @@ class Page2 extends Component {
 }
 ```
 
+## Application Plumbing
+
+A Posh Plum also provides two optional components to use as the plumbing for
+high-reliability application software.  With Reactor and State Machine, it's
+possible to create any application from simple to sophisticated without any
+other libraries.
+
+### State Machines
+
+The Finite State Machine might sound stodgy and mathematical, but we think it's 
+one of the most useful inventions ever to be created.  Some form or
+other of a state machine is used for essentially every high-reliability 
+technology in existence.  Consider the light-switch, the elevator or the jumbo 
+jet: having a clear, reliable map of all their possible states can be key to 
+predictability.
+
+Plum offers declarative `<State>`s and `transitions` to implement the core of
+FSM's for UI.  In this example, we show a card that expands on click and opens a 
+route when double-clicked:
+
+```
+import withStateMachine, {State} from "poshplum/withStateMachine";
+import Cards from "poshplum/Cards"
+import {Route, Link, withRouter} from "react-router-dom";
+
+@withRouter
+@withStateMachine 
+MyCard extends React.Component {
+  constructor() { this.openRoute = this.openRoute.bind(this) }
+  openRoute() {
+    const {history} = this.props;
+    history.push('/some/nested/route');
+  }
+  render() {
+    const editing = [this.openRoute, "editing"];
+    
+    return <div>
+      <State name="default" transitions={{"expand": "expanded", "click": "expanded"}} />
+      <State name="expanded" transitions={{"dblclick": editing, "edit": editing}} />
+      <State name="editing" transitions={{"back": "default"}} />
+      <Cards.Card>
+        <Cards.Title>Imaginary Project</Title>
+        
+        {this.hasState("expanded") && <p>Expanded card with a project summary</p>
+        <Cards.Footer>
+          4 people are working on this project
+          {this.hasState("expanded") && <p>Double-click to <Link 
+            onClick={this.mkTransition("edit")} to="/some/nested/route">edit</Link></p>}
+        </Cards.Footer>
+      </Cards.Card>
+      <Route path="/some/nested/route" component={EditingPanel} />
+    </div>
+  }
+}
+// EditingPanel class: implementation not shown
+```
+
+The `<State>` components declare all the states that the component can have. Your 
+state machine doesn't have to stop at 3 actions.  If you can draw a flowchart on 
+a whiteboard, you can make a state machine directly from that diagram using Plum's 
+`<State>` component.  
+
+We suggest using imperative-looking command words (click, close, cancel, open, 
+search) for transition names, and descriptive `-ing` or `-ed` words for state names 
+(opened, searching, closed, waiting, selectingOption).  
+
+The transitions declared in each `<State>` indicate actions (`expand`, `click`, 
+`dblclick`, `back`, ...) that will lead to other states (`expanded`, `editing`, 
+`default`, ...).  In the example, `const editing` shows how to use a predicate 
+function, which can disallow a state transition (return `false`) and/or provide 
+side effects if the transition is allowed.
+
+The `<EditingPanel>` in this example might trigger a `back` transition using 
+`dispatchEvent` or `Reactor.trigger()`, and the state machine will catch and act 
+on these events found within its DOM tree.  You can trigger the same events from 
+anywhere, making it easy to create a site tour that can expand a card or even 
+open the editor as the visitor clicks "Next".  Or you could enhance a list of
+cards with behavior that keeps at most one card `expanded`.  
+
+### Reactor
+
+The Reactor module provides a handful of components that can work fluidly together
+to compose rich application functionality from declarative components, while keeping
+coupling low.  It takes advantage of the browser's highly performant event 
+infrastructure, while proactively managing event listeners to avoid memory leaks.
+
+Reactor current expects a DOM environment.  React-Native isn't expected to work, 
+although it may be possible to shift to using synthetic events in the virtual DOM.  
+Patches welcome.
+
+#### Reactor: State machine example
+The State Machine example above does internally create a Reactor similar to the 
+following, translating the `transition=` entries to `<Action>`s.
+
+```
+  @Reactor 
+  class wFSM$MyCard {
+    render() {
+      return <div>
+        {this.hasState("default") && <Action expand={this.mkTransition("expand")} />}
+        {this.hasState("default") && <Action click={this.mkTransition("click")} />}
+        {this.hasState("expanded") && <Action dblclick={this.mkTransition("dblclick")} />}
+        {this.hasState("expanded") && <Action edit={this.mkTransition("edit")} />}
+        {this.hasState("editing") && <Action back={this.mkTransition("back")} />}
+      </div>
+    }
+  }
+```
+
+In the case of the State machine, the Actions available at a moment are
+depending on the current state of the machine.  You could use 
+`this.setState({currentState})` to force a different state machine change, 
+but we hope you don't need to do that.  `transition()`, `mkTransition()` and 
+`trigger()` should be sufficient.
+
+#### Actors and Actions
+
+The purpose of the Reactor is to provide an explicit scope for Actors and Actions,
+and to mediate access to those Actions for UI components.  The `@Reactor` 
+declaration provides an event-listening scope, implementing the classic "event 
+delegate" pattern on behalf of every `<Action>` it sees.  
+
+If you're used to Redux actions, you may already have a correct intuition on 
+these actions. Dispatching actions can be as simple as issuing 
+`this.trigger("eventName", {...payload})`.  There's no implicit connection 
+to a global store: Reactors can use `setState()` within their own scope, or 
+they can use other techniques that work for you.  An unhandled event will always
+raise an error for your attention; we don't tolerate mysteries.
+
+The @Actor decorator supports lightweight declaration of a separate, named, 
+reusable module of actions, plugging into an existing Reactor found in your 
+application.  The Reactor acts as a listening delegate for `actorName:actionName` 
+events.  
+
+An Actor can contribute to their Reactor's `state`, or they can share 
+asyncronous events in the Reactor's scope, without any implicit state changes.
+
+
+
+#### Custom Events: Publish and Subscribe within a Reactor
+
+Keyboard and mouse activities from a user are found in DOM events.  At a higher
+level of abstraction, the browser detects focus changes and animation progress, 
+and exposes events about them to interested listeners.  
+
+A Posh Plum makes it easy for actors to reveal higher-level application semantic 
+activities as events, for the places where Things can Happen.  Example use-cases
+could include:
+
+ * Right-click + WASD => paginate vertically/horizontally within
+   a section of the page
+ * Side-button + R = `<Publish event="wantsRefresh" />`, with a form that
+   `<Subscribe>`s and reacts to that request.  
+ * Alt, held for more than 0.5s => reveal keyboard shortcuts next to every 
+   onscreen control
+ * A data-loading Actor monitors for changes on the record it loaded, 
+   and the related Form keeps the form syncronized.
+
+The `<Publish>` and `<Subscribe>` components make it easy to create an async 
+communication channel that works for your purpose.  They help you minimize scope 
+and do narrow-casting or broadcasting where needed.  
+
+Just as with actions created by Actors and Reactors, event listeners for 
+`<Subscribe>` are done by delegating to their enclosing Reactor.  Events being 
+`<Publish>`ed by an actor are modularized by prepending `actorName:` to the 
+event name found in the `<Publish>` tag.
+
+
+
+#### Composing Reactors
+
+It's easy to create multiple levels of Reactors in your application, each 
+having a separate purpose and scope.  We suggest keeping things simple. 
+A dialog box might contain a Reactor having Actions that do the right API calls 
+for serving the UI in the dialog.  
+
+Any errors or progress events might not be handled by the dialog, but can be 
+delegated to an application-level Reactor that activates a standardized loading 
+indicator, success message or error notification with perfect consistency. 
+
+Use your application's hierarchy to your own users' advantage, and beware of 
+leaving idle actors retaining large data structures in a global scope.
+
+#### Unhandled events and other Error handling with Reactors.
+
+When you use `Reactor.trigger()`, any event that isn't (automatically) marked as 
+being `handledBy` one or more actors will result in an `error` event being 
+triggered.  ...unless that event is an `error` event - in this case, the error 
+is thrown to the console instead.  This arrangement makes it easy to see missing 
+Actors, `<Subscribe>`rs, and errors of any kind (feel free to issue your own 
+`error` events too).
+
+Any `trigger()`ed or `<Subscribe>`d events that aren't registered will always
+cause an `error` event.  Make sure you're mounting the right Actors before (or 
+at the same time as) the `<Subscribe>`r, or that you've arranged some other 
+strategy to ensure consistently correct behavior.
+
+
 ## Developing
 
-This repo uses neutrino.js for packaging and development-time operation.
-The package.json includes scripts for triggering important actions.
+This repo uses rollup for packaging.  The package.json includes scripts for triggering 
+important actions.
 
 ```
-> yarn run     // run a UI harness on port 5000 for a web-browser preview
-> yarn test    // run tests
-> yarn testing // run tests with --watch
-> yarn testing-debug // with debugger/inspector for test debugging
-> yarn build   // build the package
+> yarn run           // run a UI harness on port 5000 for a web-browser preview
+> yarn test          // run tests
+> yarn testing       // run tests with --watch
+> yarn test:debug    // run with debugger/inspector for test debugging
+> yarn testing:debug // test with debugger and watch
+> yarn build         // build the package
 ```
 
-Use [chrome devtools](chrome://inspect) to attach to the Jest tests.
+Use [chrome devtools](chrome://inspect) to attach to the Jest tests for :debug tasks.
 
 #### Note for Windows-based developers
 
@@ -380,3 +602,6 @@ On Windows + Cygwin, `yarn testing` needs `git` to be in the path, and Cygwin's
 alias or shell script with \` `PATH=/cygdrive/c/Program\ Files/Git/bin:$PATH yarn testing`\` 
 (or similar) corrects the error.  See [this issue comment](https://github.com/facebook/jest/issues/3214#issuecomment-312186643) 
 for more background.
+
+Use a Linux virtual machine with Virtual Box if you want to make things easier.
+Ubuntu + NVM + Yarn from https://yarnpkg.com/lang/en/docs/install/ recommended.

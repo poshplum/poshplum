@@ -5,7 +5,8 @@ import { AppContainer } from 'react-hot-loader';
 import TopMenuLayout,{Title,Menu,Body} from './components/layouts/topmenu';
 import {Card} from "./components/Cards";
 
-// makes CSS available.  TODO: how users of this library should do it?
+// makes CSS available.
+// users can import "poshplum/plum.css"
 import './plum-defaults.scss';
 
 import { BrowserRouter } from 'react-router-dom'
