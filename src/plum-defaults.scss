@@ -44,7 +44,11 @@ h6 { font-size: 0.85rem }
 }
 
 .screader {
-  position: relative;
+  position: absolute;
+  width:1px;
+  height: 1px;
+  display:block;
+  overflow:hidden;
   left: -5000px;
 }
 main {
