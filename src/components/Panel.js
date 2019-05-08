@@ -28,8 +28,8 @@ export default class Panel extends Layout {
     let {className="", ...otherProps} = this.props;
     let {Title, Icon, Header, Body, Footer} = this.slots;
 
-    return <div className={`panel ${className}`} {...otherProps}>
-      {Title && <div className="panel-title">{Icon} {Title}</div>}
+    return <div role="main" className={`panel ${className}`} {...otherProps}>
+      {Title && <div className="panel-title">{Icon}<h2>{Title}</h2></div>}
       {Header && <div className="panel-header">{Header}</div>}
       <div className="panel-body">
         {Body}
