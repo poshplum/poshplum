@@ -88,7 +88,6 @@ export class Card extends Layout {
     return card;
   }
 };
-Card.displayName="Card";
 
 const Cards = {};
 Cards.List = class CardsList extends Component {
