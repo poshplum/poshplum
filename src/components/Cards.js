@@ -111,6 +111,7 @@ Cards.List = class CardsList extends Component {
       // itemRoute,
       children=[],
       debug,
+      totalSize="-1",
       card:CardComponent,
       footer,
       pages,
@@ -132,9 +133,10 @@ Cards.List = class CardsList extends Component {
     if(debug) debugger;
 
     let emptyDisplay = matchChildType("Cards.Empty", children)
-    if (! emptyDisplay.length) emptyDisplay = [ this.empty() ];
+    if (! emptyDisplay.length)
+      emptyDisplay = [ this.empty() ];
 
-    let hasEmptyTreatment = !! emptyDisplay.length
+    let hasEmptyTreatment = true ;// !! emptyDisplay.length
 
     let addItem = matchChildType("Cards.Add", children);
 
@@ -175,7 +177,7 @@ Cards.List = class CardsList extends Component {
     let cloner = (item) => {
       let {props, type:ChildCard} = cardChild;
       return <ChildCard key={item.id} {...{item, ...props}} />
-    }
+      }
     let listItems = (items) => { return map(items,
       (singleItem) =>
         CardComponent ? <CardComponent key={singleItem.id} item={singleItem} />
@@ -188,13 +190,10 @@ Cards.List = class CardsList extends Component {
     else outputPages = listItems(items);
 
     // cardChild = cardChild.type;
-    return <div {...moreProps}>
+    return [<div role="list" {...moreProps}>
       {addItem}
-
-      {(count == 0 && hasEmptyTreatment ) ? emptyDisplay
-        : outputPages
-      }
-    </div>
+      {outputPages}
+    </div>, emptyDisplay]
   }
 }
 Cards.List.propTypes = {
@@ -219,10 +218,8 @@ Cards.Title = function({className="", ...props}) {
 };
 Cards.Title.displayName="Cards.Title";
 
-Cards.Empty = function({children,...props}) {
-  return keys(props).length ?
-    <div {...props} />
-    : children
+Cards.Empty = function({children,className="", ...props}) {
+  return <div className={`${className} 空空兄珍`} {...props}>{children}</div>
 };
 Cards.Empty.displayName="Cards.Empty";
 

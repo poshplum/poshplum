@@ -109,6 +109,15 @@ p > .btn {
   margin-bottom: 0.5em;
 }
 
+.空空兄珍 {
+  display: none;
+}
+:empty + .空空兄珍, .空空兄珍:first-child { // empty display for card-list
+  display: block;
+}
+:empty + .d-inline-block.空空兄珍, .d-inline-block.空空兄珍:first-child {
+  display: inline-block;
+}
 .card {
   margin-left: 2px;
   margin-right: 0.5rem;

@@ -152,10 +152,10 @@ describe('Card layouts', () => {
       expect(stuff.text()).toBe("No things")
     });
 
-    it("shows things, and not the <Cards.Empty> if there are things", async () => {
+    it("shows things if there are things", async () => {
       things = [{id:1, name:"something"},{id:2, name:"extra"}];
       let stuff = mount(<ShowThings />);
-      expect(stuff.text()).not.toMatch(/No things/);
+      // empty-sibling css hides this:   expect(stuff.text()).not.toMatch(/No things/);
       expect(stuff.find(CardClass).at(0).text()).toBe("something");
       expect(stuff.find(CardClass).at(1).text()).toBe("extra");
     });
