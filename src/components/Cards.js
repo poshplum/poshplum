@@ -91,14 +91,16 @@ export class Card extends Layout {
 
 const Cards = {};
 Cards.List = class CardsList extends Component {
-  card(singleItem) {
+  card(singleItem, i) {
     let {Card} = this.constructor;
     if (!Card)
       throw new Error("Cards.List: no card found; needs a rendered <Card> (or subclass) element, \n"+
         "or a card(item) method to render a Card (or a subclass of Card), given an item...\n" +
         "or a static Card property pointing to a component that renders a Card/card subclass.");
 
-    return <Card key={singleItem.id} item={singleItem} />
+    const {totalSize="-1"} = this.props;
+
+    return <Card aria-setsize={totalSize} aria-posinset={i} role="listitem" key={singleItem.id} item={singleItem} />
   }
   empty() {
     return null;
@@ -159,7 +161,7 @@ Cards.List = class CardsList extends Component {
         if( i % pagesize == 0 && thisPage.length) {
           // flush the prior page
           // alert("flushing")
-          let pageComponents = pageCallback(thisPage);
+          let pageComponents = pageCallback(thisPage, pageNumber);
 
           results.push( pageLayoutChild.props.render({cards: pageComponents, pageNumber}) );
           thisPage = [];
@@ -174,20 +176,22 @@ Cards.List = class CardsList extends Component {
       return results;
     }
 
-    let cloner = (item) => {
+    let cloner = (item, i) => {
       let {props, type:ChildCard} = cardChild;
-      return <ChildCard key={item.id} {...{item, ...props}} />
+      return <ChildCard aria-setsize={totalSize} aria-posinset={i} role="listitem" key={item.id} {...{item, ...props}} />
+    }
+    let listItems = (items, p) => { return map(items,
+      (singleItem, pi) => {
+        const i = (p * (pagesize||0)) + pi;
+        return CardComponent ? <CardComponent aria-setsize={totalSize} aria-posinset={i} role="listitem" key={singleItem.id} item={singleItem} />
+          : cardChild ? cloner(singleItem, i)
+          : this.card(singleItem, i)
       }
-    let listItems = (items) => { return map(items,
-      (singleItem) =>
-        CardComponent ? <CardComponent key={singleItem.id} item={singleItem} />
-          : cardChild ? cloner(singleItem)
-          : this.card(singleItem)
     )};
 
     let outputPages;
     if (pageLayoutChild) outputPages = paginator(listItems)
-    else outputPages = listItems(items);
+    else outputPages = listItems(items, 0);
 
     // cardChild = cardChild.type;
     return [<div role="list" {...moreProps}>

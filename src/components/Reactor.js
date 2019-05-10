@@ -580,7 +580,7 @@ const Reactor = (componentClass) => {
       eventName = eventName.replace(/\u{ff3f}/u, ':');
       if (!this.events[eventName]) {
         if (this.isEventCatcher) {
-          const message = `${this.constructor.name}: <Subscribe ${eventName}>: no '${eventName}' event is <Publish>'d`;
+          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no ‹Publish '${eventName}'› event found`;
           console.warn(message);
 
           this._listenerRef.current.dispatchEvent(
@@ -667,9 +667,17 @@ const Reactor = (componentClass) => {
       }
     }
 
+    filterProps(props) {
+      if (super.filterProps)
+          return super.filterProps(props);
+
+      return props;
+    }
     render() {
       let {_reactorDidMount: mounted} = (this.state || {});
-      return <div ref={this._listenerRef} className={`reactor-for-${componentClassName}`}>
+
+      let props = this.filterProps(this.props);
+      return <div ref={this._listenerRef} className={`reactor-for-${componentClassName}`} {...props}>
         {mounted && super.render()}
       </div>
     }
@@ -719,7 +727,7 @@ Reactor.dispatchTo =
       // event = unk
     }
     const message = this.events && this.events[event.type] ?
-      `unhandled event '${event.type}' with no <Subscribe ${event.type}={handlerFunction} />\n` :
+      `unhandled event '${event.type}' with no ‹Subscribe ${event.type}={handlerFunction}›\n` :
       `unhandled event '${event.type}'.  Have you included an Actor that services this event?\n`+
         (isErrorAlready ? "" : "Add an 'error' event handler to catch errors for presentation in the UI.");
 
@@ -814,7 +822,7 @@ export class Action extends React.Component {
   }
 
   componentDidMount() {
-    let {children, id, capture, name, client="<unknown>", debug, ...handler} = this.props;
+    let {children, id, capture, name, client="‹unknown›", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
@@ -899,7 +907,7 @@ export class Publish extends React.Component {
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 0) {
-      throw new Error("<Publish event=\"eventName\" /> events should only have a single prop - the 'event' name. ('debug' prop is also allowed)\n");
+      throw new Error("‹Publish event=\"eventName\"› events should only have a single prop - the 'event' name. ('debug' prop is also allowed)\n");
     }
     Reactor.trigger(this._pubRef.current,
       Reactor.PublishEvent({name, debug})
@@ -951,13 +959,13 @@ export class Subscribe extends React.Component {
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("<Subscribe eventName={notifyFunction} /> events should only have a single prop - the eventName to subscribe. ('optional' and 'debug' props also allowed)\n");
+      throw new Error("‹Subscribe eventName={notifyFunction}› events should only have a single prop - the eventName to subscribe. ('optional' and 'debug' props also allowed)\n");
     }
     this.eventName = foundKeys[0];
     this.debug = debug;
     if (this.listenerFunc && this.listenerFunc !== handler[this.eventName]) {
       throw new Error(
-        `<Subscribe ${this.eventName} has changed event handlers, which is not supported. `+
+        `‹Subscribe ${this.eventName}› has changed event handlers, which is not supported. `+
         `... this can commonly be caused by doing ${this.eventName}={this.someHandler.bind(this)} on a component class.  A good fix can be to bind the function exactly once, perhaps in a constructor.`
       );
     }
