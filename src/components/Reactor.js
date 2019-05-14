@@ -98,6 +98,12 @@ const Listener = (componentClass) => {
       if (!(event instanceof Event)) {
         event = this.eventPrefix() + event;
       }
+      if (!this._listenerRef.current) {
+        if (event.type == "error") {
+          console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack)
+          return;
+        }
+      }
       return Reactor.trigger(this._listenerRef.current, event, detail);
     }
 
