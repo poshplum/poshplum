@@ -82,8 +82,8 @@ const Listener = (componentClass) => {
 
   const clazz = class Listener extends componentClass {
     listening = [];
-    constructor() {
-      super()
+    constructor(props) {
+      super(props)
       this._listenerRef = React.createRef();
     }
     get unlistenDelay() {
