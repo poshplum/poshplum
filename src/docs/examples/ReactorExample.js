@@ -55,9 +55,9 @@ class BookFetcher extends React.Component {
 
   load = async ({detail:{search,pageNumber}}) => {
     const result = await fetch(... search, pageNumber ...) {}
-    if (!result.ok) return this.trigger('fetchError', {result});
+    if (!result.ok) return this.notify('fetchError', {result});
     const json = await result.json()
-    this.trigger('dataUpdated', json);
+    this.notify('dataUpdated', json);
   }
   render() {
     return <div>

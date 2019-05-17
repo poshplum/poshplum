@@ -94,10 +94,14 @@ const Listener = (componentClass) => {
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler, capture);
     }
-    trigger(event, detail) {
-      if (!(event instanceof Event)) {
-        event = this.eventPrefix() + event;
+    notify(event, detail) {
+      if (event instanceof Event) {
+        throw new Error("notify() requires event name, not Event object");
       }
+      event = this.eventPrefix() + event;
+      return this.trigger(event, detail);
+    }
+    trigger(event,detail) {
       if (!this._listenerRef.current) {
         if (event.type == "error") {
           console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack)
@@ -294,10 +298,10 @@ export const Actor = (componentClass) => {
         console.error(`${this.constructor.name}: registerAction: registration event has no details... :(`);
         debugger
       }
-      let {name,debug} = registrationEvent.detail;
+      let {name,debug, bare} = registrationEvent.detail;
       let dbg = debugInt(debug);
       let moreDebug = (dbg > 1);
-      let newName = `${this.name()}:${name}`;
+      let newName = bare ? name : `${this.name()}:${name}`;
       logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`)
       if (dbg) console.log(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (moreDebug) {
@@ -561,8 +565,8 @@ const Reactor = (componentClass) => {
     registerActor(event) {
       let {name, actor, debug} = event.detail;
       logger(this.constructor.name, `registering actor '${name}'`)
-      if(debug) console.info(this.constructor.name, `registering actor '${name}'`);
-      if(this.actors[name]) {
+      if (debug) console.info(this.constructor.name, `registering actor '${name}'`);
+      if (this.actors[name]) {
         console.error(`Actor named '${name}' already registered`, this.actors[name])
       } else {
         this.actors[name] = actor;
@@ -820,7 +824,7 @@ export class Action extends React.Component {
   }
 
   render() {
-    let {children, capture, id, client, debug, ...handler} = this.props;
+    let {children, capture, bare, id, client, debug, ...handler} = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
@@ -828,12 +832,12 @@ export class Action extends React.Component {
   }
 
   componentDidMount() {
-    let {children, id, capture, name, client="‹unknown›", debug, ...handler} = this.props;
+    let {children, id, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id')\n"+
+      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', or 'bare')\n"+
         "If your action name can't be a prop, specify it with name=, and the action function with action="
       );
     }
@@ -849,7 +853,7 @@ export class Action extends React.Component {
     this.handler = handler;
     name = name || foundName;
 
-    let registerEvent = Reactor.RegisterAction({name, capture, handler, debug})
+    let registerEvent = Reactor.RegisterAction({name, bare, capture, handler, debug})
     Reactor.trigger(this._actionRef.current,
       registerEvent
     );

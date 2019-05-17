@@ -401,7 +401,7 @@ describe("Reactor", () => {
         class PublishesEvent extends React.Component {
           name() { return "published" }
           greet() {
-            this.trigger("greeting", {hi:"hi"})
+            this.notify("greeting", {hi:"hi"})
           }
           render() {
             return <Publish debug={1} event="greeting" />
@@ -539,6 +539,8 @@ describe("Reactor", () => {
     @Actor
     class ToyDataActor extends React.Component {
       create = Reactor.bindWithBreadcrumb(jest.fn(), this);
+      bareAction = Reactor.bindWithBreadcrumb(jest.fn(), this);
+
       getData() { return mockData }
       name() { return "members" };
       render() {
@@ -546,6 +548,7 @@ describe("Reactor", () => {
 
         return <div className="some-toyData-actor">
           <Action debug={0} create={this.create} />
+          <Action bare debug={0} bareAction={this.bareAction} />
           <Action debug={0} getData={this.getData} />
           {children}
         </div>
@@ -585,6 +588,14 @@ describe("Reactor", () => {
       Reactor.dispatchTo(eSrc, new CustomEvent("members:create", {bubbles:true, detail: {debug:0}}));
 
       expect(component.find(ToyDataActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
+    });
+
+    it("exposes 'bare' actions without adding actor name", () => {
+      const component = mkComponent();
+      let eSrc = component.find(".event-source").instance();
+      Reactor.dispatchTo(eSrc, new CustomEvent("bareAction", {bubbles:true, detail: {debug:0}}));
+
+      expect(component.find(ToyDataActor).instance().bareAction.targetFunction).toHaveBeenCalledTimes(1);
     });
 
     it("removes actors and their actions, when the actors unmount", async () => {
