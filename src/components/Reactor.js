@@ -716,7 +716,15 @@ Reactor.dispatchTo =
   }
 
 
+  if (!(event instanceof Event)) {
+    event = new CustomEvent(event, {bubbles, detail});
+  }
   if (!(target instanceof Element)) {
+    if (event.type == 'error') {
+      console.warn("Can't dispatch error (no DOM node target), so raising to console instaed")
+      console.error(event.detail)
+      return
+    }
     const msg = "Reactor.dispatchTo: missing required arg1 (must be a DOM node)"
     logger(msg)
     const error = new Error(msg);
@@ -724,9 +732,6 @@ Reactor.dispatchTo =
     throw error;
   }
 
-    if (!(event instanceof Event)) {
-    event = new CustomEvent(event, {bubbles, detail});
-  }
     target.dispatchEvent(event);
   if (event.handledBy && event.handledBy.length)
       return;
