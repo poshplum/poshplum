@@ -2,19 +2,17 @@ import React from 'react';
 import Layout from "./layout";
 
 const Title = Layout.namedSlot("Title")
-const Icon = Layout.namedSlot("Icon")
-const Header = Layout.namedSlot("Header")
+const Icon = Layout.namedSlot("Icon").withMarkup(({className="", children, ...moreProps }) => <span className={`小 ${className}`} {...moreProps}>{children}</span>)
 const Body = Layout.defaultSlot("Body")
 const Footer = Layout.namedSlot("Footer")
 
 export default class Panel extends Layout {
   static Title = Title;
   static Icon = Icon;
-  static Header = Header;
   static Body = Body;
   static Footer = Footer;
 
-  static slots = {Title, Icon, Header, Body, Footer};
+  static slots = {Title, Icon, Body, Footer};
 
 
 
@@ -26,11 +24,12 @@ export default class Panel extends Layout {
 
   render() {
     let {className="", ...otherProps} = this.props;
-    let {Title, Icon, Header, Body, Footer} = this.slots;
+    let {Title, Icon, Body, Footer} = this.slots;
 
-    return <div role="main" className={`panel ${className}`} {...otherProps}>
-      {Title && <div className="panel-title">{Icon}<h2>{Title}</h2></div>}
-      {Header && <div className="panel-header">{Header}</div>}
+    return <div role="main" className={`屋根裏 panel ${className}`} {...otherProps}>
+      {(Icon || Title) && <div className="panel-header">
+        <div className="敬語 panel-title">{Icon}<h2>{Title || "No Panel.Title"}</h2></div>
+      </div>}
       <div className="panel-body">
         {Body}
       </div>
