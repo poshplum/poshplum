@@ -698,9 +698,24 @@ const Reactor = (componentClass) => {
 };
 Reactor.dispatchTo =
   Reactor.trigger = function dispatchWithHandledDetection(
-    target, event, {bubbles=true,...detail}={},
+    target, event, detail,
     onUnhandled
-    ) {
+  ) {
+  let bubbles = true;
+  if ("function" == typeof(detail)) {
+    if (!(event instanceof Event)) throw new Error("missing object for event details in arg 3")
+
+    onUnhandled = detail;
+    detail = {}
+  } else {
+    if (!detail) detail = {};
+    if (detail.bubbles) {
+      bubbles = detail.bubbles
+      delete detail.bubbles
+    }
+  }
+
+
   if (!(target instanceof Element)) {
     const msg = "Reactor.dispatchTo: missing required arg1 (must be a DOM node)"
     logger(msg)
@@ -712,7 +727,7 @@ Reactor.dispatchTo =
     if (!(event instanceof Event)) {
     event = new CustomEvent(event, {bubbles, detail});
   }
-  target.dispatchEvent(event);
+    target.dispatchEvent(event);
   if (event.handledBy && event.handledBy.length)
       return;
   if (onUnhandled)
@@ -822,6 +837,13 @@ Reactor.ErrorEvent = Reactor.EventFactory(Reactor.Events.errorEvent);
 Reactor.elementInfo = elementInfo;
 
 export default Reactor;
+
+// 💼  🎢 🎆 🎡 ⚽ 🏐 🥅 🐣 🔪 🏹 🗳 ️🍥 🚽 🎀 🔌 🔬 💥 💣 ⛽ 🖼️ 🌠 🔨 🌟 ⚙️ 📷 ✋ 🖐️ ⛑️
+// 🗞️ ✂️ 📀 🗃 ️ 📚 ✈️ ▶️  ⏯️ ⏸️ ⏪ ⏩ ⏫ ⏬ 👮 🎥 🎬 📓 📏 🏎️ 🏁 📡 📞 📨 ✉️ 💌 📮 ♻️
+// 💨 ☂️ 🏖️ ☔ ☂️ 🌂 ❌ ✔️ ⏱️ 🚢 🤩 🌟 💦 💎 💺 ❄️ 🔍 💸 🚿 ⏰ ⌛ 🍅 🚚 😬 🤒 🐢 🎺 🔧
+// 🚗 🦃 🛠️ 🗜️ 🔭 🔱 👎 👍 🗣️ 💬 🤢 🤮 🍄 💏 💖 🕹️ 📽️ 🎮 🚀 🚕 📣 👰 🍃 🗺️ 🌍 🛡️ 🌪️ 🌈
+// 🛐 🙏  👩‍⚕️  🏆  🥇  👣 🤰 ⚠️ 🚧 🚸 👷 🌄  👵 👶 🍼 🕊️ ☮️ 🏃 ❗ 🍷 🌀 🤼 👯 👫 🐛 🌱
+// ☯️ ⚖️ 🎺🎸🥁🎹
 
 export class Action extends React.Component {
   constructor(props) {
