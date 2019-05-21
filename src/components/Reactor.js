@@ -157,8 +157,8 @@ const Listener = (componentClass) => {
           let [type,handler] = listener;
           if (!handler) return;
           if (!stdHandlers[type]) {
-            logger(`${this.constructor.name} unmounting (re?)Actor leaked '${type}' handler`)
-            console.warn(`${this.constructor.name} unmounting (re?)Actor leaked '${type}' handler`)
+            logger(`${this.constructor.name} removed remaining '${type}' listener`)
+            console.warn(`${this.constructor.name} removed remaining '${type}' listener`)
             if(dbg) console.warn(stack)
           }
 
