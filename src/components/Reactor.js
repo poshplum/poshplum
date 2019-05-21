@@ -721,6 +721,12 @@ Reactor.dispatchTo =
   throwUnhandled.bind(this)(event);
 
   function throwUnhandled(event) {
+    if (detail && detail.optional) {
+      const message = `unhandled event ${event.type} was optional, so no error event`
+      logger(message);
+      console.warn(message);
+      return;
+    }
     const isErrorAlready = event.type == "error"
     if (!isErrorAlready) {
       // console.error(event);
