@@ -453,7 +453,7 @@ const Reactor = (componentClass) => {
       event.stopPropagation();
     }
 
-    registerAction({debug, name, handler, capture, ...moreDetails}) {
+    registerAction({debug, name, asyncResult, handler, capture, ...moreDetails}) {
       const dbg = debugInt(debug);
       const moreDebug = (dbg > 1);
       logger(`${this.constructor.name} registering action '${name}'`)
@@ -480,6 +480,7 @@ const Reactor = (componentClass) => {
         console.warn("existing handler info: ", info);
         throw new Error(msg);
       }
+      debugger
       const wrappedHandler = this.listen(name, handler, capture);
       this.actions[name] = wrappedHandler;
     }
@@ -696,6 +697,19 @@ const Reactor = (componentClass) => {
   Object.defineProperty(clazz, 'name', { value: reactorName})
   return clazz;
 };
+Reactor.asyncAction = async function dispatchAsyncAction(target, eventName, detail={}) {
+  let event = new CustomEvent(eventName, {bubbles: true, detail});
+  let onComplete, reject;
+  let promise = new Promise(function(res, rej) {
+    onComplete = res;
+    reject = rej;
+  });
+  detail.onComplete = onComplete;
+  detail.reject = reject;
+  Reactor.dispatchTo(target, event, detail, () => {reject(new Error(`Unhandled async event '${eventName}'`))});
+
+  return promise;
+};
 Reactor.dispatchTo =
   Reactor.trigger = function dispatchWithHandledDetection(
     target, event, detail,
@@ -857,20 +871,20 @@ export class Action extends React.Component {
   }
 
   render() {
-    let {children, capture, bare, id, client, debug, ...handler} = this.props;
+    let {children, asyncResult, capture, bare, id, client, debug, ...handler} = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} className={`action action-${foundName}`} ref={this._actionRef} />;
+    return <div {...{id}} className={`action action-${foundName}${asyncResult && "action-async"}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
-    let {children, id, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
+    let {children, id, asyncResult, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', or 'bare')\n"+
+      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', 'asyncResult', or 'bare')\n"+
         "If your action name can't be a prop, specify it with name=, and the action function with action="
       );
     }
@@ -886,11 +900,24 @@ export class Action extends React.Component {
     this.handler = handler;
     name = name || foundName;
 
-    let registerEvent = Reactor.RegisterAction({name, bare, capture, handler, debug})
+    if (asyncResult) handler = this.wrappedHandler = this.wrappedHandler || this.wrapAsyncHandler(handler);
+
+    let registerEvent = Reactor.RegisterAction({name, asyncResult, bare, capture, handler, debug});
     Reactor.trigger(this._actionRef.current,
       registerEvent
     );
     this.fullName = registerEvent.detail.name;
+  }
+  wrapAsyncHandler(handler) {
+    return async (event) => {
+      const {reject, onComplete} = event.detail;
+
+      try {
+        onComplete(await handler(event))
+      } catch(e) {
+        reject(e)
+      }
+    }
   }
 
   componentWillUnmount() {

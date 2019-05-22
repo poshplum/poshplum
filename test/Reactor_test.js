@@ -554,12 +554,12 @@ describe("Reactor", () => {
         </div>
       }
     }
-    function mkComponent(...moreChildren) {
+    function mkComponent(children1, children2) {
       return mount(<MyReactor>
-        <div className="event-sink"><ToyDataActor /></div>
+        <div className="event-sink"><ToyDataActor>{children2}</ToyDataActor></div>
         <div className="event-source"></div>
 
-        {moreChildren}
+        {children1}
       </MyReactor>);
     }
 
@@ -589,6 +589,24 @@ describe("Reactor", () => {
 
       expect(component.find(ToyDataActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
     });
+
+    it("lets children trigger actions with async results using triggerAsync: allows cousin/uncle nodes to collaborate", async () => {
+      const expectedHi = "it's me";
+      const getSomething = jest.fn(({detail:{hi}}) => {
+        expect(hi).toBe(expectedHi);
+
+        return hi;
+      });
+      const component = mkComponent(null, <Action debug={1} asyncResult getSomething={getSomething}/>);
+      await delay(1);
+
+      let eSrc = component.find(".event-source").instance();
+      let result = await Reactor.asyncAction(eSrc, 'members:getSomething', {hi:expectedHi});
+      expect(result).toBe(expectedHi);
+
+      expect(getSomething).toHaveBeenCalledTimes(1);
+    });
+
 
     it("exposes 'bare' actions without adding actor name", () => {
       const component = mkComponent();
