@@ -16,10 +16,12 @@ export default class Layout extends Component {
   }
   static withMarkup(slot, RenderComponent) {
     let componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}>{children}</RenderComponent>
+    componentWithMarkup.raw = RenderComponent;
     componentWithMarkup.displayName = slot.displayName;
 
     if (slot.isDefault) componentWithMarkup.isDefault = slot.isDefault;
-    if (!RenderComponent.displayName) RenderComponent.displayName = `slotMarkup(${slot.displayName})`;
+    if (!RenderComponent.displayName) RenderComponent.displayName = `slot‹${slot.displayName}›`;
+
     if (slot.tagName) componentWithMarkup.tagName = slot.tagName;
 
     return componentWithMarkup;
