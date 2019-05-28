@@ -9,6 +9,8 @@ import flatten from "lodash-es/flatten";
 export default class Layout extends Component {
   static defaultSlot(name) {
     let slot = this.namedSlot(name);
+    slot.withTagName = (name) => {slot.tagName = name ; return slot};
+
     slot.isDefault = true;
     return slot;
   }
@@ -18,11 +20,14 @@ export default class Layout extends Component {
 
     if (slot.isDefault) componentWithMarkup.isDefault = slot.isDefault;
     if (!RenderComponent.displayName) RenderComponent.displayName = `slotMarkup(${slot.displayName})`;
+    if (slot.tagName) componentWithMarkup.tagName = slot.tagName;
 
     return componentWithMarkup;
   }
   static namedSlot(name) {
     let slot = ({children}) => [children];
+    slot.withTagName = (name) => {slot.tagName = name ; return slot};
+
     slot.displayName = name;
     slot.isPlain = true;
 
@@ -77,13 +82,16 @@ export default class Layout extends Component {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
 
         if (module.hot) {
-          let childName = child.type && child.type.displayName;
+          let childName = child.type && child.type.displayName || child.type;
           return (slotType.displayName === childName) //  ✓ works with react webpack hot loader
+        }
+        if (slotType.tagName && (slotType.tagName === child.type)) {
+          return true;
         }
         return (slotType === child.type)
       });
       let foundName;
-      if(!foundSlot) {
+      if (!foundSlot) {
         // console.log("slot: default", foundSlot, child)
         foundName = "default";
       } else {
@@ -113,6 +121,7 @@ export default class Layout extends Component {
           if (item.type === foundSlot ) return item.props.children;
           return item;
         });
+        if (foundSlot.tagName) return matchingChildren;
         return React.createElement(foundSlot, {children: matchingChildren});
       }
       if (foundContents.length == 1) return foundContents[0];
