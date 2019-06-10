@@ -1,6 +1,7 @@
 import withStateMachine from "../src/components/withStateMachine";
 import * as React from "react";
 import {mount} from "enzyme";
+import delay from "./helpers/delay";
 
 const documented = () => {};
 describe("component withStateMachine", () => {
@@ -26,6 +27,8 @@ describe("component withStateMachine", () => {
       // console.warn("allowing close? ", this.allowed)
       return !!this.allowed
     };
+    enteredDefaultState = jest.fn();
+    isOpening = jest.fn();
     didExpand = () => {};
     update() {
       const promise = new Promise((res) => {this.resolveRender = res});
@@ -44,12 +47,12 @@ describe("component withStateMachine", () => {
     render() {
       let {State} = this.constructor;
       return <div>
-        <State name="default" transitions={{
+        <State onEntry={this.enteredDefaultState} name="default" transitions={{
           "open": "opened",
           "expand": [null, "detail", this.didExpand]
         }} />
         <State name="detail" transitions={{"close": [this.canClose, "default"]}} />
-        <State name="opened" transitions={{"close": [this.canClose, "default"]}} />
+        <State name="opened" onEntry={this.isOpening} transitions={{"close": [this.canClose, "default"]}} />
       </div>
     }
   }
@@ -58,7 +61,11 @@ describe("component withStateMachine", () => {
     let component, instance;
     beforeEach(async () => {
       component = mount(<MyStateMachine/>);
+      await delay(2);
       instance = component.instance();
+    });
+    it("triggers default onEntry callback", async () => {
+      expect(instance.enteredDefaultState).toHaveBeenCalled()
     });
     it("extracts the State's found as children", async () => {
       expect(Object.keys(instance.states).length).toBe(3);
@@ -70,6 +77,12 @@ describe("component withStateMachine", () => {
 
     it("hasState(default) by default", async () => {
       expect(instance.hasState('default')).toBeTruthy();
+    });
+
+    it("triggers onEntry during transition to a non-default state", async () => {
+      expect(instance.isOpening).not.toHaveBeenCalled()
+      instance.transition("open");
+      expect(instance.isOpening).toHaveBeenCalled()
     });
 
     it("changes state when it transitions", async () => {

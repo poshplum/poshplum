@@ -29,6 +29,7 @@ const info = dbg('stateMachine');
 export class State extends React.Component {
   static propTypes = {
     name: PropTypes.string.isRequired,
+    onEntry: PropTypes.func,
     transitions: PropTypes.object,
     // items: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
     // itemRoute: PropTypes.func.isRequired
@@ -61,8 +62,10 @@ export const withStateMachine = (baseClass) => {
           name,
           transitions = [],
           path,
+          onEntry,
           children
         } = state.props;
+        states[name] = {onEntry, transitions, path, children};
       });
       if ((keys(states).length == 0) && (typeof(children) == "object") && children.props && children.props.children) {
         if (this.debugState)
@@ -89,6 +92,11 @@ export const withStateMachine = (baseClass) => {
         const {currentState="default"} = (this.state || {});
         const initialState = this.states[currentState]
         trace(`${dName}: `, {initialState});
+        if (initialState.onEntry) {
+          trace(`${dName}: -> onEntry`)
+          initialState.onEntry();
+          trace(`${dName}: <- onEntry`)
+        }
       }
     }
     mkTransition(name) {
@@ -180,6 +188,7 @@ export const withStateMachine = (baseClass) => {
           this.trigger("error", {error: e});
         }
       }
+      if (nextStateDef.onEntry) nextStateDef.onEntry();
 
       trace(`${dName}: <- transition '${name}'⭞`);
       info && console.groupEnd();
