@@ -93,9 +93,11 @@ export const withStateMachine = (baseClass) => {
         const initialState = this.states[currentState]
         trace(`${dName}: `, {initialState});
         if (initialState.onEntry) {
+          setTimeout( () => {
             trace(`${dName}: -> onEntry ${currentState}`)
             initialState.onEntry();
             trace(`${dName}: <- onEntry ${currentState}`)
+          }, 1)
         }
       }
     }
@@ -189,9 +191,11 @@ export const withStateMachine = (baseClass) => {
         }
       }
       if (nextStateDef.onEntry) {
+        setTimeout( () => {
           trace(`${dName}: ${nextState}   -> onEntry`)
           nextStateDef.onEntry();
           trace(`${dName}: ${nextState}   <- onEntry`)
+        }, 0)
       }
 
       trace(`${dName}: <- transition '${name}'⭞`);
