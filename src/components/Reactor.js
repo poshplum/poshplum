@@ -460,6 +460,14 @@ const Reactor = (componentClass) => {
       this.setState({_reactorDidMount: true});
       trace(`${reactorName}: <- didMount (self)`)
     }
+    shouldComponentUpdate(nextProps, nextState) {
+      if (nextState && nextState._reactorDidMount && ((!this.state) || (!this.state._reactorDidMount)) ) {
+        return true
+      }
+      if (super.shouldComponentUpdate) return super.shouldComponentUpdate(nextProps, nextState);
+      return true;
+    }
+
     get unlistenDelay() {
       return 100
     }
