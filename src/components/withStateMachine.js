@@ -93,9 +93,9 @@ export const withStateMachine = (baseClass) => {
         const initialState = this.states[currentState]
         trace(`${dName}: `, {initialState});
         if (initialState.onEntry) {
-          trace(`${dName}: -> onEntry`)
+          trace(`${dName}: -> onEntry ${currentState}`)
           initialState.onEntry();
-          trace(`${dName}: <- onEntry`)
+          trace(`${dName}: <- onEntry ${currentState}`)
         }
       }
     }
@@ -180,15 +180,19 @@ export const withStateMachine = (baseClass) => {
       this.setState({currentState: nextState});
       if (effectFn) {
         try {
-          trace(`${dName}: ${name}: -> effect callback`)
+          trace(`${dName}: ${name}:   -> effect callback`)
           effectFn();
-          trace(`${dName}: ${name}: <- effect callback`)
+          trace(`${dName}: ${name}:   <- effect callback`)
         } catch(e) {
-          trace(`${dName}: ${name}: <- error in effect callback`, e)
+          trace(`${dName}: ${name}:   <- error in effect callback`, e)
           this.trigger("error", {error: e});
         }
       }
-      if (nextStateDef.onEntry) nextStateDef.onEntry();
+      if (nextStateDef.onEntry) {
+        trace(`${dName}: ${nextState}   -> onEntry`)
+        nextStateDef.onEntry();
+        trace(`${dName}: ${nextState}   <- onEntry`)
+      }
 
       trace(`${dName}: <- transition '${name}'⭞`);
       info && console.groupEnd();
