@@ -45,7 +45,9 @@ import React from "react";
 import * as ReactDOM from "react-dom";
 import {inheritName} from "../helpers/ClassNames";
 import dbg from 'debug';
-const logger = dbg('reactor');
+const trace = dbg("trace:reactor");
+const logger = dbg('debug:reactor');
+const info = dbg('reactor');
 
 const elementInfo = (el) => {
   // debugger
@@ -123,7 +125,6 @@ const Listener = (componentClass) => {
     }
 
     componentDidMount() {
-      if (super.componentDidMount) super.componentDidMount();
 
       if (!this._listenerRef) {
         let msg = `${this.constructor.name}: requires this._listenerRef to be set in constructor.`;
@@ -137,6 +138,19 @@ const Listener = (componentClass) => {
         console.error(msg);
         throw new Error(msg)
       }
+    }
+    componentDidUpdate(prevProps, prevState) {
+      info(`${this.constructor.name} listener -> didUpdate`)
+      logger("... didUpdate: ", {prevState, prevProps, st:this.state, pr:this.props});
+
+      if ( ((!prevState) || (!prevState._reactorDidMount)) && this.state._reactorDidMount) {
+        info(`${this.constructor.name} wrapped componentDidMount - ----------     ---------------------      --------------------------`)
+        debugger
+        super.componentDidMount && super.componentDidMount();  // deferred notification to decorated Actor/Reactor of having been mounted
+      }
+      info(`${this.constructor.name} listener -> didUpdate (super)`)
+      if (super.componentDidUpdate) super.componentDidUpdate(prevProps, prevState)
+      info(`${this.constructor.name} listener <- didUpdate`)
     }
 
     componentWillUnmount() {
