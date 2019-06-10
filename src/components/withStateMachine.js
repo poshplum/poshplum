@@ -93,9 +93,9 @@ export const withStateMachine = (baseClass) => {
         const initialState = this.states[currentState]
         trace(`${dName}: `, {initialState});
         if (initialState.onEntry) {
-          trace(`${dName}: -> onEntry ${currentState}`)
-          initialState.onEntry();
-          trace(`${dName}: <- onEntry ${currentState}`)
+            trace(`${dName}: -> onEntry ${currentState}`)
+            initialState.onEntry();
+            trace(`${dName}: <- onEntry ${currentState}`)
         }
       }
     }
@@ -139,7 +139,7 @@ export const withStateMachine = (baseClass) => {
       trace(`${dName}: -> transition '${name}'⭞`)
 
       if (info.enabled) {
-        const msg = `${this.constructor.name}: '${name}'⭞ transition `;
+        const msg = `${this.constructor.name}:${this.props.item && this.props.item.id || ""} '${name}'⭞ transition `;
         console.group(msg)
         info(msg)
       }
@@ -163,10 +163,10 @@ export const withStateMachine = (baseClass) => {
       if (!nextStateDef)
         throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
 
-      if (this.debugState) {
-        console.warn(this.constructor.name, `'${name}'⭞`, currentState, "->", nextState, (predicate ? [`after verification via function '${predicate.name}'`, predicate] : "(immediate)"));
-        console.warn("...with stack trace", new Error("trace"));
-      }
+      info(`    ${currentState} -> ${nextState}`, (predicate ? [`after verification via function '${predicate.name}'`, predicate] : "(immediate)"));
+      debug("...with stack trace", new Error("trace"));
+
+
       if (predicate) {
         if (typeof(predicate) !== 'function')
           throw new Error(`${this.constructor.name}: INVALID predicate (${predicate}); function required.\n...in transition(${name}) from state '${currentState}'`);
@@ -189,9 +189,9 @@ export const withStateMachine = (baseClass) => {
         }
       }
       if (nextStateDef.onEntry) {
-        trace(`${dName}: ${nextState}   -> onEntry`)
-        nextStateDef.onEntry();
-        trace(`${dName}: ${nextState}   <- onEntry`)
+          trace(`${dName}: ${nextState}   -> onEntry`)
+          nextStateDef.onEntry();
+          trace(`${dName}: ${nextState}   <- onEntry`)
       }
 
       trace(`${dName}: <- transition '${name}'⭞`);
@@ -200,18 +200,20 @@ export const withStateMachine = (baseClass) => {
     render() {
       trace(`${dName}: -> render (super)`);
       let inner = super.render();
-
-      trace(`${dName}: -> render (self)`);
       let {children} = inner.props;
       let {name} = this.constructor;
 
       this.states = this.findStates(children);
+
       let {currentState} = this.state || {};
       let stateDefinition = this.states[currentState];
       let transitions = stateDefinition && stateDefinition.transitions;
+      let states = this.states;
 
-      info(this.constructor.name, `rendering: (currentState=${currentState || '(default)'})`, this.states);
-      debug(this.constructor.name, `transitions: `, transitions);
+      info(`${dName}: rendering`, {currentState})
+      info.enabled || trace(`${dName}: rendering`, {currentState})
+
+      debug(this.constructor.name, `rendering: `, {transitions,states});
 
       if (!keys(this.states).length) {
         console.warn("hot loading can't match states by subclass :(")

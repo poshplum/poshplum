@@ -142,17 +142,16 @@ const Listener = (componentClass) => {
       }
     }
     componentDidUpdate(prevProps, prevState) {
-      info(`${this.constructor.name} listener -> didUpdate`)
+      trace(`${this.constructor.name} listener -> didUpdate`)
       logger("... didUpdate: ", {prevState, prevProps, st:this.state, pr:this.props});
 
       if ( ((!prevState) || (!prevState._reactorDidMount)) && this.state._reactorDidMount) {
         info(`${this.constructor.name} wrapped componentDidMount - ----------     ---------------------      --------------------------`)
-        debugger
         super.componentDidMount && super.componentDidMount();  // deferred notification to decorated Actor/Reactor of having been mounted
       }
-      info(`${this.constructor.name} listener -> didUpdate (super)`)
+      trace(`${this.constructor.name} listener -> didUpdate (super)`)
       if (super.componentDidUpdate) super.componentDidUpdate(prevProps, prevState)
-      info(`${this.constructor.name} listener <- didUpdate`)
+      trace(`${this.constructor.name} listener <- didUpdate`)
     }
 
     componentWillUnmount() {
@@ -224,7 +223,7 @@ const Listener = (componentClass) => {
         const listenerFunction = (handler.targetFunction || handler).name;
         if (dbg) {
           const msg = `${reactor.constructor.name}: Event: ${type} - calling handler ${listenerTarget}.${listenerFunction}`;
-          logger(msg);
+          trace(msg);
 
           if (moreDebug) {
             console.log(msg, {
@@ -343,6 +342,8 @@ export const Actor = (componentClass) => {
 
     render() {
       let {_reactorDidMount: mounted} = (this.state || {});
+      trace(`${this.constructor.name}: actor rendering`);
+
       return <div className={`actor actor-for-${displayName}`} ref={this._listenerRef}>
         {mounted && super.render && super.render()}
       </div>;
@@ -636,7 +637,7 @@ const Reactor = (componentClass) => {
           );
           return true
         } else {
-          logger(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
+          logger(`${this.constructor.name}: unknown registerSubscriber request; passing to higher reactor`, event.detail);
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         }
         return false
@@ -723,8 +724,7 @@ const Reactor = (componentClass) => {
     }
     render() {
       let {_reactorDidMount: mounted} = (this.state || {});
-      trace(`${reactorName}: rendering`, {mounted});
-      debugger
+      trace(`${reactorName}: reactor rendering`, {mounted});
       let props = this.filterProps(this.props);
       return <div ref={this._listenerRef} className={`reactor-for-${componentClassName}`} {...props}>
         {mounted && super.render()}
