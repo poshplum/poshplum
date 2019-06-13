@@ -29,7 +29,7 @@ describe("component withStateMachine", () => {
     };
     enteredDefaultState = jest.fn();
     isOpening = jest.fn();
-    didExpand = () => {};
+    didExpand = jest.fn();
     update() {
       const promise = new Promise((res) => {this.resolveRender = res});
       this.setState({updated:1})
@@ -82,6 +82,7 @@ describe("component withStateMachine", () => {
     it("triggers onEntry during transition to a non-default state", async () => {
       expect(instance.isOpening).not.toHaveBeenCalled()
       instance.transition("open");
+      await delay(2);
       expect(instance.isOpening).toHaveBeenCalled()
     });
 
@@ -108,9 +109,9 @@ describe("component withStateMachine", () => {
     });
 
     it("triggers the effect function when specified", async () => {
-      instance.didExpand = jest.fn();
       await instance.update();
       instance.transition("expand");
+      await delay(2);
       expect(instance.didExpand).toHaveBeenCalled();
     });
   });

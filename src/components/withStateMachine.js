@@ -43,18 +43,21 @@ export class State extends React.Component {
 
 
 export const withStateMachine = (baseClass) => {
+  let baseName = baseClass.name;
   let dName = inheritName(baseClass,`FSM`);
-  debug(`creating stateMachine component ${dName}`)
+  debug(`creating stateMachine component ${dName}`);
   const enhancedBaseClass = class withStateMachine extends baseClass {
     constructor() {
       super();
       this._stateRef = React.createRef();
     }
     static State = State;
-    state = {currentState: "default"}
+    state = {currentState: "default"};
 
     findStates(children) {
-      trace(`${dName}: findStates (${children.length} children)`)
+      if (this.states) return this.states;
+
+      trace(`${baseName}: -> findStates(${children.length} children)`);
       let found = matchChildType("State", children, State);
       let states = {};
       map(found, (state) => {
@@ -67,14 +70,15 @@ export const withStateMachine = (baseClass) => {
         } = state.props;
         states[name] = {onEntry, transitions, path, children};
       });
-      if ((keys(states).length == 0) && (typeof(children) == "object") && children.props && children.props.children) {
+      if (0 === (keys(states).length) && (typeof(children) == "object") && children.props && children.props.children) {
         if (this.debugState)
-          debug(this.constructor.name +": single child found; finding states inside that child");
-        if (debug.enabled) debugger
+          trace(this.constructor.name +": single child found; finding states inside that child");
+        if (debug.enabled) debugger;
         return this.findStates(children.props.children);
       }
-      trace(`<- ${dName}: findStates`)
-      debug(`      <-`, states)
+      info(`created state machine ${baseName} with ${Object.keys(states).length} states`);
+      if (!info.enabled) trace(`${baseName}: <- findStates():`, Object.keys(states).length, "states");
+      debug(`      <-`, states);
       return states;
     }
     hasState(...names) {
@@ -82,30 +86,36 @@ export const withStateMachine = (baseClass) => {
       return find(names, (name) => name === currentState);
     }
     componentDidMount() {
-      trace(`${dName}: componentDidMount (super)`)
+      trace(`${baseName}: -> componentDidMount (super)`);
       if (super.componentDidMount) super.componentDidMount();
-      trace(`${dName}: componentDidMount (self)`)
+      trace(`${baseName}: <- componentDidMount (super)`);
+      trace(`${baseName}:    componentDidMount (self)`);
 
       if (!this.states) {
         console.warn("withStateMachine should always have states before it gets componentDidMount.")
       } else {
         const {currentState="default"} = (this.state || {});
-        const initialState = this.states[currentState]
-        trace(`${dName}: `, {initialState});
+        const initialState = this.states[currentState];
+        debug(`${baseName}: `, {initialState});
+        if (!initialState) {
+          this.trigger("error", {error: `${this.constructor.name}: state machine should have a 'default' state.`});
+          return;
+        }
         if (initialState.onEntry) {
           setTimeout( () => {
-            trace(`${dName}: -> onEntry ${currentState}`)
+            trace(`${baseName}: -> onEntry to ${currentState}`);
             initialState.onEntry();
-            trace(`${dName}: <- onEntry ${currentState}`)
+            trace(`${baseName}: <- onEntry to ${currentState}`);
           }, 1)
         }
+        trace(`${baseName}: <- componentDidMount (self)`)
+
       }
     }
     mkTransition(name) {
       if (!this._transitions) this._transitions = {};
 
       let displayName = `stateTransition‹${name}›`;
-      trace(`${dName}: mkTransition`, {displayName});
       // let {currentState="default"} = (this.state || {});
       // if (this.states) {
       //   let thisState = this.states[currentState];
@@ -123,6 +133,7 @@ export const withStateMachine = (baseClass) => {
       // }
 
       if (!this._transitions[name]) {
+        trace(`${baseName}: mkTransition(): +${displayName}⭞`);
         this._transitions[name] = {
           [displayName]: () => {
             return this.transition(name)
@@ -138,12 +149,12 @@ export const withStateMachine = (baseClass) => {
     }
     transition(name) {
       let {currentState="default"} = (this.state || {});
-      trace(`${dName}: -> transition '${name}'⭞`)
+      trace(`${baseName}: -> ${name}⭞ transition`);
 
       if (info.enabled) {
-        const msg = `${this.constructor.name}:${this.props.item && this.props.item.id || ""} '${name}'⭞ transition `;
+        const msg = `${baseName}: ${name}⭞  transition${this.props.item && ` (rec ${this.props.item.id})` || ""}`;
+        info(msg);
         console.group(msg)
-        info(msg)
       }
 
       let thisState = this.states[currentState];
@@ -152,20 +163,22 @@ export const withStateMachine = (baseClass) => {
       let predicate, effectFn;
       if (nextState instanceof Array) {
         [predicate=() => {
-          let e = new Error(`missing predicate definition for transition '${name}' from state '${currentState}'`)
+          let e = new Error(`missing predicate definition for transition '${name}' from state '${currentState}'`);
           e.name = "warning";
           console.warn(e);
         }, nextState, effectFn] = nextState;
       }
       if (!nextState)
-        throw new Error(`${this.constructor.name}: INVALID transition('${name}') from state '${currentState} (try ${goodTransitions.join(' | ')})}'`);
+        throw new Error(`${this.constructor.name}: INVALID transition('${name}') from state '${currentState}' (suggested: ${goodTransitions.join(',')})}`);
 
-      const nextStateDef = this.states[nextState]
+      const nextStateDef = this.states[nextState];
 
       if (!nextStateDef)
         throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
 
-      info(`    ${currentState} -> ${nextState}`, (predicate ? [`after verification via function '${predicate.name}'`, predicate] : "(immediate)"));
+      (info.enabled && info || trace)(`    ${currentState} -> ${predicate && (
+        (predicate.name || "‹unnamed predicate›")+ " ->"
+      ) || "" } ${nextState}`, predicate || "");
       debug("...with stack trace", new Error("trace"));
 
 
@@ -182,28 +195,29 @@ export const withStateMachine = (baseClass) => {
       this.setState({currentState: nextState});
       if (effectFn) {
         try {
-          trace(`${dName}: ${name}:   -> effect callback`)
+          trace(`${baseName}: -> ${name}⭞ effect callback`);
           effectFn();
-          trace(`${dName}: ${name}:   <- effect callback`)
+          trace(`${baseName}: <- ${name}⭞ effect callback`);
         } catch(e) {
-          trace(`${dName}: ${name}:   <- error in effect callback`, e)
+          trace(`${baseName}: <-!${name}⭞ error in effect callback`, e);
           this.trigger("error", {error: e});
         }
       }
       if (nextStateDef.onEntry) {
         setTimeout( () => {
-          trace(`${dName}: ${nextState}   -> onEntry`)
+          trace(`${baseName}: -> onEntry to '${nextState}'`);
           nextStateDef.onEntry();
-          trace(`${dName}: ${nextState}   <- onEntry`)
+          trace(`${baseName}: <- onEntry to '${nextState}'`);
         }, 0)
       }
 
-      trace(`${dName}: <- transition '${name}'⭞`);
-      info && console.groupEnd();
+      trace(`${baseName}: <- ${name}⭞ transition`);
+      info.enabled && console.groupEnd();
     }
     render() {
-      trace(`${dName}: -> render (super)`);
+      trace(`${baseName}: -> render (super)`);
       let inner = super.render();
+      trace(`${baseName}: <- render (super)`);
       let {children} = inner.props;
       let {name} = this.constructor;
 
@@ -214,13 +228,12 @@ export const withStateMachine = (baseClass) => {
       let transitions = stateDefinition && stateDefinition.transitions;
       let states = this.states;
 
-      info(`${dName}: rendering`, {currentState})
-      info.enabled || trace(`${dName}: rendering`, {currentState})
+      trace(`${baseName}: render (self) in state '${currentState || "‹none!›"}' (${transitions && Object.keys(transitions).length || "no"} transitions)`);
 
       debug(this.constructor.name, `rendering: `, {transitions,states});
 
       if (!keys(this.states).length) {
-        console.warn("hot loading can't match states by subclass :(")
+        console.warn("hot loading can't match states by subclass :( ");
         return <div ref={this._stateRef}>
           <div className="toast toast-error">Dev error: No <code>‹State›</code> components defined. <br/>... in {name}</div>
           <div className="toast toast-success">Get the State component with this pattern:&nbsp;
@@ -229,7 +242,7 @@ export const withStateMachine = (baseClass) => {
           {inner}
         </div>
       }
-      return <div className="stateMachine" ref={this._stateRef}>
+      return <div className={`stateMachine state-${currentState}`} ref={this._stateRef}>
         {transitions && Object.entries(transitions).map( ([transitionName, target]) => {
           let actionArgs = {
             [transitionName]: this.mkTransition(transitionName)
@@ -240,7 +253,7 @@ export const withStateMachine = (baseClass) => {
         {inner}
       </div>
     }
-  }
+  };
   Object.defineProperty(enhancedBaseClass, "name", {value: dName});
   return Reactor(enhancedBaseClass);
 };
