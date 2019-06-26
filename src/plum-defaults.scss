@@ -68,7 +68,12 @@ main {
   font-size: 92%;
   color: #aaa;
   font-style:italic;
-
+}
+.form-group > p:not(:last-child) {
+  margin-bottom: 0.1em;
+}
+.form-group > p:last-child {
+  margin-bottom: 0.5em;
 }
 
 p > .btn {
