@@ -55,8 +55,6 @@ export const withStateMachine = (baseClass) => {
     state = {currentState: "default"};
 
     findStates(children) {
-      if (this.states) return this.states;
-
       trace(`${baseName}: -> findStates(${children.length} children)`);
       let found = matchChildType("State", children, State);
       let states = {};
