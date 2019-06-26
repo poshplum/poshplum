@@ -348,6 +348,13 @@ export const Actor = (componentClass) => {
         {mounted && super.render && super.render()}
       </div>;
     }
+    shouldComponentUpdate(nextProps, nextState) {
+      if (nextState && nextState._reactorDidMount && ((!this.state) || (!this.state._reactorDidMount)) ) {
+        return true
+      }
+      if (super.shouldComponentUpdate) return super.shouldComponentUpdate(nextProps, nextState);
+      return true;
+    }
 
     componentDidMount() {
       let name = this.name();
