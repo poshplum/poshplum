@@ -115,9 +115,13 @@ p > .btn {
 }
 
 .屋根裏 {  // .panel
+  .頭, .panel-header {
+    padding:0.5em;
+  }
+
   .敬語 { // .panel-title
     border-bottom: 1px solid #ccc;
-    .小 {
+    .小簡 { // icon
       font-size:237%;
       display: inline-block;
       position:relative;
@@ -126,13 +130,15 @@ p > .btn {
       margin-bottom: -0.8em;
       float:left;
     }
-    .小 + h1, .小 + h2, .小 + h3, .小 + h4, .小 + h5 {
-      margin-top:-0.5em;
+    .小簡 ~ h1, .小簡 ~ h2, .小簡 ~ h3, .小簡 ~ h4, .小簡 ~ h5 {
+      &:not(:first-child) { margin-top:0; }
+      margin-top:0;
       margin-bottom: 0;
     }
     h1, h2, h3, h4, h5 {
       padding: 0;
     }
+    padding-bottom:0;
   }
 }
 
