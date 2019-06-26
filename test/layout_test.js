@@ -173,12 +173,11 @@ describe('Layout', () => {
         expect(foundDiv.text()).toMatch(expected2);
       });
 
-      it("also works with xxxSlot().withMarkup()", () => {
-        let expected = "some content";
-        let defaultContent = "good stuff";
-
-        let Formatted = Layout.namedSlot("Formatted").withMarkup(({...props}) => <span className="pretty">{props.children}</span>);
+      describe("xxxSLot().withMarkup()", () => {
         let DefaultSlot = Layout.defaultSlot("DefaultSlot").withMarkup(({children}) => <div className="default">{children}</div>);
+
+        let Formatted = Layout.namedSlot("Formatted")
+            .withMarkup(({...props}) => <span className="pretty">{props.children}</span>);
 
         class AnotherMarkupSlot extends Layout {
           static Formatted = Formatted;
@@ -189,24 +188,45 @@ describe('Layout', () => {
             let {Formatted, DefaultSlot} = this.slots
             return <div>
               <menu>{DefaultSlot}</menu>
-              <div>In some layout-like location, pre-formatted content will be injected:
+              <div>
+                <p>In some layout-like location, pre-formatted content will be injected:</p>
 
                 <div>{Formatted}</div>
               </div>
             </div>
           }
         }
+        it("also works", () => {
+          let expected = "some content";
+          let defaultContent = "good stuff";
 
 
-        const component = mount(
-          <AnotherMarkupSlot>
-            <Formatted>{expected}</Formatted>
-            {defaultContent}
-          </AnotherMarkupSlot>
-        );
-        let foundPretty = component.find("span.pretty");
-        expect(foundPretty.text()).toBe(expected)
-        expect(component.find("div.default").text()).toBe(defaultContent);
+
+          const component = mount(
+            <AnotherMarkupSlot>
+              <Formatted>{expected}</Formatted>
+              {defaultContent}
+            </AnotherMarkupSlot>
+          );
+          let foundPretty = component.find("span.pretty");
+          expect(foundPretty.text()).toBe(expected)
+          expect(component.find("div.default").text()).toBe(defaultContent);
+        });
+
+        it("renders multiple instances of a pretty slot with a single wrapper", async () => {
+          const component = mount(
+            <AnotherMarkupSlot>
+              <Formatted>One and </Formatted>
+              <Formatted>Two</Formatted>
+
+              Some default content
+            </AnotherMarkupSlot>
+          );
+          let foundPretty = component.find("span.pretty");
+          // console.warn(foundPretty.debug())
+          expect(foundPretty.length).toBe(1);
+          expect(foundPretty.text()).toBe("One and Two");
+        });
 
       });
     });

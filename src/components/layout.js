@@ -121,6 +121,13 @@ export default class Layout extends Component {
       if (foundContents.length > 1) {
         let matchingChildren = map(foundContents, (item) => {
           if (item.type === foundSlot ) return item.props.children;
+
+          if (module.hot) {
+            let childName = item.type && item.type.displayName || item.type;
+            if (foundSlot.displayName === childName) {  //  ✓ works with react webpack hot loader
+              return item.props.children
+            }
+          }
           return item;
         });
         if (foundSlot.tagName) return matchingChildren;
