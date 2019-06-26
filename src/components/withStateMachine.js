@@ -76,7 +76,9 @@ export const withStateMachine = (baseClass) => {
         if (debug.enabled) debugger;
         return this.findStates(children.props.children);
       }
-      info(`created state machine ${baseName} with ${Object.keys(states).length} states`);
+      if (!this.states) {
+        info(`created state machine ${baseName} with ${Object.keys(states).length} states`);
+      }
       if (!info.enabled) trace(`${baseName}: <- findStates():`, Object.keys(states).length, "states");
       debug(`      <-`, states);
       return states;
@@ -135,8 +137,9 @@ export const withStateMachine = (baseClass) => {
       if (!this._transitions[name]) {
         trace(`${baseName}: mkTransition(): +${displayName}⭞`);
         this._transitions[name] = {
-          [displayName]: () => {
+          [displayName]: (event) => {
             return this.transition(name)
+            // event.stopPropagation()
           }
         }[displayName];
       }
@@ -149,10 +152,12 @@ export const withStateMachine = (baseClass) => {
     }
     transition(name) {
       let {currentState="default"} = (this.state || {});
-      trace(`${baseName}: -> ${name}⭞ transition`);
+      this.transitionsUnderway = (this.transitionsUnderway || 0) + 1;
+      const tLevel = this.transitionsUnderway > 1 ? `@L${this.transitionsUnderway} ` : ""
+      trace(`${baseName}: ${tLevel}-> ${name}⭞ transition`);
 
       if (info.enabled) {
-        const msg = `${baseName}: ${name}⭞  transition${this.props.item && ` (rec ${this.props.item.id})` || ""}`;
+        const msg = `${baseName}: ${tLevel}${name}⭞  transition${this.props.item && ` (rec ${this.props.item.id})` || ""}`;
         info(msg);
         console.group(msg)
       }
@@ -176,7 +181,7 @@ export const withStateMachine = (baseClass) => {
       if (!nextStateDef)
         throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
 
-      (info.enabled && info || trace)(`    ${currentState} -> ${predicate && (
+      (info.enabled && info || trace)(`    ${tLevel}${currentState} -> ${predicate && (
         (predicate.name || "‹unnamed predicate›")+ " ->"
       ) || "" } ${nextState}`, predicate || "");
       debug("...with stack trace", new Error("trace"));
@@ -186,8 +191,9 @@ export const withStateMachine = (baseClass) => {
         if (typeof(predicate) !== 'function')
           throw new Error(`${this.constructor.name}: INVALID predicate (${predicate}); function required.\n...in transition(${name}) from state '${currentState}'`);
         if (predicate.call(this) === false) {
-          console.warn(`${this.constructor.name}: transition(${name}) from state '${currentState}' denied by predicate in state machine`);
+          console.warn(`${this.constructor.name}: ${tLevel}transition(${name}) from state '${currentState}' denied by predicate in state machine`);
           info.enabled && console.groupEnd();
+          this.transitionsUnderway = this.transitionsUnderway - 1;
           return false
         }
       }
@@ -195,24 +201,25 @@ export const withStateMachine = (baseClass) => {
       this.setState({currentState: nextState});
       if (effectFn) {
         try {
-          trace(`${baseName}: -> ${name}⭞ effect callback`);
+          trace(`${baseName}: ${tLevel}-> ${name}⭞ effect callback`);
           effectFn();
-          trace(`${baseName}: <- ${name}⭞ effect callback`);
+          trace(`${baseName}: ${tLevel}<- ${name}⭞ effect callback`);
         } catch(e) {
-          trace(`${baseName}: <-!${name}⭞ error in effect callback`, e);
+          trace(`${baseName}: ${tLevel}<-!${name}⭞ error in effect callback`, e);
           this.trigger("error", {error: e});
         }
       }
       if (nextStateDef.onEntry) {
         setTimeout( () => {
-          trace(`${baseName}: -> onEntry to '${nextState}'`);
+          trace(`${baseName}: ${tLevel}-> onEntry to '${nextState}'`);
           nextStateDef.onEntry();
-          trace(`${baseName}: <- onEntry to '${nextState}'`);
+          trace(`${baseName}: ${tLevel}<- onEntry to '${nextState}'`);
         }, 0)
       }
 
-      trace(`${baseName}: <- ${name}⭞ transition`);
+      trace(`${baseName}: ${tLevel}<- ${name}⭞ transition`);
       info.enabled && console.groupEnd();
+      this.transitionsUnderway = this.transitionsUnderway - 1;
     }
     render() {
       trace(`${baseName}: -> render (super)`);
