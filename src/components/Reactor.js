@@ -406,9 +406,9 @@ const Reactor = (componentClass) => {
   trace(`Reactor creating branch+leaf subclass ${reactorName}`)
   const clazz = class ReactorInstance extends listenerClass {
     // registerActionEvent = Reactor.bindWithBreadcrumb(this.registerActionEvent, this);
-    constructor() {
+    constructor(props) {
       trace(`${reactorName}: -> constructor(super)`)
-      super();
+      super(props);
       trace(`${reactorName}: -> constructor(self)`)
       this.Name = reactorName;
 
@@ -784,7 +784,7 @@ Reactor.dispatchTo =
       console.error(event.detail)
       return
     }
-    const msg = "Reactor.dispatchTo: missing required arg1 (must be a DOM node)"
+    const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node)`
     logger(msg)
     const error = new Error(msg);
     console.warn(error);
@@ -920,7 +920,7 @@ export class Action extends React.Component {
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} className={`action action-${foundName}${asyncResult && " action-async"}`} ref={this._actionRef} />;
+    return <div {...{id}} className={`action action-${foundName}${asyncResult && " action-async" || ""}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
@@ -958,7 +958,9 @@ export class Action extends React.Component {
       const {reject, onComplete} = event.detail;
 
       try {
-        onComplete(await handler(event))
+        const oneAttempt = await handler(event);
+        if ("undefined" === typeof oneAttempt) return;
+        onComplete(oneAttempt)
       } catch(e) {
         reject(e)
       }
