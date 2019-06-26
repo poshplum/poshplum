@@ -141,14 +141,17 @@ p > .btn {
   display: inline-block;
 }
 .card {
+  --handleWidth: 4px;
+  --handleWidthSelected: 7px;
+  --fixedLeftPad: 2px;
   margin-left: 2px;
   margin-right: 0.5rem;
-  padding-left: 5px;
+  padding-left: calc(var(--fixedLeftPad) + var(--handleWidthSelected) - var(--handleWidth) );  // 5px;
   margin-bottom: 2px;
 
   & + .card:last-of-type { margin-bottom: 0.5em }
 
-  border-left: 4px solid #ccc;
+  border-left: var(--handleWidth) solid #ccc;
   box-shadow: 2px 2px 0px #aaa, 4px 4px 0px #ccc;
 
   //&:last-of-type { margin-bottom: 0.5em }
@@ -156,17 +159,22 @@ p > .btn {
   p:last-child { margin-bottom: 0; }
 
   &.compact {
-    margin-bottom: 0;
+    --handleWidth: 2px;
+    --handleWidthSelected:5px;
+    margin-bottom: 1px;
     margin-right: 0;
 
     .card-body {
-      padding: 0 0.33em 0 0 ;
+      padding: 0.33em;
+      &:last-child { padding: 0.33em; }
     }
   }
-
+  .card-body {
+    padding: 0.5em;
+  }
   &:active:hover, &.active, &.focus-within {
-    border-left: 7px solid #6060aa;
-    padding-left: 2px;
+    border-left: var(--handleWidthSelected) solid #6060aa;
+    padding-left: var(--fixedLeftPad);
   }
 
   &.active {
@@ -174,8 +182,8 @@ p > .btn {
     border-bottom: 1px solid #7979c7;
   }
   &:not(:active):not(.active):not(.focus-within):hover {
-    border-left: 7px solid #7681ff;
-    padding-left: 2px;
+    border-left: var(--handleWidthSelected) solid #7681ff;
+    padding-left: var(--fixedLeftPad);
     box-shadow: 2px 2px 0px #aad, 4px 4px 0px #ccf;
   }
   h1, h2, h3, h4, h5, h6 {
