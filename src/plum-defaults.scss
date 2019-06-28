@@ -129,6 +129,7 @@ p > .btn {
       left: -0.25em;
       margin-bottom: -0.8em;
       float:left;
+      text-shadow: rgba(60,60,60,0.44) -1px -3px 2px;
     }
     .小簡 ~ h1, .小簡 ~ h2, .小簡 ~ h3, .小簡 ~ h4, .小簡 ~ h5 {
       &:not(:first-child) { margin-top:0; }
