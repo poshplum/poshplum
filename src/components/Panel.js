@@ -30,7 +30,7 @@ export default class Panel extends Layout {
   static slots = {Title, Icon, HeaderRight, Body, Footer};
 
   componentDidMount() {
-    let input = this.node.current.querySelector('input[type="text"]');
+    let input = this.node.current.querySelector('input[type="text"]:not([readonly])');
     if (input) input.focus();
 
     setTimeout(() => {
