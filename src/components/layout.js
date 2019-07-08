@@ -10,6 +10,7 @@ export default class Layout extends Component {
   static defaultSlot(name) {
     let slot = this.namedSlot(name);
     slot.withTagName = (name) => {slot.tagName = name ; return slot};
+    slot.multiple = () => { slot.isMultiple = true; return slot };
 
     slot.isDefault = true;
     return slot;
@@ -29,6 +30,7 @@ export default class Layout extends Component {
   static namedSlot(name) {
     let slot = ({children}) => [children];
     slot.withTagName = (name) => {slot.tagName = name ; return slot};
+    slot.multiple = () => { slot.isMultiple = true; return slot };
 
     slot.displayName = name;
     slot.isPlain = true;
@@ -78,7 +80,8 @@ export default class Layout extends Component {
     let content = groupBy(children, (child) => {
       if (!child) return undefined;
 
-      if(this.debug) console.log("child:", child, child.type, child.type && child.type.displayName);
+      if(this.debug)
+          console.log("child:", child, child.type, child.type && child.type.displayName);
 
       let foundSlot = find(slots,(slotType, key) => {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
@@ -117,8 +120,20 @@ export default class Layout extends Component {
     if (this.debug) console.log({children, content});
     content = mapValues(content, (foundContents,key) => {
       let foundSlot = slots[key];
+      if (foundSlot && foundSlot.isMultiple) {
+        console.log("returning multiple for slot", key, foundContents);
+        debugger
+        return foundContents;
+      }
+
+      if (!foundSlot) {
+        console.warn("no slot type found:", {key, foundSlot, foundContents});
+        return null
+      }
+
       // debugger
       if (foundContents.length > 1) {
+        // coalesces slots having multiple instances to be a single instance with multiple children
         let matchingChildren = map(foundContents, (item) => {
           if (item.type === foundSlot ) return item.props.children;
 

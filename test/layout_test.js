@@ -121,6 +121,32 @@ describe('Layout', () => {
         expect(foundBody.find(".second").text()).toMatch(expected2);
       });
     });
+    describe("slots with multiple() option", () => {
+      const OptionsSlot = Layout.namedSlot("option").withTagName("option")
+      const Label = Layout.defaultSlot("Label")
+      const SelectLayout = class SelectLayout extends Layout {
+        static option = OptionsSlot;
+        static Label = Label
+        static slots = {option:OptionsSlot, Label};
+        render() {
+          let {Label, option:options} = this.slots
+          return <div>
+            <div>Label</div>
+            <select>{options}</select>
+          </div>
+        }
+      };
+      it("renders multiple element instances into the slot", async () => {
+        const component = mount(<SelectLayout>
+          <option value="one">1</option>
+          <option>2</option>
+          <option>3</option>
+        </SelectLayout>);
+        console.warn(component.debug())
+
+        expect(component.find("option").length).toBe(3);
+      });
+    });
 
     describe('Fancy slots (w/ markup)', () => {
       class PrettySlot extends React.Component {
