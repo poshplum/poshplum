@@ -82,15 +82,15 @@ const stdHandlers = {
 const Listener = (componentClass) => {
   const componentClassName = componentClass.name;
   let displayName = inheritName(componentClass, "👂");
-  trace(`listener creating subclass ${displayName}`)
+  trace(`listener creating subclass ${displayName}`);
   const clazz = class Listener extends componentClass {
     listening = [];
     constructor(props) {
-      super(props)
+      super(props);
       this._listenerRef = React.createRef();
     }
     get unlistenDelay() {
-      throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups")
+      throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups");
     }
     listen(eventName, handler, capture) {
       logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
@@ -104,14 +104,14 @@ const Listener = (componentClass) => {
       event = this.eventPrefix() + event;
       return this.trigger(event, detail);
     }
-    trigger(event,detail) {
+    trigger(event,detail, onUnhandled) {
       if (!this._listenerRef.current) {
         if (event.type == "error") {
-          console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack)
+          console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
           return;
         }
       }
-      return Reactor.trigger(this._listenerRef.current, event, detail);
+      return Reactor.trigger(this._listenerRef.current, event, detail, onUnhandled);
     }
 
     _listen(eventName, handler, capture) {
@@ -119,61 +119,62 @@ const Listener = (componentClass) => {
       // console.warn("_listen: ", eventName, handler);
       const wrappedHandler = this._wrapHandler(handler);
       const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler, {capture});
-      // console.log(listening);
+      trace("listening", {eventName}, "with handler:", handler, "(NOTE: listener applied additional wrapper)");
       listening.push([eventName, wrappedHandler]);
       return wrappedHandler
       // console.log(listening);
     }
 
     componentDidMount() {
-      trace("listener -> didMount")
+      trace("listener -> didMount");
 
       if (!this._listenerRef) {
         let msg = `${this.constructor.name}: requires this._listenerRef to be set in constructor.`;
-        logger(msg)
+        logger(msg);
         console.error(msg);
         throw new Error(msg)
       }
       if (!this._listenerRef.current) {
         let msg = `${this.constructor.name}: requires this._listenerRef.current to be set with ref={this._listenerRef}`;
-        logger(msg)
+        logger(msg);
         console.error(msg);
         throw new Error(msg)
       }
     }
     componentDidUpdate(prevProps, prevState) {
-      trace(`${this.constructor.name} listener -> didUpdate`)
+      trace(`${this.constructor.name} listener -> didUpdate`);
       logger("... didUpdate: ", {prevState, prevProps, st:this.state, pr:this.props});
 
       if ( ((!prevState) || (!prevState._reactorDidMount)) && this.state._reactorDidMount) {
-        info(`${this.constructor.name} wrapped componentDidMount - ----------     ---------------------      --------------------------`)
+        trace(`-> ${this.constructor.name} wrapped componentDidMount `);
         super.componentDidMount && super.componentDidMount();  // deferred notification to decorated Actor/Reactor of having been mounted
+        trace(`<- ${this.constructor.name} wrapped componentDidMount `)
       }
-      trace(`${this.constructor.name} listener -> didUpdate (super)`)
-      if (super.componentDidUpdate) super.componentDidUpdate(prevProps, prevState)
-      trace(`${this.constructor.name} listener <- didUpdate`)
+      trace(`${this.constructor.name} listener -> didUpdate (super)`);
+      if (super.componentDidUpdate) super.componentDidUpdate(prevProps, prevState);
+      trace(`${this.constructor.name} listener <- didUpdate`);
     }
 
     componentWillUnmount() {
       if (super.componentWillUnmount) super.componentWillUnmount();
       let {debug} = this.props;
       const dbg = debugInt(debug);
-      trace(`${this.constructor.name}: unmounting and deferred unlistening all...`)
+      trace(`${this.constructor.name}: unmounting and deferred unlistening all...`);
       if (dbg) {
-        console.log(`${this.constructor.name}: unmounting and deferred unlistening all...`)
+        console.log(`${this.constructor.name}: unmounting and deferred unlistening all...`);
       }
       let el = this._listenerRef.current;
       const stack = new Error("Backtrace");
 
       setTimeout(() => {
-        trace(`${this.constructor.name} deferred unlisten running now`)
-        if (dbg) console.warn(`${this.constructor.name} deferred unlisten running now`)
+        trace(`${this.constructor.name} deferred unlisten running now`);
+        if (dbg) console.warn(`${this.constructor.name} deferred unlisten running now`);
         this.listening.forEach((listener) => {
           let [type,handler] = listener;
           if (!handler) return;
           if (!stdHandlers[type]) {
-            console.warn(`${this.constructor.name} removed remaining '${type}' listener`)
-            if(dbg) console.warn(stack)
+            console.warn(`${this.constructor.name} removed remaining '${type}' listener`);
+            if(dbg) console.warn(stack);
           }
 
           this.unlisten(listener, el);
@@ -193,7 +194,7 @@ const Listener = (componentClass) => {
       } else if (foundListening[1] !== handler) {
         console.warn(`listener ${type} handler mismatch`);
       }
-      if (!handler) return
+      if (!handler) return;
       if (!el) throw new Error(`no el to unlisten for ${type}` );
 
       el.removeEventListener(type, handler);
@@ -249,7 +250,7 @@ const Listener = (componentClass) => {
           result = wrappedHandler.call(this, e); // retain event's `this`
         } catch(error) {
           console.error(error);
-          logger(error)
+          logger(error);
           throw(error)
         }
         return result;
@@ -258,7 +259,7 @@ const Listener = (componentClass) => {
       return tryEventHandler
     }
   }
-  Object.defineProperty(clazz, "name", {value: displayName})
+  Object.defineProperty(clazz, "name", {value: displayName});
   return clazz;
 };
 
@@ -280,7 +281,7 @@ export const Actor = (componentClass) => {
 
     constructor(props) {
       super(props);
-      trace(`${displayName}: +Actor`)
+      trace(`${displayName}: +Actor`);
       this._actorRef = React.createRef();
       this.addActorNameToRegisteredAction = Reactor.bindWithBreadcrumb(this.addActorNameToRegisteredAction, this);
       this.registerActor = Reactor.bindWithBreadcrumb(this.registerActor, this);
@@ -304,13 +305,13 @@ export const Actor = (componentClass) => {
     removePublishedEvent(event) {   // doesn't handle the event; augments it with actor name
       let {name, actor, debug} = event.detail;
       let newName = `${this.name()}:${name}`;
-      trace("unregistering ‹Publish›ed event", newName)
+      trace("unregistering ‹Publish›ed event", newName);
       event.detail.name = newName;
     }
 
     addActorNameToRegisteredAction(registrationEvent) {
       if(!registrationEvent.detail) {
-        logger(`${this.constructor.name}: registerAction: registration event has no details... :(`)
+        logger(`${this.constructor.name}: registerAction: registration event has no details... :(`);
         console.error(`${this.constructor.name}: registerAction: registration event has no details... :(`);
         debugger
       }
@@ -318,7 +319,7 @@ export const Actor = (componentClass) => {
       let dbg = debugInt(debug);
       let moreDebug = (dbg > 1);
       let newName = bare ? name : `${this.name()}:${name}`;
-      logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`)
+      logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (dbg) console.log(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (moreDebug) {
         console.log(registrationEvent);
@@ -333,7 +334,7 @@ export const Actor = (componentClass) => {
     listen(eventName, handler) {
       let {debug} = this.props;
       let dbg = debugInt(debug);
-      trace(`${this.constructor.name}: listening to ${eventName}`)
+      trace(`${this.constructor.name}: listening to ${eventName}`);
       if (dbg) {
         console.log(`${this.constructor.name}: listening to ${eventName}`);
       }
@@ -350,7 +351,7 @@ export const Actor = (componentClass) => {
     }
     shouldComponentUpdate(nextProps, nextState) {
       if (nextState && nextState._reactorDidMount && ((!this.state) || (!this.state._reactorDidMount)) ) {
-        return true
+        return true;
       }
       if (super.shouldComponentUpdate) return super.shouldComponentUpdate(nextProps, nextState);
       return true;
@@ -364,7 +365,7 @@ export const Actor = (componentClass) => {
       let {debug} = this.props;
 
       let dbg = debugInt(debug);
-      logger(`${this.constructor.name} didMount`)
+      logger(`${this.constructor.name} didMount`);
       if (dbg) {
         console.log(`${this.constructor.name} didMount`);
       }
@@ -378,14 +379,14 @@ export const Actor = (componentClass) => {
       );
 
       this.setState({_reactorDidMount: true});
-      trace(`${displayName}: ${name} <- didMount`)
+      trace(`${displayName}: ${name} <- didMount`);
     }
 
     componentWillUnmount() {
       if (super.componentWillUnmount) super.componentWillUnmount();
 
       let name = this.name();
-      trace(`${displayName}: Actor unmounting:`, name)
+      trace(`${displayName}: Actor unmounting:`, name);
       Reactor.trigger(this._listenerRef.current,
         Reactor.RemoveActor({name})
       );
@@ -403,13 +404,13 @@ const Reactor = (componentClass) => {
   const listenerClass = Listener(componentClass);
   const componentClassName = componentClass.name;
   const reactorName = inheritName(componentClass, "Rx");
-  trace(`Reactor creating branch+leaf subclass ${reactorName}`)
+  trace(`Reactor creating branch+leaf subclass ${reactorName}`);
   const clazz = class ReactorInstance extends listenerClass {
     // registerActionEvent = Reactor.bindWithBreadcrumb(this.registerActionEvent, this);
     constructor(props) {
-      trace(`${reactorName}: -> constructor(super)`)
+      trace(`${reactorName}: -> constructor(super)`);
       super(props);
-      trace(`${reactorName}: -> constructor(self)`)
+      trace(`${reactorName}: -> constructor(self)`);
       this.Name = reactorName;
 
       this.reactorProbe = Reactor.bindWithBreadcrumb(this.reactorProbe, this);
@@ -432,7 +433,7 @@ const Reactor = (componentClass) => {
       };  // known direct events
       this.actors = {};  // registered actors
       this.registeredSubscribers = {}; // registered listening agents
-      trace(`${reactorName}: <- constructors`)
+      trace(`${reactorName}: <- constructors`);
     }
 
     componentDidMount() {
@@ -441,10 +442,10 @@ const Reactor = (componentClass) => {
       // class's componentDidMount() until state._reactorDidMount is changed
       // to true, which aligns with the timing of that class's first call
       // to render().
-      trace(`${reactorName}: -> mounting(super)`)
+      trace(`${reactorName}: -> mounting(super)`);
 
       if (super.componentDidMount) super.componentDidMount();
-      trace(`${reactorName}: -> mounting(self)`)
+      trace(`${reactorName}: -> mounting(self)`);
 
       this.el = this._listenerRef.current;
       this.registerPublishedEvent({name:"error", target: this});
@@ -463,7 +464,7 @@ const Reactor = (componentClass) => {
 
       this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber);
       this.listen(Reactor.Events.removeSubscriber, this.removeSubscriberEvent);
-      trace(`${reactorName}: +didMount flag`)
+      trace(`${reactorName}: +didMount flag`);
 
       this.setState({_reactorDidMount: true});
       trace(`${reactorName}: <- didMount (self)`)
@@ -482,18 +483,18 @@ const Reactor = (componentClass) => {
 
     listen(eventName, handler, capture) { // satisfy listener
       let wrappedHandler = this._listen(eventName, handler, capture);
-      trace(`${reactorName}: +listen ${eventName}`)
+      trace(`${reactorName}: +listen ${eventName}`);
 
-      logger("+listen ", eventName, handler, {t:{t:this}}, this.actions)
+      logger("+listen ", eventName, handler, {t:{t:this}}, this.actions);
       return wrappedHandler;
     }
 
 
     reactorProbe(event) {
       let {onReactor} = event.detail;
-      trace(`${reactorName}: responding to reactorProbe`)
+      trace(`${reactorName}: responding to reactorProbe`);
       if (!onReactor) {
-        this.trigger(Reactor.ErrorEvent({error: "reactorProbe requires an onReactor callback in the event detail"}))
+        this.trigger(Reactor.ErrorEvent({error: "reactorProbe requires an onReactor callback in the event detail"}));
         return;
       }
       onReactor(this);
@@ -506,7 +507,7 @@ const Reactor = (componentClass) => {
     }
 
     registerAction({debug, name, asyncResult, handler, capture, ...moreDetails}) {
-      trace(`${reactorName}: +action ${name}`)
+      trace(`${reactorName}: +action ${name}`);
       logger("...", moreDetails, `handler=${handler.name}`, handler);
 
       const existingHandler = this.actions[name];
@@ -531,7 +532,7 @@ const Reactor = (componentClass) => {
 
     removeAction(event) {
       const {debug, name, handler, ...moreDetails} = event.detail;
-      trace(`${reactorName}: -action ${name}`)
+      trace(`${reactorName}: -action ${name}`);
       if(debug) console.log(`${this.constructor.name}: removing action:`, event.detail);
       // debugger
 
@@ -549,7 +550,7 @@ const Reactor = (componentClass) => {
     }
     registerPublishedEventEvent(event) {
       const {target, detail:{name, debug, actor}} = event;
-      this.registerPublishedEvent({name,debug, target, actor})
+      this.registerPublishedEvent({name,debug, target, actor});
 
       event.stopPropagation();
     }
@@ -560,14 +561,14 @@ const Reactor = (componentClass) => {
 
       if (debug) console.warn(message);
       if (this.events[name]) {
-        logger(`Event '${name}' already registered by`, this.events[name])
+        logger(`Event '${name}' already registered by`, this.events[name]);
         console.error(`Event '${name}' already registered by`, this.events[name]);
       } else {
         this.events[name] = target;
 
         let subscriberFanout = this.registeredSubscribers[name] = {
           fn: (event) => {
-            logger(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`)
+            logger(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
             if (debug) console.warn(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
             // if (debug) console.warn(listenerFanout.listeners);
             let anyHandled = null;
@@ -593,7 +594,7 @@ const Reactor = (componentClass) => {
       let {name, actor, debug} = event.detail;
       console.error("test me");
       // !!! check for registeredListeners to this event, issue a orphanedListener event
-      const subscriberFanout = this.registeredSubscribers[name]
+      const subscriberFanout = this.registeredSubscribers[name];
       const foundSubscribers = subscriberFanout.subscribers.length;
       if (foundSubscribers) {
         console.error(`removing published event with ${foundSubscribers} orphaned subscribers`);
@@ -610,10 +611,10 @@ const Reactor = (componentClass) => {
 
     registerActor(event) {
       let {name, actor, debug} = event.detail;
-      trace(this.constructor.name, `registering actor '${name}'`)
+      trace(this.constructor.name, `registering actor '${name}'`);
       if (debug) console.info(this.constructor.name, `registering actor '${name}'`);
       if (this.actors[name]) {
-        console.error(`Actor named '${name}' already registered`, this.actors[name])
+        console.error(`Actor named '${name}' already registered`, this.actors[name]);
       } else {
         this.actors[name] = actor;
       }
@@ -623,7 +624,7 @@ const Reactor = (componentClass) => {
     removeActor(event) {
       let {name} = event.detail;
       if(this.actors[name]) {
-        delete this.actors[name]
+        delete this.actors[name];
         event.stopPropagation();
       } else {
         console.error(`ignoring removeActor event for name '${name}' (not registered)`)
@@ -653,7 +654,7 @@ const Reactor = (componentClass) => {
         if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, {eventName, debug, listener});
       }
       event.stopPropagation();
-      logger(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"))
+      logger(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
       if (debug > 1) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       // setTimeout(() => {
@@ -709,7 +710,7 @@ const Reactor = (componentClass) => {
 
 
       if (before === after) {
-        logger(`${this.constructor.name}: no subscribers removed for ${eventName}`)
+        logger(`${this.constructor.name}: no subscribers removed for ${eventName}`);
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
       } else {
         logger(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
@@ -739,7 +740,7 @@ const Reactor = (componentClass) => {
     }
   }
   Object.defineProperty(clazz, reactorTag, { value: true });
-  Object.defineProperty(clazz, 'name', { value: reactorName})
+  Object.defineProperty(clazz, 'name', { value: reactorName});
   return clazz;
 };
 Reactor.asyncAction = async function dispatchAsyncAction(target, eventName, detail={}) {
@@ -762,15 +763,15 @@ Reactor.dispatchTo =
   ) {
   let bubbles = true;
   if ("function" == typeof(detail)) {
-    if (!(event instanceof Event)) throw new Error("missing object for event details in arg 3")
+    if (!(event instanceof Event)) throw new Error("missing object for event details in arg 3");
 
     onUnhandled = detail;
     detail = {}
   } else {
     if (!detail) detail = {};
     if (detail.bubbles) {
-      bubbles = detail.bubbles
-      delete detail.bubbles
+      bubbles = detail.bubbles;
+      delete detail.bubbles;
     }
   }
 
@@ -780,8 +781,8 @@ Reactor.dispatchTo =
   }
   if (!(target instanceof Element)) {
     if (event.type == 'error') {
-      console.warn("Can't dispatch error (no DOM node target), so raising to console instaed")
-      console.error(event.detail)
+      console.warn("Can't dispatch error (no DOM node target), so raising to console instead");
+      console.error(event.detail);
       return
     }
     const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node)`
@@ -801,12 +802,12 @@ Reactor.dispatchTo =
 
   function throwUnhandled(event) {
     if (detail && detail.optional) {
-      const message = `unhandled event ${event.type} was optional, so no error event`
+      const message = `unhandled event ${event.type} was optional, so no error event`;
       logger(message);
       console.warn(message);
       return;
     }
-    const isErrorAlready = event.type == "error"
+    const isErrorAlready = event.type == "error";
     if (!isErrorAlready) {
       // console.error(event);
       const unk = new CustomEvent("error", {bubbles:true, detail: {
@@ -872,7 +873,7 @@ Reactor.EventFactory = (type) => {
     const [{ ...eventProps}={}] = args;
     const {debug} = eventProps;
     const dbg = debugInt(debug);
-    logger(`+Event: ${type}: `, eventProps)
+    logger(`+Event: ${type}: `, eventProps);
     if (dbg > 1) console.log(`+Event: ${type}: `, eventProps);
     if (dbg > 2) debugger;
     return new CustomEvent(type, {
@@ -982,13 +983,13 @@ export class Action extends React.Component {
     // console.warn(el.outerHTML)
     if (!el) throw new Error("no el")
 
-    logger(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`)
+    logger(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
     if (debug) console.log(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
     // setTimeout(() => {
-      logger(`${this.constructor.name}: removing action '${this.fullName}' from client: `, client)
+      logger(`${this.constructor.name}: removing action '${this.fullName}' from client: `, client);
       if (debug) console.log(`${this.constructor.name}: removing action '${this.fullName}' from client: `, client);
       logger("...from el", el.outerHTML, "with parent", elementInfo(el.parentNode));
-      if (debug) console.log("...from el", el.outerHTML, "with parent", elementInfo(el.parentNode))
+      if (debug) console.log("...from el", el.outerHTML, "with parent", elementInfo(el.parentNode));
       if (debug > 1) console.log(stack);
 
       try {
@@ -996,10 +997,10 @@ export class Action extends React.Component {
           Reactor.RemoveAction({debug, name: this.fullName, handler})
         );
       } catch(e) {
-        console.error(`${this.constructor.name}: error while removing action:`, e)
+        console.error(`${this.constructor.name}: error while removing action:`, e);
       }
       logger(`<- Removing action '${this.fullName}'`);
-      if (debug) console.log(`<- Removing action '${this.fullName}'`)
+      if (debug) console.log(`<- Removing action '${this.fullName}'`);
     // }, 2)
   }
 }
@@ -1042,7 +1043,7 @@ export class Subscribe extends React.Component {
   }
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
-    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug})
+    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug});
     let {optional = false} = this.props;
 
     // defer registering the subscriber for just 1ms, so that
@@ -1057,7 +1058,7 @@ export class Subscribe extends React.Component {
           } : undefined
         );
       } else {
-        console.warn(`Subscribe:${this.eventName} didn't get a chance to register before being unmounted.  In tests, prevent this with await delay(1) after mounting `)
+        console.warn(`Subscribe:${this.eventName} didn't get a chance to register before being unmounted.  In tests, prevent this with await delay(1) after mounting `);
       }
     }, 1)
   }
