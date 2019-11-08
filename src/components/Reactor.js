@@ -49,6 +49,7 @@ import dbg from 'debug';
 const trace = dbg("trace:reactor");
 const logger = dbg('debug:reactor');
 const info = dbg('reactor');
+const eventInfo = dbg('reactor:events');
 
 const elementInfo = (el) => {
   // debugger
@@ -102,7 +103,8 @@ const Listener = (componentClass) => {
         throw new Error("notify() requires event name, not Event object");
       }
       event = this.eventPrefix() + event;
-      return this.trigger(event, detail);
+      eventInfo(`${this.name()}: notify '${event}':`, {detail});
+      return this.trigger(event, detail, () => {});
     }
     trigger(event,detail, onUnhandled) {
       if (!this._listenerRef.current) {
@@ -220,11 +222,14 @@ const Listener = (componentClass) => {
         };
         if (!handled.reactorNode) debugger;
 
+        const isInternalEvent = type in Reactor.Events;
         const listenerTarget = handler.boundThis && handler.boundThis.constructor.name;
-        const listenerFunction = (handler.targetFunction || handler).name;
-        if (dbg) {
-          const msg = `${reactor.constructor.name}: Event: ${type} - calling handler ${listenerTarget}.${listenerFunction}`;
-          trace(msg);
+        const listenerFunction = (handler.targetFunction || handler);
+        const listenerName = listenerFunction.name;
+        if (dbg || eventInfo.enabled) {
+          const msg = `${reactor.constructor.name}: Event: ${type} - calling handler:`;
+          trace(msg, listenerFunction, "on target", listenerTarget);
+          if (!isInternalEvent) eventInfo(msg, listenerFunction, "on target:", listenerTarget);
 
           if (moreDebug) {
             console.log(msg, {
@@ -235,13 +240,16 @@ const Listener = (componentClass) => {
             });
             debugger;
           } else {
-            console.log(msg);
+            if (dbg) console.log(msg);
           }
         }
         trace(`${displayName}:  ⚡'${type}'`);
         const result = handler.call(this,event); // retain event's `this` (target of event)
         if (result === undefined || !!result) {
+          if (!isInternalEvent) eventInfo("(event was handled)");
           event.handledBy.push(handled);
+        } else {
+          if (!isInternalEvent) eventInfo("(event was not handled at this level)");
         }
       }
       let tryEventHandler = function(e) {
@@ -573,6 +581,8 @@ const Reactor = (componentClass) => {
             // if (debug) console.warn(listenerFanout.listeners);
             let anyHandled = null;
             subscriberFanout.subscribers.forEach((subscriberFunc) => {
+              eventInfo(`'${name}: delivering to subscriber`, subscriberFunc);
+
               const r = subscriberFunc(event);
               if (r == undefined || !!r) {
                 anyHandled = r
@@ -650,6 +660,7 @@ const Reactor = (componentClass) => {
         }
         return false
       } else {
+        eventInfo(`${this.constructor.name}: +subscriber for `, {eventName, debug, listener});
         logger(`${this.constructor.name}: +subscriber for `, {eventName, debug, listener});
         if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, {eventName, debug, listener});
       }
@@ -689,6 +700,8 @@ const Reactor = (componentClass) => {
         }
         return
       }
+      eventInfo(`${this.constructor.name}: -subscriber removed for `, {eventName, debug, listener});
+
       event.stopPropagation();
       this.removeSubscriber(eventName, listener, debug);
     }
@@ -780,13 +793,20 @@ Reactor.dispatchTo =
     event = new CustomEvent(event, {bubbles, detail});
   }
   if (!(target instanceof Element)) {
+    try {
+      target = ReactDOM.findDOMNode(target)
+    } catch(e) {
+      // no-op; will fall through to errors below
+    }
+  }
+  if (!(target instanceof Element)) {
     if (event.type == 'error') {
       console.warn("Can't dispatch error (no DOM node target), so raising to console instead");
       console.error(event.detail);
       return
     }
-    const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node)`
-    logger(msg)
+    const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node or React Component that findDOMNode() can use)`;
+    logger(msg);
     const error = new Error(msg);
     console.warn(error);
     throw error;
