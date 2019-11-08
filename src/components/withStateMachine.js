@@ -239,7 +239,7 @@ export const withStateMachine = (baseClass) => {
 
       if (!keys(this.states).length) {
         console.warn("hot loading can't match states by subclass :( ");
-        return <div ref={this._stateRef}>
+        return <div ref={this._stateRef} style={{display:"contents"}}>
           <div className="toast toast-error">Dev error: No <code>‹State›</code> components defined. <br/>... in {name}</div>
           <div className="toast toast-success">Get the State component with this pattern:&nbsp;
             <code>const {"{"}State{"}"} = this.constructor</code>
@@ -247,7 +247,7 @@ export const withStateMachine = (baseClass) => {
           {inner}
         </div>
       }
-      return <div className={`stateMachine state-${currentState}`} ref={this._stateRef}>
+      return <div  style={{display:"contents"}} className={`stateMachine state-${currentState}`} ref={this._stateRef}>
         {transitions && Object.entries(transitions).map( ([transitionName, target]) => {
           let actionArgs = {
             [transitionName]: this.mkTransition(transitionName)

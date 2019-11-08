@@ -121,8 +121,8 @@ export default class Layout extends Component {
     content = mapValues(content, (foundContents,key) => {
       let foundSlot = slots[key];
       if (foundSlot && foundSlot.isMultiple) {
-        console.log("returning multiple for slot", key, foundContents);
-        debugger
+        // console.log("returning multiple for slot", key, foundContents);
+        // debugger
         return foundContents;
       }
 

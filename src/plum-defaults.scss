@@ -158,6 +158,8 @@ p > .btn {
   --fixedLeftPad: 2px;
   margin-left: 2px;
   margin-right: 0.5rem;
+  break-inside: avoid;
+
   padding-left: calc(var(--fixedLeftPad) + var(--handleWidthSelected) - var(--handleWidth) );  // 5px;
   margin-bottom: 2px;
 

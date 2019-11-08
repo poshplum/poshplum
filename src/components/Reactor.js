@@ -345,7 +345,7 @@ export const Actor = (componentClass) => {
       let {_reactorDidMount: mounted} = (this.state || {});
       trace(`${this.constructor.name}: actor rendering`);
 
-      return <div className={`actor actor-for-${displayName}`} ref={this._listenerRef}>
+      return <div style={{display:"contents"}} className={`actor actor-for-${displayName}`} ref={this._listenerRef}>
         {mounted && super.render && super.render()}
       </div>;
     }
@@ -734,7 +734,7 @@ const Reactor = (componentClass) => {
       let {_reactorDidMount: mounted} = (this.state || {});
       trace(`${reactorName}: reactor rendering`, {mounted});
       let props = this.filterProps(this.props);
-      return <div ref={this._listenerRef} className={`reactor-for-${componentClassName}`} {...props}>
+      return <div style={{display:"contents"}} ref={this._listenerRef} className={`reactor-for-${componentClassName}`} {...props}>
         {mounted && super.render()}
       </div>
     }
@@ -903,12 +903,6 @@ Reactor.elementInfo = elementInfo;
 
 export default Reactor;
 
-// 💼 🎢 🎆 🎡 ⚽ 🏐 🥅  🐣 🔪  🏹 🗳 ️🍥 🚽 🎀 🔌 🔬 💥 💣 ⛽ 🖼️ 🌠 🔨 🌟 ⚙️ 📷 ✋ 🖐️ ⛑️
-// 🗞️ ✂️ 📀 🗃 ️ 📚 ✈️ ▶️  ⏯️ ⏸️ ⏪ ⏩ ⏫ ⏬ 👮 🎥 🎬 📓 📏 🏎️ 🏁 📡 📞 📨 ✉️ 💌 📮 ♻️ 💨
-// ☂️ 🏖️ ☔ ☂️ 🌂 ❌ ✔️  ⏱️ 🚢 🤩 🌟 💦 💎 💺 ❄️ 🔍 💸 🚿 ⏰ ⌛ 🍅 🚚 😬 🤒 🐢 🎺 🔧 🚗
-// 🦃 🛠️ 🗜️ 🔭 🔱 👎 👍  🗣️ 💬 🤢 🤮 🍄 💏 💖 🕹️ 📽️ 🎮 🚀 🚕 📣 👰 🍃 🗺️ 🌍 🛡️ 🌪️ 🌈 🛐
-// 🙏 👩‍⚕️  🏆  🥇  👣 🤰 ⚠️ 🚧 🚸 👷 🌄  👵 👶 🍼 🕊️ ☮️ 🏃 ❗ 🍷 🌀 🤼 👯 👫 🐛 🌱
-// ☯️ ⚖️ 🎺🎸🥁🎹
 
 export class Action extends React.Component {
   constructor(props) {
@@ -921,7 +915,7 @@ export class Action extends React.Component {
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} className={`action action-${foundName}${asyncResult && " action-async" || ""}`} ref={this._actionRef} />;
+    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${asyncResult && " action-async" || ""}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
@@ -1014,7 +1008,7 @@ export class Publish extends React.Component {
 
   render() {
     let {event:name} = this.props;
-    return <div className={`published-event event-${name}`} ref={this._pubRef}></div>;
+    return <div style={{display:"none"}} className={`published-event event-${name}`} ref={this._pubRef}/>;
   }
 
   componentDidMount() {
@@ -1089,7 +1083,7 @@ export class Subscribe extends React.Component {
     }
     this.listenerFunc = handler[this.eventName];
 
-    return <div className={`listen listen-${this.eventName}`} ref={this._subRef} />;
+    return <div style={{display:"none"}} className={`listen listen-${this.eventName}`} ref={this._subRef} />;
   }
 
 
