@@ -149,11 +149,14 @@ describe("Reactor", () => {
       await delay(120);
       expect(Object.keys(instance1.actions).length).toBe(baseLength+2);
 
+
       // -- make sure it doesn't remove matching action names from nested reactors
       let instance2 = component.find(".nested").find(UnmountTest).instance();
       await instance2.addActions();
       await delay(120);
       // console.log(instance1.el.outerHTML);
+
+      let listenerCount = instance2.listening.length;
 
       await instance2.removeExtraAction();
       await delay(120);
@@ -170,6 +173,12 @@ describe("Reactor", () => {
 
 
       expect(Object.keys(instance1.actions).length).toBe(baseLength+1);
+
+      // -- add actions back, and make sure the list of listeners doesn't grow
+      await instance2.addActions();
+      await delay(120);
+      expect(instance2.listening.length).toBe(listenerCount);
+
     });
 
     it("rejects Actions with duplicate names", () => {
@@ -269,7 +278,7 @@ describe("Reactor", () => {
           <ListeningElement />
         </MyReactor>);
 
-        const listeners = component.instance().registeredSubscribers['imWayCool'];
+        const listeners = component.instance().events['imWayCool'].subscribers;
         const listenerInstance = component.find(ListeningElement).instance();
 
         const eSrc = component.find(".publisher").instance();
@@ -305,7 +314,7 @@ describe("Reactor", () => {
           <ListeningElement />
         </MyReactor>);
 
-        const listeners = component.instance().registeredSubscribers['imWayCool'];
+        const listeners = component.instance().events['imWayCool'].subscribers;
 
         const eSrc = component.find(".publisher").instance();
         const listener = component.find(ListeningElement).instance();
@@ -328,7 +337,8 @@ describe("Reactor", () => {
 
         let instance = component.instance();
         await delay(1)
-        expect(instance.registeredSubscribers.imWayCool).toBeTruthy();
+        expect(instance.events.imWayCool).toBeTruthy();
+        expect(instance.events.imWayCool.subscribers).toBeTruthy();
 
 
         let listenerInstance = component.find(ListeningElement).instance();
@@ -341,8 +351,6 @@ describe("Reactor", () => {
 
         await listener.none();
         await delay(1)
-
-        // expect(instance.registeredSubscribers.imWayCool).toBeFalsy();
 
         mockConsole(['error'])
         Reactor.dispatchTo(eSrc, new CustomEvent("imWayCool", {bubbles:true}));
