@@ -1,3 +1,6 @@
+var levenshtein = require('fast-levenshtein');
+
+
 // Reactors:
 //  - Take modularized responsibility for local state change
 //  - Provide feather-weight structure for action/dispatch/reducer pattern
@@ -174,9 +177,16 @@ const Listener = (componentClass) => {
         this.listening.forEach((listener) => {
           let [type,handler] = listener;
           if (!handler) return;
+
           if (!stdHandlers[type]) {
-            console.warn(`${this.constructor.name} removed remaining '${type}' listener`);
-            if(dbg) console.warn(stack);
+            const thisPubSubEvent = this.events[type];
+            if (thisPubSubEvent) {
+              if (thisPubSubEvent.subscribers.size)
+                  console.warn(`${this.constructor.name} removed published '${type}' listener, leaving ${thisPubSubEvent.subscribers.size} with no event source.`);
+            } else {
+              console.warn(`${this.constructor.name} removed remaining '${type}' listener: `, handler);
+              if(dbg) console.warn(stack);
+            }
           }
 
           this.unlisten(listener, el);
@@ -310,10 +320,11 @@ export const Actor = (componentClass) => {
       event.detail.name = newName;
     }
 
-    removePublishedEvent(event) {   // doesn't handle the event; augments it with actor name
-      let {name, actor, debug} = event.detail;
+    removePublishedEvent(event) {   // doesn't handle the event; augments it with actor & actor-name
+      let {name, debug} = event.detail;
       let newName = `${this.name()}:${name}`;
       trace("unregistering ‹Publish›ed event", newName);
+      event.detail.actor = this;
       event.detail.name = newName;
     }
 
@@ -437,10 +448,8 @@ const Reactor = (componentClass) => {
       this.listening = [];
 
       this.actions = {}; // known direct actions
-      this.events = {
-      };  // known direct events
+      this.events = {};  // known events for publish & subscribe
       this.actors = {};  // registered actors
-      this.registeredSubscribers = {}; // registered listening agents
       trace(`${reactorName}: <- constructors`);
     }
 
@@ -456,6 +465,8 @@ const Reactor = (componentClass) => {
       trace(`${reactorName}: -> mounting(self)`);
 
       this.el = this._listenerRef.current;
+      this.registerPublishedEvent({name:"success", target: this});
+      this.registerPublishedEvent({name:"warning", target: this});
       this.registerPublishedEvent({name:"error", target: this});
 
       // this.myNode = ReactDOM.findDOMNode(this);
@@ -557,7 +568,12 @@ const Reactor = (componentClass) => {
 
     }
     registerPublishedEventEvent(event) {
-      const {target, detail:{name, debug, actor}} = event;
+      const {target, detail:{name, debug, actor, global}} = event;
+      if (global && !this.isEventCatcher) {
+        logger(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
+        if (debug) console.warn(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
+        return;
+      }
       this.registerPublishedEvent({name,debug, target, actor});
 
       event.stopPropagation();
@@ -568,54 +584,70 @@ const Reactor = (componentClass) => {
       trace(`${reactorName}: `, message);
 
       if (debug) console.warn(message);
-      if (this.events[name]) {
-        logger(`Event '${name}' already registered by`, this.events[name]);
-        console.error(`Event '${name}' already registered by`, this.events[name]);
-      } else {
-        this.events[name] = target;
 
-        let subscriberFanout = this.registeredSubscribers[name] = {
-          fn: (event) => {
-            logger(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
-            if (debug) console.warn(`got event ${name}, dispatching to ${subscriberFanout.subscribers.length} listeners`);
-            // if (debug) console.warn(listenerFanout.listeners);
-            let anyHandled = null;
-            subscriberFanout.subscribers.forEach((subscriberFunc) => {
-              eventInfo(`'${name}: delivering to subscriber`, subscriberFunc);
 
-              const r = subscriberFunc(event);
-              if (r == undefined || !!r) {
-                anyHandled = r
-              }
-              // ?? honor stopPropagation[immediate] ?
-            });
+      const thisEvent =
+        this.events[name] =
+        this.events[name] || {
+          publishers: new Set(),
+          subscribers: new Set(),
+          _listener: this.listen(name, subscriberFanout)
+      };
 
-            return anyHandled;
-          },
-          subscribers: []
-        };
+      thisEvent.publishers.add(actor);
 
-        subscriberFanout._fan = this.listen(name, subscriberFanout.fn);
+
+      function subscriberFanout(event) {
+        logger(`got event ${name}, dispatching to ${thisEvent.subscribers.size} listeners`);
+        if (debug) console.warn(`got event ${name}, dispatching to ${thisEvent.subscribers.size} listeners`);
+
+        let anyHandled = null;
+        for (const subscriberFunc of thisEvent.subscribers) {
+          eventInfo(`'${name}: delivering to subscriber`, subscriberFunc);
+
+          const r = subscriberFunc(event);
+          if (r == undefined || !!r) {
+            anyHandled = r
+          }
+          // ?? honor stopPropagation[immediate] ?
+        }
+        return anyHandled;
       }
     }
+
     eventPrefix() { return "" }
 
     removePublishedEvent(event) {
-      let {name, actor, debug} = event.detail;
+      let {target, detail:{name, global, actor, debug}} = event;
       console.error("test me");
-      // !!! check for registeredListeners to this event, issue a orphanedListener event
-      const subscriberFanout = this.registeredSubscribers[name];
-      const foundSubscribers = subscriberFanout.subscribers.length;
-      if (foundSubscribers) {
-        console.error(`removing published event with ${foundSubscribers} orphaned subscribers`);
+      if (global && !this.isEventCatcher) {
+        logger(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
+        if (debug) console.warn(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
+        return;
       }
-      this.unlisten([name, subscriberFanout._fan]);
 
-      if (!this.events[name]) {
-        console.warn(`can't removePublishedEvent '${name}' (not registered)`);
-      } else {
+      // !!! check for registeredListeners to this event, issue a orphanedListener event
+      const thisEvent = this.events[name]; if (!thisEvent) {
+        console.warn(`can't removePublishedEvent ('${name}') - not registered`);
+        throw new Error(`removePublishedEvent('${name}') not registered...  Was its DOM element moved around in the tree since creation?`);
+      }
+      const publishers = thisEvent.publishers;
+      if (!publishers.has(actor)) {
+        console.warn(`can't removePublishedEvent('${name}') - actor not same as those who have registered`, {actor, publishers});
+        return;
+      }
+      publishers.delete(actor);
+
+      if (!publishers.size) {
+        const subs = thisEvent.subscribers;
+
+        if (subs.size) console.error(`removing published event with ${subs.size} orphaned subscribers: `, [...subs.values()]);
+        this.unlisten([name, thisEvent._listener], target);
         delete this.events[name];
         event.stopPropagation();
+      } else {
+        logger(`${this.constructor.name}: event '${name}' is still published by ${publishers.size} actors:`, [...publishers.values()] );
+        if (debug) console.warn(`${this.constructor.name}: event '${name}' is still published by ${publishers.size} actors:`, [...publishers.values()] );
       }
     }
 
@@ -643,11 +675,23 @@ const Reactor = (componentClass) => {
 
     registerSubscriber(event) {
 
-      let {eventName, listener, debug} = event.detail;
+      let {eventName, candidates: deeperCandidates=[], listener, debug} = event.detail;
       eventName = eventName.replace(/\u{ff3f}/u, ':');
       if (!this.events[eventName]) {
+        const possibleMatches = Object.keys(this.events);
+
+        let allKnownCandidates = [
+          possibleMatches.
+            map(candidate => [levenshtein.get(candidate, eventName) / eventName.length, candidate]).
+            filter(([distance,x]) => distance < 0.6).
+            sort(([d1],[d2]) => ( (d1 < d2) ? -1 : 1)).
+            map(([distance, candidate]) => candidate),
+          ...deeperCandidates
+        ].join(", ");
+
         if (this.isEventCatcher) {
-          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no ‹Publish '${eventName}'› event found`;
+          if (allKnownCandidates) allKnownCandidates = `(try one of: ${allKnownCandidates}})`;
+          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no ‹Publish '${eventName}'› event found ${allKnownCandidates}`;
           console.warn(message);
 
           this._listenerRef.current.dispatchEvent(
@@ -655,6 +699,10 @@ const Reactor = (componentClass) => {
           );
           return true
         } else {
+          // augment the event with candidates we identified at this level,
+          // before letting the event propage up through the tree.
+          event.detail.candidates = allKnownCandidates;
+
           logger(`${this.constructor.name}: unknown registerSubscriber request; passing to higher reactor`, event.detail);
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         }
@@ -673,14 +721,17 @@ const Reactor = (componentClass) => {
       // }, 1)
     }
 
-    addSubscriberEvent(eventName, listener, debug) {
-      let subscriberFanout;
-      if (subscriberFanout = this.registeredSubscribers[eventName]) {
-        subscriberFanout.subscribers.push(listener);
-
-        return;
+    addSubscriberEvent(eventName, subscriberFn, debug) {
+      const thisEvent = this.events[eventName];
+      if (thisEvent) {
+        if (thisEvent.subscribers.has(subscriberFn)) {
+          console.error(`addSubscriberEvent('${eventName}'): ignoring duplicate subscription`, subscriberFn);
+          return;
+        } else {
+          thisEvent.subscribers.add(subscriberFn);
+        }
       } else {
-        throw new Error("bad subscriber name")
+        throw new Error(`addSubscriberEvent('${eventName}'): bad event name in subscription request`)
       }
     }
 
@@ -688,8 +739,8 @@ const Reactor = (componentClass) => {
       let {eventName, listener, debug} = event.detail;
       eventName = eventName.replace(/\u{ff3f}/u, ':');
 
-      let subscriberFanout = this.registeredSubscribers[eventName];
-      if (!subscriberFanout) {
+      const thisEvent = this.events[eventName];
+      if (!thisEvent) {
         if (this.isEventCatcher) {
           const message = `${this.constructor.name} in removeSubscriber: unknown event ${eventName}`;
           logger(message)
@@ -706,34 +757,22 @@ const Reactor = (componentClass) => {
       this.removeSubscriber(eventName, listener, debug);
     }
 
-    removeSubscriber(eventName, listener, debug) {
-      let subscriberFanout = this.registeredSubscribers[eventName];
+    removeSubscriber(eventName, subscriber, debug) {
+      const thisEvent = this.events[eventName];
 
-      logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener);
-      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, listener,
+      logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriber);
+      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriber,
         new Error("...stack trace")
       );
 
-      const before = subscriberFanout.subscribers.length;
-      subscriberFanout.subscribers = subscriberFanout.subscribers.filter((f) => {
-        // console.error("compare:", f, listener, f === listener);
-        return f !== listener
-      });
-      const after = subscriberFanout.subscribers.length;
-
-
-      if (before === after) {
+      if (!thisEvent.subscribers.delete(subscriber)) {
         logger(`${this.constructor.name}: no subscribers removed for ${eventName}`);
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
       } else {
+        const after = thisEvent.subscribers.size;
         logger(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
         if (debug)
           console.warn(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
-      }
-
-      if (after === 0) {
-        // this.unlisten([eventName, subscriberFanout._fan]);
-        // delete this.registeredSubscribers[eventName];
       }
     }
 
@@ -814,9 +853,12 @@ Reactor.dispatchTo =
 
     target.dispatchEvent(event);
   if (event.handledBy && event.handledBy.length)
-      return;
-  if (onUnhandled)
-      return onUnhandled(event);
+      return event;
+  if (onUnhandled) {
+      onUnhandled(event);
+      return event;
+  }
+
 
   throwUnhandled.bind(this)(event);
 
@@ -1035,14 +1077,22 @@ export class Publish extends React.Component {
     // console.log("Publish didMount");
     if (super.componentDidMount) super.componentDidMount();
 
-    let {children, event:name, debug, ...handler} = this.props;
+    let {children, event:name, global, debug, ...handler} = this.props;
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 0) {
-      throw new Error("‹Publish event=\"eventName\"› events should only have a single prop - the 'event' name. ('debug' prop is also allowed)\n");
+      throw new Error("‹Publish event=\"eventName\"› events should only have the 'event' name, and optionally 'global' or 'debug')\n");
     }
     Reactor.trigger(this._pubRef.current,
-      Reactor.PublishEvent({name, debug})
+      Reactor.PublishEvent({name, global, debug})
+    );
+  }
+  componentWillUnmount() {
+    if (super.componentDidMount) super.componentDidMount();
+
+    let {children, event:name, global, debug, ...handler} = this.props;
+    Reactor.trigger(this._pubRef.current,
+      Reactor.RemovePublishedEvent({name, global, debug})
     );
   }
 
@@ -1059,20 +1109,24 @@ export class Subscribe extends React.Component {
     if (super.componentDidMount) super.componentDidMount();
     let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug});
     let {optional = false} = this.props;
-
+    this.subscriptionPending = true;
     // defer registering the subscriber for just 1ms, so that
     // any <Publish>ed events from Actors will have their chance
     // to be mounted and registered:
     setTimeout(() => {
-      // skip subscriber registration if already unmounted
-      if (this._subRef.current) {
+      delete this.subscriptionPending;
+      if (!this.unmounting && this._subRef.current) {
         Reactor.trigger(this._subRef.current, subscriberReq, {},
           optional ? (unhandledEvent) => {
+              this.failedOptional = true;
               console.warn(`unhandled subscribe to '${this.eventName}' was optional, so no error event.`)
           } : undefined
         );
       } else {
-        console.warn(`Subscribe:${this.eventName} didn't get a chance to register before being unmounted.  In tests, prevent this with await delay(1) after mounting `);
+        console.warn(
+          `Subscribe: event '${this.eventName}' didn't get a chance to register before being unmounted.  \n`+
+          `NOTE: In tests, you probably want to prevent this with "await delay(1);" after mounting.`
+        );
       }
     }, 1)
   }
@@ -1081,9 +1135,10 @@ export class Subscribe extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     if (this.failedOptional) return;
-    Reactor.trigger(this._subRef.current,
+    if (!this.subscriptionPending) Reactor.trigger(this._subRef.current,
       Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
     );
+    this.unmounting = true;
   }
 
   render() {
