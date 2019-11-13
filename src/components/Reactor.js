@@ -88,10 +88,11 @@ const Listener = (componentClass) => {
   let displayName = inheritName(componentClass, "👂");
   trace(`listener creating subclass ${displayName}`);
   const clazz = class Listener extends componentClass {
-    listening = [];
+
     constructor(props) {
       super(props);
       this._listenerRef = React.createRef();
+      this.listening = new Map();
     }
     get unlistenDelay() {
       throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups");
@@ -125,9 +126,12 @@ const Listener = (componentClass) => {
       const wrappedHandler = this._wrapHandler(handler);
       const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler, {capture});
       trace("listening", {eventName}, "with handler:", handler, "(NOTE: listener applied additional wrapper)");
-      listening.push([eventName, wrappedHandler]);
+
+      const listenersOfThisType = listening.get(eventName) ||
+        listening.set(eventName, new Set()).get(eventName);
+
+      listenersOfThisType.add(wrappedHandler);
       return wrappedHandler
-      // console.log(listening);
     }
 
     componentDidMount() {
@@ -172,45 +176,44 @@ const Listener = (componentClass) => {
       const stack = new Error("Backtrace");
 
       setTimeout(() => {
+        const {listening} = this;
+
         trace(`${this.constructor.name} deferred unlisten running now`);
         if (dbg) console.warn(`${this.constructor.name} deferred unlisten running now`);
-        this.listening.forEach((listener) => {
-          let [type,handler] = listener;
-          if (!handler) return;
 
-          if (!stdHandlers[type]) {
-            const thisPubSubEvent = this.events[type];
-            if (thisPubSubEvent) {
-              if (thisPubSubEvent.subscribers.size)
+        for (const [type, listeners] of listening.entries()) {
+          for (const handler of listeners.values()) {
+            if (!stdHandlers[type]) {
+              const thisPubSubEvent = this.events[type];
+              if (thisPubSubEvent) {
+                if (thisPubSubEvent.subscribers.size)
                   console.warn(`${this.constructor.name} removed published '${type}' listener, leaving ${thisPubSubEvent.subscribers.size} with no event source.`);
-            } else {
-              console.warn(`${this.constructor.name} removed remaining '${type}' listener: `, handler);
-              if(dbg) console.warn(stack);
+              } else {
+                console.warn(`${this.constructor.name} removed remaining '${type}' listener: `, handler);
+                if(dbg) console.warn(stack);
+              }
             }
-          }
 
-          this.unlisten(listener, el);
-        });
-      }, this.unlistenDelay)
+            this.unlisten([type, handler], el);
+          }
+        }
+      }, this.unlistenDelay);
     }
 
     unlisten(typeAndHandler, el=this._listenerRef.current) {
       let [type,handler] = typeAndHandler;
-      let foundListening = this.listening.find(([ltype, lhandler]) => {
-        return type == ltype
-      });
+      let listenersOfThisType = this.listening.get(type);
+
+      let foundListening = listenersOfThisType.has(handler);
+
       if (!foundListening) {
-        console.warn(`listener ${type} not found/matched in listeners`, this.listening);
-      } else if (!foundListening[1]) {
-        console.warn(`listener ${type} already removed`);
-      } else if (foundListening[1] !== handler) {
-        console.warn(`listener ${type} handler mismatch`);
+        console.warn(`${type} listener not found/matched `, handler, `\n   ...in listeners`, [...listenersOfThisType.values()]);
+        return;
       }
-      if (!handler) return;
       if (!el) throw new Error(`no el to unlisten for ${type}` );
 
       el.removeEventListener(type, handler);
-      if (foundListening) foundListening[1] = null;
+      listenersOfThisType.delete(handler)
     }
 
     _wrapHandler(handler) {
@@ -448,7 +451,6 @@ const Reactor = (componentClass) => {
 
       this.registerSubscriber = Reactor.bindWithBreadcrumb(this.registerSubscriber, this);
       this.removeSubscriberEvent = Reactor.bindWithBreadcrumb(this.removeSubscriberEvent, this);
-      this.listening = [];
 
       this.actions = {}; // known direct actions
       this.events = {};  // known events for publish & subscribe
