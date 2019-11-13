@@ -282,7 +282,7 @@ const Listener = (componentClass) => {
 };
 
 export const Actor = (componentClass) => {
-  if (!componentClass.prototype.name) {
+  if (!componentClass.prototype.name || ("function" !== typeof componentClass.prototype.name)) {
     throw new Error("Actors require a name() method; this name identifies the actor's delegate name for its Reactor, and scopes its Actions");
   }
 
@@ -311,6 +311,7 @@ export const Actor = (componentClass) => {
     registerActor() {
       throw new Error("nested Actors not currently supported.  If you have a use-case, please create a pull req demonstrating it")
     }
+
     registerPublishedEventEvent(event) {  // doesn't handle the event; augments it with actor name
       const {target, detail:{name, debug}} = event;
 
@@ -431,6 +432,8 @@ const Reactor = (componentClass) => {
       super(props);
       trace(`${reactorName}: -> constructor(self)`);
       this.Name = reactorName;
+      this.name = () => reactorName;
+      Object.defineProperty(this.name, "name", {value: reactorName});
 
       this.reactorProbe = Reactor.bindWithBreadcrumb(this.reactorProbe, this);
 
@@ -588,11 +591,12 @@ const Reactor = (componentClass) => {
 
       const thisEvent =
         this.events[name] =
-        this.events[name] || {
-          publishers: new Set(),
-          subscribers: new Set(),
-          _listener: this.listen(name, subscriberFanout)
-      };
+          this.events[name] || {
+            publishers: new Set(),
+            subscribers: new Set(),
+            subscriberOwners: new Map(),
+            _listener: this.listen(name, subscriberFanout)
+          };
 
       thisEvent.publishers.add(actor);
 
@@ -626,12 +630,11 @@ const Reactor = (componentClass) => {
         return;
       }
 
-      // !!! check for registeredListeners to this event, issue a orphanedListener event
       const thisEvent = this.events[name]; if (!thisEvent) {
         console.warn(`can't removePublishedEvent ('${name}') - not registered`);
         throw new Error(`removePublishedEvent('${name}') not registered...  Was its DOM element moved around in the tree since creation?`);
       }
-      const publishers = thisEvent.publishers;
+      const {subscriberOwners: owners, publishers} = thisEvent;
       if (!publishers.has(actor)) {
         console.warn(`can't removePublishedEvent('${name}') - actor not same as those who have registered`, {actor, publishers});
         return;
@@ -641,7 +644,22 @@ const Reactor = (componentClass) => {
       if (!publishers.size) {
         const subs = thisEvent.subscribers;
 
-        if (subs.size) console.error(`removing published event with ${subs.size} orphaned subscribers: `, [...subs.values()]);
+        for (const sub of subs.values()) {
+          const owner = owners.get(sub);
+          if (owner && owner.publisherUnmounted) {
+            // avoid spurious warnings when publisher and subscriber are being unmounted in a single batch:
+            owner.publisherUnmounted();
+            owners.delete(sub)
+          } else {
+            console.warn(`${this.constructor.name}: removePublishedEvent('${name}'): subscriber function had no matching owner:`, sub);
+          }
+          subs.delete(sub);
+        }
+        if (subs.size) {
+          console.error(`removing published event with ${subs.size} orphaned subscribers...\n...owners & subscribers:`,
+            [...subs.values()].map(s => [ owners.get(s), s ])
+          );
+        }
         this.unlisten([name, thisEvent._listener], target);
         delete this.events[name];
         event.stopPropagation();
@@ -673,9 +691,15 @@ const Reactor = (componentClass) => {
       }
     }
 
+    // matches a registerSubscriber event to a Reactor node by inspecting its
+    // known publishers.  If it's not matched, it passes the event on to a higher-level
+    // Reactor, after decorating the event with a list of published event-names that are similar
+    // to the requested one.  And if the current Reactor is a root-reactor ("isEventCatcher=true"),
+    // it issues an error event with a friendly message for the developer.
+    // When the requested event-name is found, it stops the registerSubscriber from further
+    // propagation and calls through to registerSubscriberEvent().
     registerSubscriber(event) {
-
-      let {eventName, candidates: deeperCandidates=[], listener, debug} = event.detail;
+      let {eventName, owner, candidates: deeperCandidates = [], listener, debug} = event.detail;
       eventName = eventName.replace(/\u{ff3f}/u, ':');
       if (!this.events[eventName]) {
         const possibleMatches = Object.keys(this.events);
@@ -691,7 +715,7 @@ const Reactor = (componentClass) => {
 
         if (this.isEventCatcher) {
           if (allKnownCandidates) allKnownCandidates = `(try one of: ${allKnownCandidates}})`;
-          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no ‹Publish '${eventName}'› event found ${allKnownCandidates}`;
+          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no matching ‹Publish› ${allKnownCandidates}`;
           console.warn(message);
 
           this._listenerRef.current.dispatchEvent(
@@ -708,27 +732,49 @@ const Reactor = (componentClass) => {
         }
         return false
       } else {
-        eventInfo(`${this.constructor.name}: +subscriber for `, {eventName, debug, listener});
-        logger(`${this.constructor.name}: +subscriber for `, {eventName, debug, listener});
-        if (debug) console.warn(`${this.constructor.name}: registering subscriber for `, {eventName, debug, listener});
+        eventInfo(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
+        logger(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
+        if (debug) console.warn(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
       }
       event.stopPropagation();
       logger(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
       if (debug > 1) console.warn(`${this.constructor.name}: registering subscriber to '${eventName}': `, listener, new Error("...stack trace"));
 
       // setTimeout(() => {
-        this.addSubscriberEvent(eventName, listener, debug);
+      this.addSubscriberEvent(eventName, owner, listener, debug);
       // }, 1)
     }
 
-    addSubscriberEvent(eventName, subscriberFn, debug) {
+    // takes a validated ‹Publish› event-name, a subscribing actor reference and a subscriber-function,
+    // and adds the subscriber to the event's set of subscribers.
+    addSubscriberEvent(eventName, owner, subscriberFn, debug) {
       const thisEvent = this.events[eventName];
       if (thisEvent) {
-        if (thisEvent.subscribers.has(subscriberFn)) {
-          console.error(`addSubscriberEvent('${eventName}'): ignoring duplicate subscription`, subscriberFn);
+        const {subscribers, subscriberOwners:owners} = thisEvent;
+        if (subscribers.has(subscriberFn)) {
+          const existingOwner = owners.get(subscriberFn);
+          const ownerBit = existingOwner ? [ "\n   ...with existing owner", existingOwner ] : [];
+          console.error(`addSubscriberEvent('${eventName}'): ignoring duplicate subscription:`, subscriberFn, ...ownerBit);
           return;
         } else {
-          thisEvent.subscribers.add(subscriberFn);
+          const pOwner = owners.get(subscriberFn);
+          if (pOwner) {
+            // this isn't supposed to happen - it's just for sanity-checking.
+            const message = `addSubscriberEvent('${eventName}'): subscriberOwners already has this subscriberFunction registered to another owner`;
+            console.error(message, {subscriberFn, owner:pOwner});
+            throw new Error(message + " (see console for more detail)")
+          }
+
+          subscribers.add(subscriberFn);
+          if (owner) {
+            owners.set(subscriberFn, owner);
+          } else {
+            const message = `addSubscriberEvent('${eventName}'): registering subscriber without an owner.  \n`+
+              `   ...if you add event.detail.owner pointing to an object with .publisherUnmounted(), you can get `+
+              `      notifications when the publisher is unmounting, which can help you suppress spurious warnings `+
+              `      (and possible memory leaks as well) when ‹Publish› and ‹Subscribe› are unmounted at the same time.`;
+            console.warn(message, subscriberFn);
+          }
         }
       } else {
         throw new Error(`addSubscriberEvent('${eventName}'): bad event name in subscription request`)
@@ -736,7 +782,7 @@ const Reactor = (componentClass) => {
     }
 
     removeSubscriberEvent(event) {
-      let {eventName, listener, debug} = event.detail;
+      let {eventName, owner, listener, debug} = event.detail;
       eventName = eventName.replace(/\u{ff3f}/u, ':');
 
       const thisEvent = this.events[eventName];
@@ -751,24 +797,32 @@ const Reactor = (componentClass) => {
         }
         return
       }
-      eventInfo(`${this.constructor.name}: -subscriber removed for `, {eventName, debug, listener});
+      eventInfo(`${this.constructor.name}: -subscriber removed:`, {eventName, debug, listener});
 
       event.stopPropagation();
-      this.removeSubscriber(eventName, listener, debug);
+      this.removeSubscriber(eventName, owner, listener, debug);
     }
 
-    removeSubscriber(eventName, subscriber, debug) {
+    removeSubscriber(eventName, owner, subscriberFn, debug) {
       const thisEvent = this.events[eventName];
+      const {subscribers, subscriberOwners:owners} = thisEvent;
 
-      logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriber);
-      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriber,
+      logger(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriberFn);
+      if (debug) console.warn(`${this.constructor.name}: removing subscriber to '${eventName}': `, subscriberFn,
         new Error("...stack trace")
       );
 
-      if (!thisEvent.subscribers.delete(subscriber)) {
+      if (!subscribers.delete(subscriberFn)) {
         logger(`${this.constructor.name}: no subscribers removed for ${eventName}`);
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
       } else {
+        // it's ok to just delete the owner entry here - it's only needed during
+        //   Publish-removal, when it's possible that this code path can't run
+        //   properly because the Publish and Subscribe are both removed from
+        //   the DOM at the same time.
+        if (!owners.delete(subscriberFn)) {
+          console.warn(`${this.constructor.name}: removed a subscriber with no matching owner:`, subscriberFn, "\n     ... did the registerSubscriber event have details.owner?");
+        }
         const after = thisEvent.subscribers.size;
         logger(`${this.constructor.name}: removed a subscriber for ${eventName}; ${after} remaining`);
         if (debug)
@@ -1107,7 +1161,8 @@ export class Subscribe extends React.Component {
   }
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
-    let subscriberReq = Reactor.SubscribeToEvent({eventName: this.eventName, listener: this.listenerFunc, debug:this.debug});
+    let subscriberReq = Reactor.SubscribeToEvent(
+      {eventName: this.eventName, owner: this, listener: this.listenerFunc, debug: this.debug});
     let {optional = false} = this.props;
     this.subscriptionPending = true;
     // defer registering the subscriber for just 1ms, so that
@@ -1123,7 +1178,7 @@ export class Subscribe extends React.Component {
           } : undefined
         );
       } else {
-        console.warn(
+        console.log(
           `Subscribe: event '${this.eventName}' didn't get a chance to register before being unmounted.  \n`+
           `NOTE: In tests, you probably want to prevent this with "await delay(1);" after mounting.`
         );
@@ -1135,10 +1190,13 @@ export class Subscribe extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     if (this.failedOptional) return;
-    if (!this.subscriptionPending) Reactor.trigger(this._subRef.current,
+    if (!this.subscriptionPending && !this.pubUnmounted) Reactor.trigger(this._subRef.current,
       Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
     );
     this.unmounting = true;
+  }
+  publisherUnmounted() {
+    this.pubUnmounted = true;
   }
 
   render() {
