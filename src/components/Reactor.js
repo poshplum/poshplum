@@ -755,8 +755,11 @@ const Reactor = (componentClass) => {
         const {subscribers, subscriberOwners:owners} = thisEvent;
         if (subscribers.has(subscriberFn)) {
           const existingOwner = owners.get(subscriberFn);
-          const ownerBit = existingOwner ? [ "\n   ...with existing owner", existingOwner ] : [];
-          console.error(`addSubscriberEvent('${eventName}'): ignoring duplicate subscription:`, subscriberFn, ...ownerBit);
+          const ownerBit = existingOwner ? [ "\n...with existing owner", existingOwner ] : [];
+          console.error(`addSubscriberEvent('${eventName}'): ignoring duplicate subscription:`, subscriberFn, ...ownerBit,
+            `\n---> have you subscribed using a method in your class as an event handler?  \n`+
+              `     you should probably bind that function to its instance in constructor.`
+          );
           return;
         } else {
           const pOwner = owners.get(subscriberFn);
