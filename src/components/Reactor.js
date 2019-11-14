@@ -99,10 +99,10 @@ const Listener = (componentClass) => {
     get unlistenDelay() {
       throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups");
     }
-    listen(eventName, handler, capture) {
+    listen(eventName, handler, capture, {returnsResult}) {
       logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
-      return this._listen(eventName, handler, capture);
+      return this._listen(eventName, handler, capture, {returnsResult});
     }
     notify(event, detail) {
       if (event instanceof Event) {
@@ -121,11 +121,21 @@ const Listener = (componentClass) => {
       }
       return Reactor.trigger(this._listenerRef.current, event, detail, onUnhandled);
     }
+    eventResult(event, detail, onUnhandled) {
+      if (!this._listenerRef.current) {
+        if (event.type == "error") {
+          console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
+          return;
+        }
+      }
+      return Reactor.eventResult(this._listenerRef.current, event, detail, onUnhandled);
 
-    _listen(eventName, handler, capture) {
+    }
+
+    _listen(eventName, handler, capture, {returnsResult}={}) {
       const listening = this.listening;
       // console.warn("_listen: ", eventName, handler);
-      const wrappedHandler = this._wrapHandler(handler);
+      const wrappedHandler = this._wrapHandler(handler, {returnsResult});
       const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler, {capture});
       trace("listening", {eventName}, "with handler:", handler, "(NOTE: listener applied additional wrapper)");
 
@@ -218,9 +228,12 @@ const Listener = (componentClass) => {
       listenersOfThisType.delete(handler)
     }
 
-    _wrapHandler(handler) {
+    _wrapHandler(handler, {returnsResult}={}) {
       const reactor = this;
       function wrappedHandler(event) {
+        if (returnsResult && !event.detail.result) {
+          throw new Error("event.detail.result should be ready to be filled when returnsResult is set on an action - trigger with Reactor.eventResult()")
+        }
         const {type, detail} = (event || {});
         const {debug} = (detail || {});
 
@@ -258,28 +271,38 @@ const Listener = (componentClass) => {
           }
         }
         trace(`${displayName}:  ⚡'${type}'`);
-        const result = handler.call(this,event); // retain event's `this` (target of event)
-        if (result === undefined || !!result) {
-          if (!isInternalEvent) eventDebug("(event was handled)");
-          event.handledBy.push(handled);
-        } else {
-          if (!isInternalEvent) eventDebug("(event was not handled at this level)");
-        }
-        if (!isInternalEvent && useGroup) console.groupEnd();
-      }
-      let tryEventHandler = function(e) {
-        let result;
         try {
-          result = wrappedHandler.call(this, e); // retain event's `this`
+          const result = handler.call(this,event); // retain event's `this` (target of event)
+          if (returnsResult) {
+            if ("undefined" === typeof result) {
+              const msg = `event('${type}', returnsResult) handler returned undefined result`;
+              console.error(msg, {handler});
+              throw new Error(msg)
+            }
+            if (result.then) {
+              const msg = `event('${type}', returnsResult) handler returned a promise.  That might be an unplanned use of an async function, or it might be just what you wanted.  Your call.`;
+              console.warn(msg, {handler});
+            }
+            event.detail.result = result;
+          }
+
+          if (result === undefined || !!result) {
+            if (!isInternalEvent) eventDebug("(event was handled)");
+            event.handledBy.push(handled);
+          } else {
+            if (!isInternalEvent) eventDebug("(event was not handled at this level)");
+          }
+          if (!isInternalEvent && useGroup) console.groupEnd();
+          return result;
         } catch(error) {
-          console.error(error);
-          logger(error);
-          throw(error)
+          event.error = error
+          // console.error(error);
+          // logger(error);
+          // throw(error)
         }
-        return result;
       }
-      tryEventHandler.innerHandler = handler && handler.targetFunction || handler;
-      return tryEventHandler
+      wrappedHandler.innerHandler = handler && handler.targetFunction || handler;
+      return wrappedHandler
     }
   }
   Object.defineProperty(clazz, "name", {value: displayName});
@@ -293,9 +316,9 @@ export const Actor = (componentClass) => {
 
   const listenerClass = Listener(componentClass);
 
-  let displayName = inheritName(componentClass, "Actor");
+  const displayName = inheritName(componentClass, "🎭");
 
-  return class ActorInstance extends listenerClass {
+  const clazz = class ActorInstance extends listenerClass {
     static get name() { return displayName };
     get unlistenDelay() {
       return 50
@@ -356,14 +379,14 @@ export const Actor = (componentClass) => {
       // registrationEvent.stopPropagation();
     }
 
-    listen(eventName, handler) {
+    listen(eventName, handler, {returnsResult}={}) {
       let {debug} = this.props;
       let dbg = debugInt(debug);
       trace(`${this.constructor.name}: listening to ${eventName}`);
       if (dbg) {
         console.log(`${this.constructor.name}: listening to ${eventName}`);
       }
-      return this._listen(eventName, handler);
+      return this._listen(eventName, handler, {returnsResult});
     }
 
     render() {
@@ -419,6 +442,8 @@ export const Actor = (componentClass) => {
     }
 
   }
+  Object.defineProperty(clazz, "name", {value: displayName});
+  return clazz;
 };
 
 
@@ -477,6 +502,7 @@ const Reactor = (componentClass) => {
       this.registerPublishedEvent({name:"error", target: this});
 
       // this.myNode = ReactDOM.findDOMNode(this);
+      console.warn("reactorProbe should have returnsResult")
       this.listen(Reactor.Events.reactorProbe, this.reactorProbe);
 
       this.listen(Reactor.Events.registerAction, this.registerActionEvent);
@@ -507,8 +533,8 @@ const Reactor = (componentClass) => {
       return 100
     }
 
-    listen(eventName, handler, capture) { // satisfy listener
-      let wrappedHandler = this._listen(eventName, handler, capture);
+    listen(eventName, handler, capture, {returnsResult}={}) { // satisfy listener
+      let wrappedHandler = this._listen(eventName, handler, capture, {returnsResult});
       trace(`${reactorName}: +listen ${eventName}`);
 
       logger("+listen ", eventName, handler, {t:{t:this}}, this.actions);
@@ -532,7 +558,7 @@ const Reactor = (componentClass) => {
       event.stopPropagation();
     }
 
-    registerAction({debug, name, asyncResult, handler, capture, ...moreDetails}) {
+    registerAction({debug, name, returnsResult, handler, capture, ...moreDetails}) {
       trace(`${reactorName}: +action ${name}`);
       logger("...", moreDetails, `handler=${handler.name}`, handler);
 
@@ -552,7 +578,7 @@ const Reactor = (componentClass) => {
         throw new Error(msg);
       }
 
-      const wrappedHandler = this.listen(name, handler, capture);
+      const wrappedHandler = this.listen(name, handler, capture, {returnsResult});
       this.actions[name] = wrappedHandler;
     }
 
@@ -857,18 +883,25 @@ const Reactor = (componentClass) => {
   return clazz;
 };
 
-Reactor.asyncAction = async function dispatchAsyncAction(target, eventName, detail={}) {
+Reactor.eventResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
   let event = new CustomEvent(eventName, {bubbles: true, detail});
-  let onComplete, reject;
-  let promise = new Promise(function(res, rej) {
-    onComplete = res;
-    reject = rej;
-  });
-  detail.onComplete = onComplete;
-  detail.reject = reject;
-  Reactor.dispatchTo(target, event, detail, () => {reject(new Error(`Unhandled async action '${eventName}'`))});
+  const pendingResult = "‹pending›";
+  event.detail.result = pendingResult;
+  if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
+    if (error) {
+      error.stack = `caught error dispatching eventResult('${eventName}'):\n` + error.stack;
+      throw error;
+    } else {
+      const msg = `eventResult('${eventName}') had no responders:`;
+      console.error(msg, error, unhandledEvent);
+      throw new Error(error || msg);
+    }
+  };
 
-  return promise;
+  Reactor.dispatchTo(target, event, detail, onUnhandled);
+  if (pendingResult === event.detail.result) throw new Error(`eventResult('${eventName}') did not provide event.detail.result`);
+
+  if (event.detail) return event.detail.result;
 };
 
 Reactor.dispatchTo =
@@ -876,6 +909,8 @@ Reactor.dispatchTo =
     target, event, detail,
     onUnhandled
   ) {
+  let backTrace = new Error("trace");
+  backTrace.stack = backTrace.stack.split("\n").slice(2).join("\n");
   let bubbles = true;
   if ("function" == typeof(detail)) {
     if (!(event instanceof Event)) throw new Error("missing object for event details in arg 3");
@@ -889,7 +924,6 @@ Reactor.dispatchTo =
       delete detail.bubbles;
     }
   }
-
 
   if (!(event instanceof Event)) {
     event = new CustomEvent(event, {bubbles, detail});
@@ -909,23 +943,24 @@ Reactor.dispatchTo =
     }
     const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node or React Component that findDOMNode() can use)`;
     logger(msg);
-    const error = new Error(msg);
-    console.warn(error);
-    throw error;
+    backTrace.stack = msg + backTrace.stack;
+    console.warn(backTrace);
+    throw backTrace;
   }
 
-    target.dispatchEvent(event);
+  target.dispatchEvent(event);
+  let error = event.error;
   if (event.handledBy && event.handledBy.length)
       return event;
   if (onUnhandled) {
-      onUnhandled(event);
+      onUnhandled(event, error);
       return event;
   }
 
 
-  throwUnhandled.bind(this)(event);
+  warnOnUnhandled.bind(this)(event, error);
 
-  function throwUnhandled(event) {
+  function warnOnUnhandled(event, caughtError) {
     if (detail && detail.optional) {
       const message = `unhandled event ${event.type} was optional, so no error event`;
       logger(message);
@@ -947,20 +982,28 @@ Reactor.dispatchTo =
 
       // event = unk
     }
+
+    if (caughtError) {
+      caughtError.stack = "Error thrown in ${event.type}:\n" + caughtError.stack;
+
+      throw caughtError;
+    }
+
     const message = this.events && this.events[event.type] ?
       `unhandled event '${event.type}' with no ‹Subscribe ${event.type}={handlerFunction}›\n` :
       `unhandled event '${event.type}'.  Have you included an Actor that services this event?\n`+
         (isErrorAlready ? "" : "Add an 'error' event handler to catch errors for presentation in the UI.");
 
+
     logger(message,
       event.detail,
       `...at DOM Target:  `, (event.target && event.target.outerHTML), "\n",
-      new Error("Backtrace:")
+      backTrace
     );
     console.error(message,
       event.detail,
       `...at DOM Target:  `, (event.target && event.target.outerHTML), "\n",
-      new Error("Backtrace:")
+      backTrace
     );
   }
 };
@@ -1032,24 +1075,25 @@ export default Reactor;
 export class Action extends React.Component {
   constructor(props) {
     super(props);
+    this.Name = "";
     this._actionRef= React.createRef();
   }
 
   render() {
-    let {children, asyncResult, capture, bare, id, client, debug, ...handler} = this.props;
+    let {children, returnsResult, capture, bare, id, client, debug, ...handler} = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${asyncResult && " action-async" || ""}`} ref={this._actionRef} />;
+    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${returnsResult && " use-eventResult" || ""}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
-    let {children, id, asyncResult, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
+    let {children, id, returnsResult, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', 'asyncResult', or 'bare')\n"+
+      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', 'returnsResult', or 'bare')\n"+
         "If your action name can't be a prop, specify it with name=, and the action function with action="
       );
     }
@@ -1065,27 +1109,14 @@ export class Action extends React.Component {
     this.handler = handler;
     name = name || foundName;
 
-    if (asyncResult) handler = this.wrappedHandler = this.wrappedHandler || this.wrapAsyncHandler(handler);
-
-    let registerEvent = Reactor.RegisterAction({name, asyncResult, bare, capture, handler, debug});
+    let registerEvent = Reactor.RegisterAction({name, returnsResult, bare, capture, handler, debug});
     Reactor.trigger(this._actionRef.current,
       registerEvent
     );
     this.fullName = registerEvent.detail.name;
+    Object.defineProperty(this, "Name", {value: (bare ? "⚡" : "🏒") + this.fullName});
   }
-  wrapAsyncHandler(handler) {
-    return async (event) => {
-      const {reject, onComplete} = event.detail;
 
-      try {
-        const oneAttempt = await handler(event);
-        if ("undefined" === typeof oneAttempt) return;
-        onComplete(oneAttempt)
-      } catch(e) {
-        reject(e)
-      }
-    }
-  }
 
   componentWillUnmount() {
     if (super.componentWillUnmount) super.componentWillUnmount();
@@ -1123,6 +1154,7 @@ export class Action extends React.Component {
     // }, 2)
   }
 }
+Object.defineProperty(Action, "name", {value: "🏒Action"})
 Reactor.Action = Action;
 
 export class Publish extends React.Component {

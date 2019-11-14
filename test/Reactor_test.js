@@ -598,18 +598,18 @@ describe("Reactor", () => {
       expect(component.find(ToyDataActor).instance().create.targetFunction).toHaveBeenCalledTimes(1);
     });
 
-    it("lets children trigger actions with async results using triggerAsync: allows cousin/uncle nodes to collaborate", async () => {
+    it("helps cousins/uncles (and their children) trigger actions and get a 'result' passed back in event detail, using eventResult", async () => {
       const expectedHi = "it's me";
       const getSomething = jest.fn(({detail:{hi}}) => {
         expect(hi).toBe(expectedHi);
 
         return hi;
       });
-      const component = mkComponent(null, <Action debug={1} asyncResult getSomething={getSomething}/>);
+      const component = mkComponent(null, <Action debug={1} returnsResult getSomething={getSomething}/>);
       await delay(1);
 
       let eSrc = component.find(".event-source").instance();
-      let result = await Reactor.asyncAction(eSrc, 'members:getSomething', {hi:expectedHi});
+      let result = await Reactor.eventResult(eSrc, 'members:getSomething', {hi:expectedHi});
       expect(result).toBe(expectedHi);
 
       expect(getSomething).toHaveBeenCalledTimes(1);
