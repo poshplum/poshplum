@@ -53,12 +53,14 @@ const trace = dbg("trace:reactor");
 const logger = dbg('debug:reactor');
 const info = dbg('reactor');
 const eventInfo = dbg('reactor:events');
+const eventDebug = dbg('debug:reactor:events');
 
 const elementInfo = (el) => {
   // debugger
   function esc(inp) {
     return inp.replace(/\./g, '\\.')
   }
+  return [el, esc(el.id)];
   const classNames = el.classList.toString().split(/ /).map(esc).join('.');
   return `<${el.constructor.name}.${classNames}#${esc(el.id)}>`;
 };
@@ -239,31 +241,31 @@ const Listener = (componentClass) => {
         const listenerTarget = handler.boundThis && handler.boundThis.constructor.name;
         const listenerFunction = (handler.targetFunction || handler);
         const listenerName = listenerFunction.name;
-        if (dbg || eventInfo.enabled) {
-          const msg = `${reactor.constructor.name}: Event: ${type} - calling handler:`;
-          trace(msg, listenerFunction, "on target", listenerTarget);
-          if (!isInternalEvent) eventInfo(msg, listenerFunction, "on target:", listenerTarget);
 
-          if (moreDebug) {
-            console.log(msg, {
-              handled,
-              triggeredAt: elementInfo(event.target),
+        const useGroup = eventDebug.enabled;
+        const collapsed = useGroup && eventInfo.enabled;
+        const topMsgTarget = useGroup ? ( collapsed ? console.groupCollapsed : console.group ).bind(console, eventInfo.namespace)
+          : eventInfo;
+
+        if (dbg || eventInfo.enabled || eventDebug.enabled) {
+          const msg = `${reactor.constructor.name}: Event: ${type} - calling handler at`;
+          if (!isInternalEvent) {
+            topMsgTarget(msg, ...elementInfo(event.target));
+            eventDebug({
+              listenerFunction,
               listenerTarget,
-              listenerFunction
             });
-            debugger;
-          } else {
-            if (dbg) console.log(msg);
           }
         }
         trace(`${displayName}:  ⚡'${type}'`);
         const result = handler.call(this,event); // retain event's `this` (target of event)
         if (result === undefined || !!result) {
-          if (!isInternalEvent) eventInfo("(event was handled)");
+          if (!isInternalEvent) eventDebug("(event was handled)");
           event.handledBy.push(handled);
         } else {
-          if (!isInternalEvent) eventInfo("(event was not handled at this level)");
+          if (!isInternalEvent) eventDebug("(event was not handled at this level)");
         }
+        if (!isInternalEvent && useGroup) console.groupEnd();
       }
       let tryEventHandler = function(e) {
         let result;
@@ -854,6 +856,7 @@ const Reactor = (componentClass) => {
   Object.defineProperty(clazz, 'name', { value: reactorName});
   return clazz;
 };
+
 Reactor.asyncAction = async function dispatchAsyncAction(target, eventName, detail={}) {
   let event = new CustomEvent(eventName, {bubbles: true, detail});
   let onComplete, reject;
@@ -867,6 +870,7 @@ Reactor.asyncAction = async function dispatchAsyncAction(target, eventName, deta
 
   return promise;
 };
+
 Reactor.dispatchTo =
   Reactor.trigger = function dispatchWithHandledDetection(
     target, event, detail,
