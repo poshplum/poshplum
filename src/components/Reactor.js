@@ -279,10 +279,11 @@ const Listener = (componentClass) => {
               console.error(msg, {handler});
               throw new Error(msg)
             }
-            if (result.then) {
+            if (result && result.then) {
               const msg = `event('${type}', returnsResult) handler returned a promise.  That might be an unplanned use of an async function, or it might be just what you wanted.  Your call.`;
               console.warn(msg, {handler});
             }
+
             event.detail.result = result;
           }
 
@@ -317,6 +318,7 @@ export const Actor = (componentClass) => {
   const listenerClass = Listener(componentClass);
 
   const displayName = inheritName(componentClass, "🎭");
+  const className = inheritName(componentClass, "Actor");
 
   const clazz = class ActorInstance extends listenerClass {
     static get name() { return displayName };
@@ -442,7 +444,8 @@ export const Actor = (componentClass) => {
     }
 
   }
-  Object.defineProperty(clazz, "name", {value: displayName});
+  Object.defineProperty(clazz, "name", {value: className});
+  Object.defineProperty(clazz, "displayName", {value: displayName});
   return clazz;
 };
 
@@ -502,7 +505,6 @@ const Reactor = (componentClass) => {
       this.registerPublishedEvent({name:"error", target: this});
 
       // this.myNode = ReactDOM.findDOMNode(this);
-      console.warn("reactorProbe should have returnsResult")
       this.listen(Reactor.Events.reactorProbe, this.reactorProbe);
 
       this.listen(Reactor.Events.registerAction, this.registerActionEvent);
@@ -702,6 +704,7 @@ const Reactor = (componentClass) => {
     registerActor(event) {
       let {name, actor, debug} = event.detail;
       trace(this.constructor.name, `registering actor '${name}'`);
+
       if (debug) console.info(this.constructor.name, `registering actor '${name}'`);
       if (this.actors[name]) {
         console.error(`Actor named '${name}' already registered`, this.actors[name]);
@@ -952,6 +955,7 @@ Reactor.dispatchTo =
   let error = event.error;
   if (event.handledBy && event.handledBy.length)
       return event;
+
   if (onUnhandled) {
       onUnhandled(event, error);
       return event;
@@ -984,7 +988,7 @@ Reactor.dispatchTo =
     }
 
     if (caughtError) {
-      caughtError.stack = "Error thrown in ${event.type}:\n" + caughtError.stack;
+      caughtError.stack = `Error thrown in ${event.type}:\n` + caughtError.stack;
 
       throw caughtError;
     }
@@ -1154,7 +1158,8 @@ export class Action extends React.Component {
     // }, 2)
   }
 }
-Object.defineProperty(Action, "name", {value: "🏒Action"})
+Object.defineProperty(Action, "displayName", {value: "🏒Action"})
+Object.defineProperty(Action, "name", {value: "Action"});
 Reactor.Action = Action;
 
 export class Publish extends React.Component {
