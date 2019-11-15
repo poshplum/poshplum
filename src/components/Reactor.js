@@ -895,9 +895,10 @@ Reactor.eventResult = function getEventResult(target, eventName, detail={}, onUn
       error.stack = `caught error dispatching eventResult('${eventName}'):\n` + error.stack;
       throw error;
     } else {
-      const msg = `eventResult('${eventName}') had no responders:`;
-      console.error(msg, error, unhandledEvent);
-      throw new Error(error || msg);
+      const msg = `eventResult('${eventName}'): Error: no responders (check the event name carefully)!`;
+      error = new Error(msg);
+      console.error("unhandled event:", unhandledEvent, "\n", error);
+      throw error;
     }
   };
 
