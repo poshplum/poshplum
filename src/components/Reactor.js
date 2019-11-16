@@ -121,21 +121,21 @@ const Listener = (componentClass) => {
       }
       return Reactor.trigger(this._listenerRef.current, event, detail, onUnhandled);
     }
-    eventResult(event, detail, onUnhandled) {
+    actionResult(event, detail, onUnhandled) {
       if (!this._listenerRef.current) {
         if (event.type == "error") {
           console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
           return;
         }
       }
-      return Reactor.eventResult(this._listenerRef.current, event, detail, onUnhandled);
+      return Reactor.actionResult(this._listenerRef.current, event, detail, onUnhandled);
 
     }
 
     _listen(eventName, handler, capture, {returnsResult}={}) {
       const listening = this.listening;
       // console.warn("_listen: ", eventName, handler);
-      const wrappedHandler = this._wrapHandler(handler, {returnsResult});
+      const wrappedHandler = this._wrapHandler(handler, {eventName,returnsResult});
       const newListener = this._listenerRef.current.addEventListener(eventName, wrappedHandler, {capture});
       trace("listening", {eventName}, "with handler:", handler, "(NOTE: listener applied additional wrapper)");
 
@@ -228,11 +228,11 @@ const Listener = (componentClass) => {
       listenersOfThisType.delete(handler)
     }
 
-    _wrapHandler(handler, {returnsResult}={}) {
+    _wrapHandler(handler, {eventName,returnsResult}={}) {
       const reactor = this;
       function wrappedHandler(event) {
         if (returnsResult && !event.detail.result) {
-          throw new Error("event.detail.result should be ready to be filled when returnsResult is set on an action - trigger with Reactor.eventResult()")
+          throw new Error(`event(${eventName}‹returnsResult›).detail.result should be ready to be filled in - not triggered with Reactor.actionResult()?`)
         }
         const {type, detail} = (event || {});
         const {debug} = (detail || {});
@@ -500,10 +500,11 @@ const Reactor = (componentClass) => {
       trace(`${reactorName}: -> mounting(self)`);
 
       this.el = this._listenerRef.current;
-      this.registerPublishedEvent({name:"success", target: this});
-      this.registerPublishedEvent({name:"warning", target: this});
-      this.registerPublishedEvent({name:"error", target: this});
-
+      if (this.hasNotifications) {
+        this.registerPublishedEvent({name:"success", target: this});
+        this.registerPublishedEvent({name:"warning", target: this});
+        this.registerPublishedEvent({name:"error", target: this});
+      }
       // this.myNode = ReactDOM.findDOMNode(this);
       this.listen(Reactor.Events.reactorProbe, this.reactorProbe);
 
@@ -604,7 +605,7 @@ const Reactor = (componentClass) => {
     }
     registerPublishedEventEvent(event) {
       const {target, detail:{name, debug, actor, global}} = event;
-      if (global && !this.isEventCatcher) {
+      if (global && !this.isRootReactor) {
         logger(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
         if (debug) console.warn(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
         return;
@@ -656,7 +657,7 @@ const Reactor = (componentClass) => {
     removePublishedEvent(event) {
       let {target, detail:{name, global, actor, debug}} = event;
       console.error("test me");
-      if (global && !this.isEventCatcher) {
+      if (global && !this.isRootReactor) {
         logger(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
         if (debug) console.warn(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
         return;
@@ -727,7 +728,7 @@ const Reactor = (componentClass) => {
     // matches a registerSubscriber event to a Reactor node by inspecting its
     // known publishers.  If it's not matched, it passes the event on to a higher-level
     // Reactor, after decorating the event with a list of published event-names that are similar
-    // to the requested one.  And if the current Reactor is a root-reactor ("isEventCatcher=true"),
+    // to the requested one.  And if the current Reactor is a root-reactor ("isRootReactor=true"),
     // it issues an error event with a friendly message for the developer.
     // When the requested event-name is found, it stops the registerSubscriber from further
     // propagation and calls through to registerSubscriberEvent().
@@ -746,7 +747,7 @@ const Reactor = (componentClass) => {
           ...deeperCandidates
         ].join(", ");
 
-        if (this.isEventCatcher) {
+        if (this.isRootReactor) {
           if (allKnownCandidates) allKnownCandidates = `(try one of: ${allKnownCandidates}})`;
           const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no matching ‹Publish› ${allKnownCandidates}`;
           console.warn(message);
@@ -823,7 +824,7 @@ const Reactor = (componentClass) => {
 
       const thisEvent = this.events[eventName];
       if (!thisEvent) {
-        if (this.isEventCatcher) {
+        if (this.isRootReactor) {
           const message = `${this.constructor.name} in removeSubscriber: unknown event ${eventName}`;
           logger(message)
           console.warn(message);
@@ -886,16 +887,16 @@ const Reactor = (componentClass) => {
   return clazz;
 };
 
-Reactor.eventResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
+Reactor.actionResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
   let event = new CustomEvent(eventName, {bubbles: true, detail});
   const pendingResult = "‹pending›";
   event.detail.result = pendingResult;
   if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
     if (error) {
-      error.stack = `caught error dispatching eventResult('${eventName}'):\n` + error.stack;
+      error.stack = `caught error in action('${eventName}‹returnsResult›'):\n` + error.stack;
       throw error;
     } else {
-      const msg = `eventResult('${eventName}'): Error: no responders (check the event name carefully)!`;
+      const msg = `actionResult('${eventName}'): Error: no responders (check the event name carefully)!`;
       error = new Error(msg);
       console.error("unhandled event:", unhandledEvent, "\n", error);
       throw error;
@@ -903,7 +904,7 @@ Reactor.eventResult = function getEventResult(target, eventName, detail={}, onUn
   };
 
   Reactor.dispatchTo(target, event, detail, onUnhandled);
-  if (pendingResult === event.detail.result) throw new Error(`eventResult('${eventName}') did not provide event.detail.result`);
+  if (pendingResult === event.detail.result) throw new Error(`actionResult('${eventName}') did not provide event.detail.result`);
 
   if (event.detail) return event.detail.result;
 };
@@ -972,12 +973,14 @@ Reactor.dispatchTo =
       console.warn(message);
       return;
     }
+    const eventDesc = (this.events && this.events[event.type]) ? `Published event '${event.type}'` : `action '${event.type}'`
     const isErrorAlready = event.type == "error";
     if (!isErrorAlready) {
       // console.error(event);
+      const error = (caughtError ? "Error thrown in" : "unhandled error");
       const unk = new CustomEvent("error", {bubbles:true, detail: {
           // debug:1,
-          error: `unhandled event ${event.type}`,
+          error: `${error} ${eventDesc}`,
           ...detail
         }});
       target.dispatchEvent(unk);
@@ -989,14 +992,14 @@ Reactor.dispatchTo =
     }
 
     if (caughtError) {
-      caughtError.stack = `Error thrown in ${event.type}:\n` + caughtError.stack;
+      caughtError.stack = `Error thrown in ${eventDesc}:\n` + caughtError.stack;
 
       throw caughtError;
     }
 
     const message = this.events && this.events[event.type] ?
-      `unhandled event '${event.type}' with no ‹Subscribe ${event.type}={handlerFunction}›\n` :
-      `unhandled event '${event.type}'.  Have you included an Actor that services this event?\n`+
+      `unhandled ${eventDesc} with no ‹Subscribe ${event.type}={handlerFunction}›\n` :
+      `unhandled ${eventDesc}.  Have you included an Actor that services this event?\n`+
         (isErrorAlready ? "" : "Add an 'error' event handler to catch errors for presentation in the UI.");
 
 
@@ -1089,7 +1092,7 @@ export class Action extends React.Component {
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${returnsResult && " use-eventResult" || ""}`} ref={this._actionRef} />;
+    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${returnsResult && " use-actionResult" || ""}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
