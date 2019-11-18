@@ -883,10 +883,13 @@ const Reactor = (componentClass) => {
 };
 
 Reactor.actionResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
+  if ("string" !== typeof eventName) throw new Error("actionResult: eventName arg must be a string");
+
   let event = new CustomEvent(eventName, {bubbles: true, detail});
   const pendingResult = "‹pending›";
   event.detail.result = pendingResult;
   if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
+    debugger
     if (error) {
       error.stack = `caught error in action('${eventName}‹returnsResult›'):\n` + error.stack;
       throw error;
@@ -968,13 +971,15 @@ Reactor.dispatchTo =
       console.warn(message);
       return;
     }
-    const eventDesc = (this.events && this.events[event.type]) ? `Published event '${event.type}'`
-        : `action '${event.type}'`;
+    const eventDesc = (this.events && this.events[event.type]) ?
+      `Published event '${event.type}'`
+      : `action '${event.type}'`;
+
     const isErrorAlready = event.type == "error";
     if (!isErrorAlready) {
       // console.error(event);
       const error = (caughtError ? "Error thrown in" : "unhandled error");
-      const helpfulMessage = `${error} ${eventDesc}: `+ caughtError.message;
+      const helpfulMessage = `${error} ${eventDesc}`+ ((caughtError && (": "+caughtError.message)) || "");
       const errorWithStack = caughtError || new Error("");
       errorWithStack.message = helpfulMessage;
       const unk = new CustomEvent("error", {bubbles:true, detail: {
