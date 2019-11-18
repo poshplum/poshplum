@@ -968,20 +968,32 @@ Reactor.dispatchTo =
       console.warn(message);
       return;
     }
-    const eventDesc = (this.events && this.events[event.type]) ? `Published event '${event.type}'` : `action '${event.type}'`
+    const eventDesc = (this.events && this.events[event.type]) ? `Published event '${event.type}'`
+        : `action '${event.type}'`;
     const isErrorAlready = event.type == "error";
     if (!isErrorAlready) {
       // console.error(event);
       const error = (caughtError ? "Error thrown in" : "unhandled error");
+      const helpfulMessage = `${error} ${eventDesc}: `+ caughtError.message;
+      const errorWithStack = caughtError || new Error("");
+      errorWithStack.message = helpfulMessage;
       const unk = new CustomEvent("error", {bubbles:true, detail: {
           // debug:1,
-          error: `${error} ${eventDesc}`,
+          error: helpfulMessage,
           ...detail
         }});
       target.dispatchEvent(unk);
       // if the error event is handled, it indicates the error was successfully
       // processed by a UI-level actor (displaying it for the user to act on)
-      if (unk.handledBy && unk.handledBy.length) return;
+      if (unk.handledBy && unk.handledBy.length) {
+        // still, we show the full error detail on the console for the developer
+        // to act on
+        return console.error(errorWithStack);
+      } else {
+        // when it's unhandled, it's thrown to the console as an error
+        // that was not presented to the user (probably in a later call
+        // into this same method
+      }
 
       // event = unk
     }
