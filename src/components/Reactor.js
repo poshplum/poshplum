@@ -52,7 +52,6 @@ import dbg from 'debug';
 const trace = dbg("trace:reactor");
 const logger = dbg('debug:reactor');
 const info = dbg('reactor');
-const eventInfo = dbg('reactor:events');
 const eventDebug = dbg('debug:reactor:events');
 
 const elementInfo = (el) => {
@@ -109,7 +108,7 @@ const Listener = (componentClass) => {
         throw new Error("notify() requires event name, not Event object");
       }
       event = this.eventPrefix() + event;
-      eventInfo(`${this.name()}: notify '${event}':`, {detail});
+      eventDebug(`${this.name()}: notify '${event}':`, {detail});
       return this.trigger(event, detail, () => {});
     }
     trigger(event,detail, onUnhandled) {
@@ -255,20 +254,15 @@ const Listener = (componentClass) => {
         const listenerFunction = (handler.targetFunction || handler);
         const listenerName = listenerFunction.name;
 
-        const useGroup = eventDebug.enabled;
-        const collapsed = useGroup && eventInfo.enabled;
-        const topMsgTarget = useGroup ? ( collapsed ? console.groupCollapsed : console.group ).bind(console, eventInfo.namespace)
-          : eventInfo;
-
-        if (dbg || eventInfo.enabled || eventDebug.enabled) {
+        const showDebug = !isInternalEvent && (dbg || eventDebug.enabled);
+        if (showDebug) {
           const msg = `${reactor.constructor.name}: Event: ${type} - calling handler at`;
-          if (!isInternalEvent) {
-            topMsgTarget(msg, ...elementInfo(event.target));
-            eventDebug({
-              listenerFunction,
-              listenerTarget,
-            });
-          }
+
+          console.group(eventDebug.namespace, msg, ...elementInfo(event.target));
+          eventDebug({
+            listenerFunction,
+            listenerTarget,
+          });
         }
         trace(`${displayName}:  ⚡'${type}'`);
         try {
@@ -293,13 +287,14 @@ const Listener = (componentClass) => {
           } else {
             if (!isInternalEvent) eventDebug("(event was not handled at this level)");
           }
-          if (!isInternalEvent && useGroup) console.groupEnd();
           return result;
         } catch(error) {
           event.error = error
           // console.error(error);
           // logger(error);
           // throw(error)
+        } finally {
+          if (showDebug) console.groupEnd();
         }
       }
       wrappedHandler.innerHandler = handler && handler.targetFunction || handler;
@@ -640,7 +635,7 @@ const Reactor = (componentClass) => {
 
         let anyHandled = null;
         for (const subscriberFunc of thisEvent.subscribers) {
-          eventInfo(`'${name}: delivering to subscriber`, subscriberFunc);
+          eventDebug(`'${name}: delivering to subscriber`, subscriberFunc);
 
           const r = subscriberFunc(event);
           if (r == undefined || !!r) {
@@ -766,7 +761,7 @@ const Reactor = (componentClass) => {
         }
         return false
       } else {
-        eventInfo(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
+        eventDebug(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
         logger(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
         if (debug) console.warn(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
       }
@@ -834,7 +829,7 @@ const Reactor = (componentClass) => {
         }
         return
       }
-      eventInfo(`${this.constructor.name}: -subscriber removed:`, {eventName, debug, listener});
+      eventDebug(`${this.constructor.name}: -subscriber removed:`, {eventName, debug, listener});
 
       event.stopPropagation();
       this.removeSubscriber(eventName, owner, listener, debug);
