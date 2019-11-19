@@ -220,6 +220,7 @@ const Listener = (componentClass) => {
 
       if (!foundListening) {
         console.warn(`${type} listener not found/matched `, handler, `\n   ...in listeners`, [...listenersOfThisType.values()]);
+        debugger
         return;
       }
       if (!el) throw new Error(`no el to unlisten for ${type}` );
@@ -361,10 +362,10 @@ export const Actor = (componentClass) => {
         console.error(`${this.constructor.name}: registerAction: registration event has no details... :(`);
         debugger
       }
-      let {name,debug, bare} = registrationEvent.detail;
+      let {name, debug, observer, bare} = registrationEvent.detail;
       let dbg = debugInt(debug);
       let moreDebug = (dbg > 1);
-      let newName = bare ? name : `${this.name()}:${name}`;
+      let newName = (bare || observer) ? name : `${this.name()}:${name}`;
       logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (dbg) console.log(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (moreDebug) {
@@ -506,7 +507,7 @@ const Reactor = (componentClass) => {
       const isInternal = {isInternal: true};
       this.listen(Reactor.Events.reactorProbe, this.reactorProbe, false, isInternal);
 
-      this.listen(Reactor.Events.registerAction, this.registerActionEvent, false, isInternal);
+      this.listen(Reactor.Events.registerAction, this.registerActionEvent, false, {returnsResult: true, ...isInternal});
       this.listen(Reactor.Events.removeAction, this.removeAction, false, isInternal);
 
       this.listen(Reactor.Events.registerActor, this.registerActor, false, isInternal);
@@ -535,11 +536,11 @@ const Reactor = (componentClass) => {
     }
 
     listen(eventName, handler, capture, {isInternal, returnsResult}={}) { // satisfy listener
-      let wrappedHandler = this._listen(eventName, handler, capture, {isInternal, returnsResult});
+      let effectiveHandler = this._listen(eventName, handler, capture, {isInternal, returnsResult});
       trace(`${reactorName}: +listen ${eventName}`);
 
       logger("+listen ", eventName, handler, {t:{t:this}}, this.actions);
-      return wrappedHandler;
+      return effectiveHandler;
     }
 
 
@@ -557,20 +558,22 @@ const Reactor = (componentClass) => {
 
     registerActionEvent(event) {
       const {debug, name, capture, handler, ...moreDetails} = event.detail;
-      this.registerAction({debug, name, handler, capture, ...moreDetails});
+      const effectiveHandler = this.registerAction({debug, name, handler, capture, ...moreDetails});
       event.stopPropagation();
       event.handledBy = handledInternally;
+      // satisfies the returnsResult/actionResult interface, without wrapper overhead.
+      event.detail.result = effectiveHandler;
     }
 
-    registerAction({debug, name, returnsResult, handler, capture, bare, ...moreDetails}) {
+    registerAction({debug, name, returnsResult, handler, capture, observer="", bare, ...moreDetails}) {
       trace(`${reactorName}: +action ${name}`);
       logger("...", moreDetails, `handler=${handler.name}`, handler);
 
       const priorityHandlers = [];
 
-      const actionDescription = bare ? `bare '${name}' event handler` : `Action '${name}'`
+      const actionDescription = bare ? `bare '${name}' event ${observer || "handler"}` : `Action ${observer && "observer: "}'${name}'`;
       const existingActionHandler = this.actions[name];
-      if (existingActionHandler && !bare) {
+      if (existingActionHandler && !bare && !observer) {
         debugger
         let info = {
           listenerFunction: (existingActionHandler.targetFunction || existingActionHandler).name,
@@ -584,8 +587,8 @@ const Reactor = (componentClass) => {
         console.error(msg);
         console.warn("existing handler info: ", info);
         throw new Error(msg);
-      } else if (bare && existingActionHandler) {
-        console.warn(`vvvvvvvvv ${actionDescription} may not be called due to an existing Action`)
+      } else if ((bare || observer) && existingActionHandler) {
+        console.warn(`vvvvvvvvv ${actionDescription} may not be called due to an existing Action listener`)
         console.dir(handler)
       }
       if (this.listening[name]) {
@@ -597,24 +600,24 @@ const Reactor = (componentClass) => {
         }
       }
 
-      const wrappedHandler = this.listen(name, handler, capture, {returnsResult, bare});
-      if (!bare) {
-        this.actions[name] = wrappedHandler;
+      const effectiveHandler = this.listen(name, handler, capture, {returnsResult, observer, bare});
+      if (!(bare || observer)) {
+        this.actions[name] = effectiveHandler;
       }
-      return wrappedHandler
+      return effectiveHandler
     }
 
     removeAction(event) {
-      const {debug, name, handler, bare, ...moreDetails} = event.detail;
+      const {debug, name, handler, observer="", bare, ...moreDetails} = event.detail;
       trace(`${reactorName}: -action ${name}`);
       if(debug) console.log(`${this.constructor.name}: removing action:`, event.detail);
       // debugger
 
-      if (!bare && !this.actions[name]) {
+      if (!this.actions[name] && !(bare || observer)) {
         logger(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
         console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
       } else {
-        if (bare) {
+        if (bare || observer) {
           this.unlisten([name, handler], this.el)
         } else {
           this.unlisten([name, this.actions[name]], this.el);
@@ -919,9 +922,15 @@ const Reactor = (componentClass) => {
 };
 Reactor.pendingResult = Symbol("‹pending›")
 Reactor.actionResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
-  if ("string" !== typeof eventName) throw new Error("actionResult: eventName arg must be a string");
+  let event;
+  if (eventName instanceof Event) {
+    event = eventName;
+    eventName = event.type
+  } else {
+    if ("string" !== typeof eventName) throw new Error("actionResult: must give a string eventName or Event.");
+    event = new CustomEvent(eventName, {bubbles: true, detail});
+  }
 
-  let event = new CustomEvent(eventName, {bubbles: true, detail});
   event.detail.result = Reactor.pendingResult;
   if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
     debugger
@@ -1166,20 +1175,20 @@ export class Action extends React.Component {
   }
 
   render() {
-    let {children, returnsResult, capture, bare, id, client, debug, ...handler} = this.props;
+    let {children, returnsResult, capture, observer="", bare, id, client, debug, ...handler} = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} style={{display:"none"}} className={`action action-${foundName}${returnsResult && " use-actionResult" || ""}`} ref={this._actionRef} />;
+    return <div {...{id}} style={{display:"none"}} className={`action${observer && " observer"} action-${foundName}${returnsResult && " use-actionResult" || ""}`} ref={this._actionRef} />;
   }
 
   componentDidMount() {
-    let {children, id, returnsResult, capture, bare, name, client="‹unknown›", debug, ...handler} = this.props;
+    let {children, id, returnsResult, capture, observer="", bare, name, client="‹unknown›", debug, ...handler} = this.props;
     if (super.componentDidMount) super.componentDidMount();
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', 'returnsResult', or 'bare')\n"+
+      throw new Error("Actions should only have a single prop - the action name. (plus 'debug', 'id', 'returnsResult', 'observer', or 'bare')\n"+
         "If your action name can't be a prop, specify it with name=, and the action function with action="
       );
     }
@@ -1192,31 +1201,27 @@ export class Action extends React.Component {
       console.error(message, this);
       throw new Error(message);
     }
-    this.handler = handler;
     name = name || foundName;
 
-    let registerEvent = Reactor.RegisterAction({name, returnsResult, bare, capture, handler, debug});
-    Reactor.trigger(this._actionRef.current,
+    let registerEvent = Reactor.RegisterAction({name, returnsResult, observer, bare, capture, handler, debug});
+    this.handler = Reactor.actionResult(this._actionRef.current,
       registerEvent
     );
     this.fullName = registerEvent.detail.name;
-    Object.defineProperty(this, "Name", {value: (bare ? "⚡" : "🏒") + this.fullName});
+    Object.defineProperty(this, "Name", {value: (observer && "👁️")+(bare ? "⚡" : "🏒") + this.fullName});
   }
 
 
   componentWillUnmount() {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
-    let {children, client, name, bare, debug, ...handlers} = this.props;
+    let {client, observer, bare, debug} = this.props;
 
-    const foundKeys = Object.keys(handlers);
-    const foundName = foundKeys[0];
     const stack = new Error("Backtrace");
-    const handler = handlers[foundName];
+    const handler = this.handler
 
     client = client || handler.name
     const el = this._actionRef.current;
-    // console.warn(el.outerHTML)
     if (!el) throw new Error("no el")
 
     logger(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
@@ -1230,7 +1235,7 @@ export class Action extends React.Component {
 
       try {
         Reactor.trigger(el,
-          Reactor.RemoveAction({debug, bare, name: this.fullName, handler})
+          Reactor.RemoveAction({debug, observer, bare, name: this.fullName, handler})
         );
       } catch(e) {
         console.error(`${this.constructor.name}: error while removing action:`, e);
