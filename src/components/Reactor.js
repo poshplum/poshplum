@@ -78,6 +78,7 @@ const debugInt = (debug) => {
 const handledInternally = [Symbol("ReactorInternal")]
 
 const stdHandlers = {
+  'error': 1,
   'registerAction': 1,
   'registerActor': 1,
   'registerPublishedEvent': 1,
@@ -466,6 +467,8 @@ const Reactor = (componentClass) => {
       Object.defineProperty(this.name, "name", {value: reactorName});
 
       this.reactorProbe = Reactor.bindWithBreadcrumb(this.reactorProbe, this);
+      // this.addReactorName = this.addReactorName.bind(this)
+      this.addReactorName = Reactor.bindWithBreadcrumb(this.addReactorName, this)
 
       this.registerActionEvent = Reactor.bindWithBreadcrumb(this.registerActionEvent, this);
       this.removeAction = Reactor.bindWithBreadcrumb(this.removeAction, this);
@@ -501,8 +504,9 @@ const Reactor = (componentClass) => {
         this.registerPublishedEvent({name:"success", target: this});
         this.registerPublishedEvent({name:"warning", target: this});
         this.registerPublishedEvent({name:"error", target: this});
+      } else {
+        this.registerAction({observer:true, name:"error", handler:this.addReactorName});
       }
-      // this.myNode = ReactDOM.findDOMNode(this);
       const _l = this.internalListeners = new Set();
       const isInternal = {isInternal: true};
       this.listen(Reactor.Events.reactorProbe, this.reactorProbe, false, isInternal);
@@ -543,6 +547,9 @@ const Reactor = (componentClass) => {
       return effectiveHandler;
     }
 
+    addReactorName(event) { // for error events
+      if (event.detail && !event.detail.reactor) event.detail.reactor = `(in ${this.constructor.name})`;
+    }
 
     reactorProbe(event) {
       let {onReactor} = event.detail;
@@ -767,18 +774,22 @@ const Reactor = (componentClass) => {
       if (!this.events[eventName]) {
         const possibleMatches = Object.keys(this.events);
 
-        let allKnownCandidates = [
-          possibleMatches.
-            map(candidate => [levenshtein.get(candidate, eventName) / eventName.length, candidate]).
-            filter(([distance,x]) => distance < 0.6).
+        const distances = possibleMatches.map(candidate =>
+            [levenshtein.get(candidate, eventName) / eventName.length, candidate]
+        );
+        const closeDistances = distances.filter(([distance,x]) => distance < 0.6);
+        const likelyCandidates = closeDistances.
             sort(([d1],[d2]) => ( (d1 < d2) ? -1 : 1)).
-            map(([distance, candidate]) => candidate),
-          ...deeperCandidates
-        ].join(", ");
+            map(([distance, candidate]) => candidate);
+
+        let allKnownCandidates = [
+            ...likelyCandidates,
+            ...deeperCandidates
+        ];
 
         if (this.isRootReactor) {
-          if (allKnownCandidates) allKnownCandidates = `(try one of: ${allKnownCandidates}})`;
-          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no matching ‹Publish› ${allKnownCandidates}`;
+          const candidatesMessage = allKnownCandidates ? ` (try one of: ${allKnownCandidates.join(",")})` : "";
+          const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no matching ‹Publish›${candidatesMessage}`;
           console.warn(message);
 
           this._listenerRef.current.dispatchEvent(
@@ -1059,6 +1070,7 @@ Reactor.dispatchTo =
       const unk = new CustomEvent("error", {bubbles:true, detail: {
         // debug:1,
         error: helpfulMessage,
+        reactor: " ", // suppress redundant info (??? move all of this to the error-notification?)
         ...detail
       }});
       target.dispatchEvent(unk);
@@ -1068,7 +1080,6 @@ Reactor.dispatchTo =
         // when that ‹unk› event isn't handled, it's typically thrown to the
         // console as an error that was not presented to the user (in a later call
         // into this same method)
-        debugger  // !!! verify that's true^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^)
       } else {
         // still, we show the full error detail on the console for the developer
         // to be able to act on:
