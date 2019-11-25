@@ -141,10 +141,6 @@ export const withStateMachine = (baseClass) => {
           }
         }[displayName];
       }
-      if(debug.enabled) {
-        debug(this.constructor.name, "mkTransition", name, this._transitions[name]);
-        debugger
-      }
 
       return this._transitions[name];
     }
@@ -158,6 +154,10 @@ export const withStateMachine = (baseClass) => {
         const msg = `${baseName}: ${tLevel}${name}⭞  transition${this.props.item && ` (rec ${this.props.item.id})` || ""}`;
         info(msg);
         console.group(msg)
+      }
+      if(debug.enabled) {
+        debug(this.constructor.name, "transition", name, this._transitions[name]);
+        debugger
       }
 
       let thisState = this.states[currentState];
