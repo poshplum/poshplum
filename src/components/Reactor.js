@@ -131,12 +131,12 @@ const Listener = (componentClass) => {
 
     }
 
-    _listen(eventName, rawHandler, capture, {isInternal, returnsResult}={}) {
+    _listen(eventName, rawHandler, capture, {isInternal, observer, returnsResult}={}) {
       const listening = this.listening;
       // console.warn("_listen: ", eventName, handler);
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
-      const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {eventName,returnsResult});
+      const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {eventName,observer, returnsResult});
       this._listenerRef.current.addEventListener(eventName, handler, {capture});
       trace("listening", {eventName}, "with handler:", handler, note);
 
@@ -230,11 +230,13 @@ const Listener = (componentClass) => {
       listenersOfThisType.delete(handler)
     }
 
-    _wrapHandler(handler, {eventName,returnsResult}={}) {
+    _wrapHandler(handler, {eventName,observer,returnsResult}={}) {
       const reactor = this;
+      const createdBy = new Error("stack");
       function wrappedHandler(event) {
         if (returnsResult && !event.detail.result) {
-          throw new Error(`event(${eventName}‹returnsResult›).detail.result should be ready to be filled in - not triggered with Reactor.actionResult()?`)
+          event.error = new Error(`event('${eventName}'‹returnsResult›): use Reactor.actionResult(...) or ‹actor›.actionResult(...)`);
+          return;
         }
         const {type, detail} = (event || {});
         const {debug} = (detail || {});
@@ -247,7 +249,9 @@ const Listener = (componentClass) => {
         let handled = {
           reactor,
           reactorNode: this,
+          eventName,
           listenerObj,
+          createdBy,
           listenerFunction: handler.targetFunction || handler
         };
         if (!handled.reactorNode) debugger;
@@ -269,30 +273,48 @@ const Listener = (componentClass) => {
         }
         trace(`${displayName}:  ⚡'${type}'`);
         try {
+          if (observer) debugger;
           const result = handler.call(this,event); // retain event's `this` (target of event)
           if (returnsResult) {
             if ("undefined" === typeof result) {
-              const msg = `event('${type}', returnsResult) handler returned undefined result`;
+              const msg = `event('${type}'‹returnsResult›) handler returned undefined result`;
               console.error(msg, {handler});
               throw new Error(msg)
             }
             if (result && result.then) {
-              const msg = `event('${type}', returnsResult) handler returned a promise.  That might be an unplanned use of an async function, or it might be just what you wanted.  Your call.`;
+              const msg = `event('${type}'‹returnsResult›) handler returned a promise.  That might be an unplanned use of an async function, or it might be just what you wanted.  Your call.`;
               console.warn(msg, {handler});
             }
+            if (event.error) {
+              debugger
+            } else {
+              if (!isInternalEvent) eventDebug("(event was handled)");
+              event.handledBy.push(handled);
 
-            event.detail.result = result;
+              event.detail.result = result;
+            }
+            return result;
           }
 
-          if (result === undefined || !!result) {
+          if (observer && !result) {
+            console.log(`observed ${event.type}`, handled);
+            eventDebug("event observer called")
+          } else if (result === undefined || !!result) {
             if (!isInternalEvent) eventDebug("(event was handled)");
+            if (event.handledBy.length > 4) debugger;
             event.handledBy.push(handled);
           } else {
             if (!isInternalEvent) eventDebug("(event was not handled at this level)");
           }
           return result;
         } catch(error) {
-          event.error = error
+          if (observer) {
+            const message = `event('${event.type}') observer ${listenerName} threw an error: `;
+            console.error(message, error)
+            Reactor.trigger(event.target, "error", {error:message + error.message});
+          } else {
+            event.error = error
+          }
           // console.error(error);
           // logger(error);
           // throw(error)
@@ -539,8 +561,9 @@ const Reactor = (componentClass) => {
       return 100
     }
 
-    listen(eventName, handler, capture, {isInternal, returnsResult}={}) { // satisfy listener
-      let effectiveHandler = this._listen(eventName, handler, capture, {isInternal, returnsResult});
+    listen(eventName, handler, capture, {isInternal, observer, returnsResult}={}) { // satisfy listener
+      if (observer && returnsResult) throw new Error(`Action observer('${eventName}') can't also be returnsResult.  It's fine to observe a returnsResult event, but don't mark the observer with returnsResult.`)
+      let effectiveHandler = this._listen(eventName, handler, capture, {isInternal, observer, returnsResult});
       trace(`${reactorName}: +listen ${eventName}`);
 
       logger("+listen ", eventName, handler, {t:{t:this}}, this.actions);
@@ -549,6 +572,7 @@ const Reactor = (componentClass) => {
 
     addReactorName(event) { // for error events
       if (event.detail && !event.detail.reactor) event.detail.reactor = `(in ${this.constructor.name})`;
+      return null
     }
 
     reactorProbe(event) {
@@ -946,7 +970,9 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
   if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
     debugger
     if (error) {
-      error.stack = `caught error in action('${eventName}‹returnsResult›'):\n` + error.stack;
+      const msg = `caught error in action('${eventName}'‹returnsResult›):`;
+      error.stack = `${msg}\n${error.stack}`;
+      Reactor.trigger(target, "error", {error:`${msg} ${error.message}`}); // this helps when a synchronous action is called from an async function
       throw error;
     } else {
       const msg = `actionResult('${eventName}'): Error: no responders (check the event name carefully)!`;
@@ -1010,14 +1036,21 @@ Reactor.dispatchTo =
 
   target.dispatchEvent(event);
   let error = event.error;
-  if (event.handledBy && event.handledBy.length)
-      return event;
+  if (event.handledBy && event.handledBy.length) {
+    if (error) {
+      const msg = `Handled(!) event('${event.type}') had error: `;
+      Reactor.trigger(target, "error", {error: msg + error.message});
+      console.error(msg, error, "\nhandledBy:", event.handledBy);
+    }
+    return event;
+  }
 
   if (onUnhandled) {
       onUnhandled(event, error);
       return event;
+  } else if (!error && null === onUnhandled ) {
+    return event;
   }
-
 
   warnOnUnhandled.bind(this)(event, error);
 
