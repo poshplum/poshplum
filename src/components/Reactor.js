@@ -136,7 +136,7 @@ const Listener = (componentClass) => {
       // console.warn("_listen: ", eventName, handler);
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
-      const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {eventName,observer, returnsResult});
+      const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {eventName, isInternal, observer, returnsResult});
       this._listenerRef.current.addEventListener(eventName, handler, {capture});
       trace("listening", {eventName}, "with handler:", handler, note);
 
@@ -230,7 +230,7 @@ const Listener = (componentClass) => {
       listenersOfThisType.delete(handler)
     }
 
-    _wrapHandler(handler, {eventName,observer,returnsResult}={}) {
+    _wrapHandler(handler, {eventName,isInternal, observer,returnsResult}={}) {
       const reactor = this;
       const createdBy = new Error("stack");
       function wrappedHandler(event) {
@@ -256,7 +256,7 @@ const Listener = (componentClass) => {
         };
         if (!handled.reactorNode) debugger;
 
-        const isInternalEvent = type in Reactor.Events;
+        const isInternalEvent = type in Reactor.Events || isInternal;
         const listenerTarget = handler.boundThis && handler.boundThis.constructor.name;
         const listenerFunction = (handler.targetFunction || handler);
         const listenerName = listenerFunction.name;
@@ -273,7 +273,6 @@ const Listener = (componentClass) => {
         }
         trace(`${displayName}:  ⚡'${type}'`);
         try {
-          if (observer) debugger;
           const result = handler.call(this,event); // retain event's `this` (target of event)
           if (returnsResult) {
             if ("undefined" === typeof result) {
@@ -297,7 +296,7 @@ const Listener = (componentClass) => {
           }
 
           if (observer && !result) {
-            console.log(`observed ${event.type}`, handled);
+            if (!isInternalEvent) console.log(`observer saw event('${event.type}')`, handled);
             eventDebug("event observer called")
           } else if (result === undefined || !!result) {
             if (!isInternalEvent) eventDebug("(event was handled)");
@@ -527,7 +526,7 @@ const Reactor = (componentClass) => {
         this.registerPublishedEvent({name:"warning", target: this});
         this.registerPublishedEvent({name:"error", target: this});
       } else {
-        this.registerAction({observer:true, name:"error", handler:this.addReactorName});
+        this.registerAction({observer:true, isInternal: true, name:"error", handler:this.addReactorName});
       }
       const _l = this.internalListeners = new Set();
       const isInternal = {isInternal: true};
@@ -596,7 +595,7 @@ const Reactor = (componentClass) => {
       event.detail.result = effectiveHandler;
     }
 
-    registerAction({debug, name, returnsResult, handler, capture, observer="", bare, ...moreDetails}) {
+    registerAction({debug, name, returnsResult, isInternal, handler, capture, observer="", bare, ...moreDetails}) {
       trace(`${reactorName}: +action ${name}`);
       logger("...", moreDetails, `handler=${handler.name}`, handler);
 
@@ -631,7 +630,7 @@ const Reactor = (componentClass) => {
         }
       }
 
-      const effectiveHandler = this.listen(name, handler, capture, {returnsResult, observer, bare});
+      const effectiveHandler = this.listen(name, handler, capture, {returnsResult, isInternal, observer, bare});
       if (!(bare || observer)) {
         this.actions[name] = effectiveHandler;
       }
