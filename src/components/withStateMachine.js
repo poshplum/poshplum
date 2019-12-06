@@ -136,8 +136,8 @@ export const withStateMachine = (baseClass) => {
         trace(`${baseName}: mkTransition(): +${displayName}⭞`);
         this._transitions[name] = {
           [displayName]: (event) => {
+            event.stopPropagation()
             return this.transition(name)
-            // event.stopPropagation()
           }
         }[displayName];
       }
