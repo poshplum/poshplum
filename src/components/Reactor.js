@@ -604,7 +604,6 @@ const Reactor = (componentClass) => {
       const actionDescription = bare ? `bare '${name}' event ${observer || "handler"}` : `Action ${observer && "observer: "}'${name}'`;
       const existingActionHandler = this.actions[name];
       if (existingActionHandler && !bare && !observer) {
-        debugger
         let info = {
           listenerFunction: (existingActionHandler.targetFunction || existingActionHandler).name,
           listenerTarget: (
@@ -1071,14 +1070,24 @@ Reactor.dispatchTo =
       const error = (caughtError ? "Error thrown in" : "unhandled event:");
       const errorWithFriendlyStack = new Error(""); {
         let foundFramework = false;
-        let filteredStack = (caughtError || errorWithFriendlyStack).stack.split("\n").filter(
-          (line) => {
-            const matched = foundFramework;
-            if (line.match(/trigger/)) foundFramework = true;
-            if (line.match(/react-dom/)) return false;
-            return matched
+        let callerStack = [];
+        let handlerStack = [];
+        for (const line of (caughtError || errorWithFriendlyStack).stack.split("\n")) {
+          if (line.match(/wrappedHandler|trigger|dispatchWithHandledDetection/)) {
+            foundFramework = true;
+          } else if (!line.match(/react-dom/)) {
+            if (foundFramework) {
+              callerStack.push(line)
+            } else {
+              handlerStack.push(line);
+            }
           }
-        ).join("\n");
+        }
+        const filteredStack = [
+          ...handlerStack,
+          "in handler ^^^^^  ...called from vvvvv",
+          ...callerStack
+        ].join("\n");
         let firstReactor = "";
         let elInfo = []; {
           for (let p=event.target; !!p; p = p.parentNode) {
