@@ -192,11 +192,13 @@ export const withStateMachine = (baseClass) => {
           console.warn(`${this.constructor.name}: ${tLevel}transition(${name}) from state '${currentState}' denied by predicate in state machine`);
           info.enabled && console.groupEnd();
           this.transitionsUnderway = this.transitionsUnderway - 1;
+          info.enabled && console.groupEnd();
+
           return false
         }
       }
       if (this.debugState > 1) debugger;
-      this.setState({currentState: nextState});
+      if (currentState !== nextState) this.setState({currentState: nextState});
       if (effectFn) {
         try {
           trace(`${baseName}: ${tLevel}-> ${name}⭞ effect callback`);
@@ -207,7 +209,7 @@ export const withStateMachine = (baseClass) => {
           this.trigger("error", {error: e});
         }
       }
-      if (nextStateDef.onEntry) {
+      if (currentState !== nextState && nextStateDef.onEntry) {
         setTimeout( () => {
           trace(`${baseName}: ${tLevel}-> onEntry to '${nextState}'`);
           nextStateDef.onEntry();
