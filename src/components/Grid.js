@@ -22,10 +22,10 @@ const gridColSpan = (span) => span ? ({
 }) : null;
 
 const Grid = ({children, className, width, gap, align, ...props}) => { return <div className={`grid ${className}`} {...props} style={{
-  display: "grid",
+    display: "grid",
   ...styleWidth(width),
-  ...gridGap(gap),
-  ...gridAlign(align)
+    ...gridGap(gap),
+    ...gridAlign(align)
 }}>{children}</div> };
 
 Grid.propTypes = {
@@ -45,8 +45,8 @@ Grid.defaultProps = {
   gap: "0.5em"
 }
 
-Grid.Item = ({children, span, ...props}) => {
-  return <div {...props} style={{
+Grid.Item = ({children, className="", span, ...props}) => {
+  return <div {...props} className={`${className}`} style={{
     ...gridColSpan(span)
   }}>{children}</div>
 }
