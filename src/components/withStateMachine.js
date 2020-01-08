@@ -47,8 +47,8 @@ export const withStateMachine = (baseClass) => {
   let dName = inheritName(baseClass,`FSM`);
   debug(`creating stateMachine component ${dName}`);
   const enhancedBaseClass = class withStateMachine extends baseClass {
-    constructor() {
-      super();
+    constructor(props) {
+      super(props);
       this._stateRef = React.createRef();
     }
     static State = State;
@@ -171,13 +171,19 @@ export const withStateMachine = (baseClass) => {
           console.warn(e);
         }, nextState, effectFn] = nextState;
       }
-      if (!nextState)
+      if (!nextState) {
+        info.enabled && console.groupEnd();
+
         throw new Error(`${this.constructor.name}: INVALID transition('${name}') from state '${currentState}' (suggested: ${goodTransitions.join(',')})}`);
+      }
 
       const nextStateDef = this.states[nextState];
 
-      if (!nextStateDef)
+      if (!nextStateDef) {
+        info.enabled && console.groupEnd();
+
         throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
+      }
 
       (info.enabled && info || trace)(`    ${tLevel}${currentState} -> ${predicate && (
         (predicate.name || "‹unnamed predicate›")+ " ->"
@@ -186,13 +192,14 @@ export const withStateMachine = (baseClass) => {
 
 
       if (predicate) {
-        if (typeof(predicate) !== 'function')
+        if (typeof(predicate) !== 'function') {
+          info.enabled && console.groupEnd();
           throw new Error(`${this.constructor.name}: INVALID predicate (${predicate}); function required.\n...in transition(${name}) from state '${currentState}'`);
+        }
         if (predicate.call(this) === false) {
           console.warn(`${this.constructor.name}: ${tLevel}transition(${name}) from state '${currentState}' denied by predicate in state machine`);
           info.enabled && console.groupEnd();
           this.transitionsUnderway = this.transitionsUnderway - 1;
-          info.enabled && console.groupEnd();
 
           return false
         }
