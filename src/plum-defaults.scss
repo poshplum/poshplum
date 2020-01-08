@@ -288,6 +288,12 @@ nav {
   border-bottom: 1px solid #aaa;
   box-shadow: 0 3px 2px #ccc;
 }
+.panel .panel {
+  --zIndexBase:10
+}
+.panel .panel .panel {
+  --zIndexBase:20
+}
 .panel {
   &.fixed-bottom-right {
     position: fixed;
@@ -298,7 +304,7 @@ nav {
     width: 66vw;
     background: #f7f7f7;
 
-    z-index: 10;
+    z-index: 11;
     border-left: 4px solid $primary-color-light;
     border-right: 1px solid #ccc;
 
