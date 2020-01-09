@@ -594,15 +594,19 @@ const Reactor = (componentClass) => {
 
     registerActionEvent(event) {
       const {debug, name, capture, handler, ...moreDetails} = event.detail;
-      const effectiveHandler = this.registerAction({debug, name, handler, capture, ...moreDetails});
+      const effectiveHandler = this.registerAction({debug, event, name, handler, capture, ...moreDetails});
       event.stopPropagation();
       event.handledBy = handledInternally;
       // satisfies the returnsResult/actionResult interface, without wrapper overhead.
       event.detail.result = effectiveHandler;
     }
 
-    registerAction({debug, name, returnsResult, isInternal, handler, capture, observer="", bare, ...moreDetails}) {
+    registerAction({debug, event, name, returnsResult, isInternal, handler, capture, observer="", bare, ...moreDetails}) {
       trace(`${reactorName}: +action ${name}`);
+      if (!handler) {
+        console.error(`RegisterAction: ${name}: no handler`, event.target)
+        throw new Error(`RegisterAction: ${name}: no handler (see console for more details)`);
+      }
       logger("...", moreDetails, `handler=${handler.name}`, handler);
 
       const priorityHandlers = [];
@@ -1278,7 +1282,7 @@ export class Action extends React.Component {
     const stack = new Error("Backtrace");
     const handler = this.handler
 
-    client = client || handler.name
+    client = client || (handler && handler.name || "‹no handler›");
     const el = this._actionRef.current;
     if (!el) throw new Error("no el")
 
