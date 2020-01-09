@@ -104,10 +104,10 @@ const Listener = (componentClass) => {
     get unlistenDelay() {
       throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups");
     }
-    listen(eventName, handler, capture, {returnsResult}) {
+    listen(eventName, handler, capture, {isInternal, observer, returnsResult}) {
       logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
-      return this._listen(eventName, handler, capture, {returnsResult});
+      return this._listen(eventName, handler, capture, {isInternal, observer, returnsResult});
     }
     notify(event, detail) {
       if (event instanceof Event) {
@@ -293,6 +293,11 @@ const Listener = (componentClass) => {
               event.detail.result = result;
             }
             return result;
+          } else if (!observer) {
+            if (event.detail.result == Reactor.pendingResult) {
+              console.error("handler without returnsResult:", handler);
+              throw new Error(`event called with eventResult, but the handler isn't marked with returnsResult.  Fix one, or fix the other.`)
+            }
           }
 
           if (observer && !result) {
@@ -400,14 +405,14 @@ export const Actor = (componentClass) => {
       // registrationEvent.stopPropagation();
     }
 
-    listen(eventName, handler, {returnsResult}={}) {
+    listen(eventName, handler, capture, {isInternal, observer, returnsResult}={}) {
       let {debug} = this.props;
       let dbg = debugInt(debug);
       trace(`${this.constructor.name}: listening to ${eventName}`);
       if (dbg) {
         console.log(`${this.constructor.name}: listening to ${eventName}`);
       }
-      return this._listen(eventName, handler, {returnsResult});
+      return this._listen(eventName, handler, capture, {isInternal, observer, returnsResult});
     }
 
     render() {
@@ -438,9 +443,10 @@ export const Actor = (componentClass) => {
       if (dbg) {
         console.log(`${this.constructor.name} didMount`);
       }
-      this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction, {isInternal:true});
-      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, {isInternal:true});
-      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, {isInternal:true});
+
+      this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction, false, {isInternal:true, observer:true});
+      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, false, {isInternal:true});
+      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
 
       // if(foundKeys[0] == "action") debugger;
       this.trigger(
