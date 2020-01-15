@@ -294,7 +294,7 @@ const Listener = (componentClass) => {
             }
             return result;
           } else if (!observer) {
-            if (event.detail.result == Reactor.pendingResult) {
+            if (event.detail && event.detail.result == Reactor.pendingResult) {
               console.error("handler without returnsResult:", handler);
               throw new Error(`event called with eventResult, but the handler isn't marked with returnsResult.  Fix one, or fix the other.`)
             }
