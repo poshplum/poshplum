@@ -319,8 +319,9 @@ nav {
   &.fixed-bottom-right {
     position: fixed;
     top: 20vh;
-    right: 1em;
+    right: 0.25em;
     min-height: 66vh;
+    max-height: 79vh;
     width: 66vw;
     background: #f7f7f7;
 
