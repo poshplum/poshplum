@@ -954,6 +954,8 @@ const Reactor = (componentClass) => {
       let props = this.filterProps(this.props);
       let {isFramework=""} = this;
       if (isFramework) isFramework=" _fw_";
+      if (this.debug || this.props.debug) debugger;
+
       return <div style={{display:"contents"}} ref={this._listenerRef} className={`reactor for-${componentClassName}${isFramework}`} {...props}>
         {mounted && super.render()}
       </div>
