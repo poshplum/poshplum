@@ -10,7 +10,7 @@ import Layout from "./layout";
 import matchChildType from "../helpers/matchChildType";
 
 let Title = Layout.namedSlot("Title").withMarkup(({className="", children, ...props}) => {
-  return <div key="title" className={`mt--2 mr--4 card-title ${className}`} {...props}>
+  return <div key="title" className={`mr--4 card-title ${className}`} {...props}>
     <h6>
       {children}
     </h6>

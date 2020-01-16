@@ -212,6 +212,20 @@ p > .btn {
     display: contents;
   }
 
+  .card-title.pop-title {
+    background: white;
+    border-top: 0.5px solid #6060aa;
+    border-radius: 3px;
+    padding: 0.25em;
+    width: fit-content;
+    margin-top: -1.3em;
+    box-shadow: 1.5px -3px 1px -1.5px #6663;
+    background: linear-gradient(127deg, #dfdfdf, #fff 1.2em);
+  }
+  .card.active .card-title.pop-title {
+    background: linear-gradient(127deg, #d9d9ff, #fff 1.2em);
+  }
+
   &.active .card-header .pop-left {
     box-shadow:
             -3px 0 1px #6060aa,
@@ -297,10 +311,9 @@ nav {
 .panel {
   &.fixed-bottom-right {
     position: fixed;
-    bottom: 1em;
+    top: 20vh;
     right: 1em;
     min-height: 66vh;
-    max-height: 80vh;
     width: 66vw;
     background: #f7f7f7;
 
