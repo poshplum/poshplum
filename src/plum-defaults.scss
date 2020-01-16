@@ -211,6 +211,13 @@ p > .btn {
   h1, h2, h3, h4, h5, h6 {
     display: contents;
   }
+  .card-title {
+    float: left;
+    width: fit-content;
+    ~ .header-right {
+      float: right;
+    }
+  }
 
   .card-title.pop-title {
     background: white;

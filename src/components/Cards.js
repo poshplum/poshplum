@@ -24,6 +24,11 @@ let Icon = Layout.namedSlot("Icon").withMarkup(({className="", icon, children, .
   </div>
 });
 
+const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(
+  ({className="", children, ...moreProps }) =>
+    <div className={`float-right header-right ${className}`} {...moreProps}>{children}</div>
+);
+
 let Body = Layout.defaultSlot("Body").withMarkup(({className="", children, ...props}) => {
   // console.log("body children:", children)
     return <div className={`card-body ${className}`} {...props}>
@@ -37,7 +42,7 @@ let Footer = Layout.namedSlot("Footer").withMarkup(({className="", ...props}) =>
   </div>
 });
 
-let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) => <div className={`chip pop-right card-label ${className}`}>{children}</div>);
+let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) => <div className={`chip pop-right zero-h card-label ${className}`}>{children}</div>);
 
 // Cards.Route = ({className="",children}) => <div className={`chip pop-right ${className}`}>{children}</div>;
 // Cards.Route.displayName="Cards.Route";
@@ -45,10 +50,11 @@ let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) => <d
 export class Card extends Layout {
   static Title = Title;
   static Icon = Icon;
+  static HeaderRight = HeaderRight;
   static Body = Body;
   static Footer = Footer;
   static Label = Label;
-  static slots = {Title, Icon, Body, Footer, Label};
+  static slots = {Title, Icon, HeaderRight, Body, Footer, Label};
 
   constructor() {
     super()
@@ -63,7 +69,7 @@ export class Card extends Layout {
       children = render(item)
     }
     if (debug) debugger;
-    let {Title, Icon, Body, Footer, Label} = this.slots;
+    let {Title, Icon, HeaderRight, Body, Footer, Label} = this.slots;
 
     if (compact) className += " compact";
     if (link && !onClick) {
@@ -78,6 +84,7 @@ export class Card extends Layout {
         {Icon}
         {Label}
         {Title}
+        {HeaderRight}
         {link && Title && showScreaderLink}
       </div> || null}
       {Body}
