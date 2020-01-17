@@ -218,18 +218,22 @@ p > .btn {
       float: right;
     }
   }
-
   .card-title.pop-title {
     background: white;
-    border-top: 0.5px solid #6060aa;
+    border-top: 0.5px solid #ccc;
     border-radius: 3px;
-    padding: 0.25em;
-    width: fit-content;
+    margin-left: -0.5em;
+    margin-right: -0.5em;
+    padding: 0.25em 0.5em;
     margin-top: -1.3em;
-    box-shadow: 1.5px -3px 1px -1.5px #6663;
+    box-shadow: 1.5px -3px 1px -1.5px #6663, 8px -6px 1px -7px #6662;
     background: linear-gradient(127deg, #dfdfdf, #fff 1.2em);
+    ~ .header-right {
+      margin-top: -1.1em;
+    }
   }
-  .card.active .card-title.pop-title {
+  &.active .card-title.pop-title {
+    border-top: 0.5px solid #6060aa;
     background: linear-gradient(127deg, #d9d9ff, #fff 1.2em);
   }
 
@@ -277,7 +281,7 @@ p > .btn {
       /*border: 2px solid hsl(0, 100%, 50%);*/
       display: inline-block;
       white-space: nowrap;
-      position: absolute;
+      position: relative;
       z-index: 1;
 
       margin-left: -0.75em;
@@ -289,10 +293,9 @@ p > .btn {
       float:right;
       height: 1.25rem;
 
-      right: -0.6em;
-      top: -0.4em;
-      opacity:0.7;
-
+      right: -1.7em;
+      top: -1.5em;
+      background: linear-gradient(to left, #eef0f3ff, #eef0f333 1.9em), linear-gradient(to bottom, #eef0f3ff, #eef0f3ff 0.1em, #eef0f333 0.5em);
       &.chip-sm {
         right: -0.6em;
         top: -0.5rem;
