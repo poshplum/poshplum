@@ -119,6 +119,13 @@ const Listener = (componentClass) => {
     }
     trigger(event,detail, onUnhandled) {
       if (!this._listenerRef.current) {
+
+        let {_reactorDidMount: mounted} = (this.state || {});
+        if (mounted) {
+          console.warn(`attempt to dispatch '${event}' event after Reactor unmounted: ${this.displayName || this.constructor.displayName}}`, {detail})
+          return
+        }
+
         if (event.type == "error") {
           console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
           return;
@@ -127,8 +134,12 @@ const Listener = (componentClass) => {
       return Reactor.trigger(this._listenerRef.current, event, detail, onUnhandled);
     }
     actionResult(event, detail, onUnhandled) {
+      let {_reactorDidMount: mounted} = (this.state || {});
+      if (mounted && !this._listenerRef.current) {
+        console.warn(`attempt to dispatch '${event}' event after Reactor unmounted: ${this.displayName || this.constructor.displayName}}`, {detail})
+        return
+      }
       return Reactor.actionResult(this._listenerRef.current, event, detail, onUnhandled);
-
     }
 
     _listen(eventName, rawHandler, capture, {isInternal, observer, returnsResult}={}) {
@@ -265,7 +276,7 @@ const Listener = (componentClass) => {
         if (showDebug) {
           const msg = `${reactor.constructor.name}: Event: ${type} - calling handler at`;
 
-          console.group(eventDebug.namespace, msg, ...elementInfo(event.target));
+          console.group(eventDebug.namespace, msg, elementInfo(event.target));
           eventDebug({
             listenerFunction,
             listenerTarget,
@@ -301,7 +312,7 @@ const Listener = (componentClass) => {
           }
 
           if (observer && !result) {
-            if (!isInternalEvent) console.log(`observer saw event('${event.type}')`, handled);
+            // if (!isInternalEvent) console.log(`observer saw event('${event.type}')`, handled);
             eventDebug("event observer called")
           } else if (result === undefined || !!result) {
             if (!isInternalEvent) eventDebug("(event was handled)");
