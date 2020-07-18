@@ -518,15 +518,17 @@ const Reactor = (componentClass) => {
       trace(`${reactorName}: <- constructors`);
     }
 
-    componentDidMount() {
+    componentDidMount(...args) {
       // always true (listener branch class)
       // Note, the listener will defer calling the originally-decorated
       // class's componentDidMount() until state._reactorDidMount is changed
       // to true, which aligns with the timing of that class's first call
       // to render().
       trace(`${reactorName}: -> mounting(super)`);
-
-      if (super.componentDidMount) super.componentDidMount();
+      for (const init of Reactor.onInit) {
+        init.call(this)
+      }
+      if (super.componentDidMount) super.componentDidMount(...args);
       trace(`${reactorName}: -> mounting(self)`);
 
       this.el = this._listenerRef.current;
@@ -552,13 +554,25 @@ const Reactor = (componentClass) => {
 
       this.listen(Reactor.Events.registerSubscriber, this.registerSubscriber, false, isInternal);
       this.listen(Reactor.Events.removeSubscriber, this.removeSubscriberEvent, false, isInternal);
-      trace(`${reactorName}: +didMount flag`);
+      trace(`${reactorName}: +mounting flag`);
 
-      this.setState({_reactorDidMount: true});
+      this.setState({mounting: true});
       trace(`${reactorName}: <- didMount (self)`)
+    }
+    componentDidUpdate(...args) {
+      const {mounting, _reactorDidMount:mounted} = this.state || {}
+      if (!mounted) {
+        trace(`${reactorName}: +didMount flag`);
+        this.setState({_reactorDidMount: true});
+        return
+      }
+      if (super.componentDidUpdate) return super.componentDidUpdate(...args)
     }
     shouldComponentUpdate(nextProps, nextState) {
       if (nextState && nextState._reactorDidMount && ((!this.state) || (!this.state._reactorDidMount)) ) {
+        return true
+      }
+      if (nextState && nextState.mounting && ((!this.state) || (!this.state.mounting)) ) {
         return true
       }
       if (super.shouldComponentUpdate) return super.shouldComponentUpdate(nextProps, nextState);
@@ -953,14 +967,20 @@ const Reactor = (componentClass) => {
       return props;
     }
     render() {
-      let {_reactorDidMount: mounted} = (this.state || {});
+      let {mounting=false, _reactorDidMount: mounted} = (this.state || {});
       trace(`${reactorName}: reactor rendering`, {mounted});
       let props = this.filterProps(this.props);
       let {isFramework=""} = this;
       if (isFramework) isFramework=" _fw_";
       if (this.debug || this.props.debug) debugger;
 
-      return <div style={{display:"contents"}} ref={this._listenerRef} className={`reactor for-${componentClassName}${isFramework}`} {...props}>
+      return <div
+        style={{display:"contents"}}
+        ref={this._listenerRef}
+        className={`reactor for-${componentClassName}${isFramework}`}
+        {...props}
+      >
+        {mounting && Reactor.universalActors}
         {mounted && super.render()}
       </div>
     }
@@ -970,6 +990,9 @@ const Reactor = (componentClass) => {
   return clazz;
 };
 Reactor.pendingResult = Symbol("‹pending›")
+Reactor.onInit = []
+Reactor.universalActors = []
+
 Reactor.actionResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
   let event;
   if (eventName instanceof Event) {
