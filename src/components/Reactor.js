@@ -1016,7 +1016,6 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
 
   event.detail.result = Reactor.pendingResult;
   if (!onUnhandled) onUnhandled = (unhandledEvent, error = "") => {
-    debugger
     if (error) {
       const msg = `caught error in action('${eventName}'‹returnsResult›):`;
       error.stack = `${msg}\n${error.stack}`;
@@ -1032,6 +1031,9 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
 
   Reactor.dispatchTo(target, event, detail, onUnhandled);
   if (Reactor.pendingResult === event.detail.result) {
+    if (onUnhandled) {
+      return result
+    }
     throw new Error(`actionResult('${eventName}') did not provide event.detail.result`)
   }
 
@@ -1094,8 +1096,13 @@ Reactor.dispatchTo =
   }
 
   if (onUnhandled) {
-      onUnhandled(event, error);
-      return event;
+
+    const result = onUnhandled(event, error);
+    if (event.detail.result == Reactor.pendingResult) {
+      event.detail.result = result
+      return result;
+    }
+    return event;
   } else if (!error && null === onUnhandled ) {
     return event;
   }
