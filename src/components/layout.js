@@ -82,26 +82,35 @@ export default class Layout extends Component {
 
       if(this.debug)
           console.log("child:", child, child.type, child.type && child.type.displayName);
+      if (child.props && child.props.debug) debugger
 
-      let foundSlot = find(slots,(slotType, key) => {
+      let foundName = find(Object.keys(slots),(key) => {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
 
+        const slotType = slots[key];
+        if (slotType.debug) debugger
         if (module.hot) {
           let childName = child.type && child.type.displayName || child.type;
-          return (slotType.displayName === childName) //  ✓ works with react webpack hot loader
+
+          //  ✓ works with react webpack hot loader
+          if (slotType.displayName === childName) return true;
         }
         if (slotType.tagName && (slotType.tagName === child.type)) {
           return true;
         }
+        if (slotType.isPrototypeOf(child.type)) return true;
         return (slotType === child.type)
       });
-      let foundName;
+      let foundSlot = foundName && slots[foundName]
+      let foundDisplayName = foundSlot && (foundSlot.displayName || foundSlot.name);
       if (!foundSlot) {
         // console.log("slot: default", foundSlot, child)
         foundName = "default";
+        if (this.debug > 1) debugger
       } else {
-        foundName = (foundSlot.displayName || foundSlot.name);
-        // console.log(`slot: ${foundName}`)
+        if (foundDisplayName !== foundName) {
+          console.warn(`slot '${foundName}' has component with displayName/name = ${foundDisplayName}`)
+        }
       }
 
       if (!foundName) throw new Error("every layout slot needs a 'displayName' or 'name'");
