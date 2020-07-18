@@ -42,7 +42,8 @@ let Footer = Layout.namedSlot("Footer").withMarkup(({className="", ...props}) =>
   </div>
 });
 
-let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) => <div className={`chip pop-right zero-h card-label ${className}`}>{children}</div>);
+let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) =>
+  <div className={`chip pop-right zero-h card-label ${className}`}>{children}</div>);
 
 // Cards.Route = ({className="",children}) => <div className={`chip pop-right ${className}`}>{children}</div>;
 // Cards.Route.displayName="Cards.Route";
