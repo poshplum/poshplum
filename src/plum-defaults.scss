@@ -224,17 +224,20 @@ p > .btn {
     border-radius: 3px;
     margin-left: -0.5em;
     margin-right: -0.5em;
-    padding: 0.25em 0.5em;
+    padding: 0.0em 0.5em;
     margin-top: -1.3em;
     box-shadow: 1.5px -3px 1px -1.5px #6663, 8px -6px 1px -7px #6662;
-    background: linear-gradient(127deg, #dfdfdf, #fff 1.2em);
+    background:
+            linear-gradient(113deg, #bbb, #fff0 0.8em),
+            linear-gradient(242deg, #ccc, #fff0 0.6em),
+            linear-gradient(to bottom, #fff, #fff 0.11em, #fff0 0.35em );
+
     ~ .header-right {
       margin-top: -1.1em;
     }
   }
   &.active .card-title.pop-title {
     border-top: 0.5px solid #6060aa;
-    background: linear-gradient(127deg, #d9d9ff, #fff 1.2em);
   }
 
   &.active .card-header .pop-left {
