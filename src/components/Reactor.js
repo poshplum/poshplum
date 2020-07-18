@@ -449,9 +449,12 @@ export const Actor = (componentClass) => {
       this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
 
       // if(foundKeys[0] == "action") debugger;
-      this.trigger(
+      const {detail:{
+        registeredWith:reactor
+      }} = this.trigger(
         Reactor.RegisterActor({name, actor:this, debug})
-      );
+      ) || {};
+      this._reactor = reactor
 
       this.setState({_reactorDidMount: true});
       trace(`${displayName}: ${name} <- didMount`);
@@ -776,6 +779,7 @@ const Reactor = (componentClass) => {
         console.error(`Actor named '${name}' already registered`, this.actors[name]);
       } else {
         this.actors[name] = actor;
+        event.detail.registeredWith = this;
         event.handledBy = handledInternally;
       }
       event.stopPropagation();
