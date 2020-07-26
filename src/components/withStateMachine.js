@@ -169,7 +169,8 @@ export const withStateMachine = (baseClass) => {
       let nextState = thisState.transitions[name];
       let goodTransitions = keys(thisState.transitions);
       let predicate, effectFn;
-      if (nextState instanceof Array) {
+
+      if (Array.isArray(nextState)) {
         [predicate=() => {
           let e = new Error(`missing predicate definition for attempted transition '${name}' from state '${currentState}'`);
           e.name = "warning";
