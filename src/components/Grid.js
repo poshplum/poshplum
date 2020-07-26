@@ -21,11 +21,12 @@ const gridColSpan = (span) => span ? ({
   gridColumn: `span ${span}`
 }) : null;
 
-const Grid = ({children, className, width, gap, align, ...props}) => { return <div className={`grid ${className}`} {...props} style={{
+const Grid = ({children, className="", width, gap, style={}, align, ...props}) => { return <div className={`grid ${className}`} {...props} style={{
     display: "grid",
   ...styleWidth(width),
     ...gridGap(gap),
-    ...gridAlign(align)
+    ...gridAlign(align),
+  ...style
 }}>{children}</div> };
 
 Grid.propTypes = {
