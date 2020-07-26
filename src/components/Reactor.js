@@ -106,6 +106,7 @@ const Listener = (componentClass) => {
     }
     listen(eventName, handler, capture, {
       isInternal,
+      bare,
       observer,
       returnsResult
     }) {
@@ -153,6 +154,7 @@ const Listener = (componentClass) => {
 
     _listen(eventName, rawHandler, capture, {
         isInternal,
+        bare,
         observer,
         returnsResult,
       }={}
@@ -165,6 +167,7 @@ const Listener = (componentClass) => {
       const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {
         eventName,
         isInternal,
+        bare,
         observer,
         returnsResult
       });
@@ -263,6 +266,7 @@ const Listener = (componentClass) => {
     _wrapHandler(handler, {
         eventName,
         isInternal,
+        bare,
         observer,
         returnsResult
       }={}
@@ -271,7 +275,7 @@ const Listener = (componentClass) => {
       const createdBy = new Error("stack");
       function wrappedHandler(event) {
         if (returnsResult && !event.detail.result) {
-          event.error = new Error(`event('${eventName}'‹returnsResult›): use Reactor.actionResult(...) or ‹actor›.actionResult(...)`);
+          event.error = new Error(`Developer error: event('${eventName}'‹returnsResult›): use Reactor.actionResult(...) or ‹actor›.actionResult(...)`);
           return;
         }
         const {type, detail} = (event || {});
@@ -349,9 +353,15 @@ const Listener = (componentClass) => {
           return result;
         } catch(error) {
           if (observer) {
-            const message = `event('${event.type}') observer ${listenerName} threw an error: `;
+            const message = `event('${event.type}') observer ${listenerName}() threw an error: `;
             console.error(message, error)
             Reactor.trigger(event.target, "error", {error:message + error.message});
+          } else if (bare) {
+            const message = `bare event('${event.type}') handler ${listenerName}() threw an error: `;
+            console.error(message, error)
+            Reactor.trigger(event.target, "error", {
+              error: message + error.message
+            });
           } else {
             event.error = error
           }
@@ -442,6 +452,7 @@ export const Actor = (componentClass) => {
 
     listen(eventName, handler, capture, {
         isInternal,
+        bare,
         observer,
         returnsResult
       }={}
@@ -454,6 +465,7 @@ export const Actor = (componentClass) => {
       }
       return this._listen(eventName, handler, capture, {
         isInternal,
+        bare,
         observer,
         returnsResult
       });
@@ -629,6 +641,7 @@ const Reactor = (componentClass) => {
 
     listen(eventName, handler, capture, {
         isInternal,
+        bare,
         observer,
         returnsResult
       }={}
@@ -636,6 +649,7 @@ const Reactor = (componentClass) => {
       if (observer && returnsResult) throw new Error(`Action observer('${eventName}') can't also be returnsResult.  It's fine to observe a returnsResult event, but don't mark the observer with returnsResult.`)
       let effectiveHandler = this._listen(eventName, handler, capture, {
         isInternal,
+        bare,
         observer,
         returnsResult
       });
@@ -709,7 +723,7 @@ const Reactor = (componentClass) => {
         throw new Error(msg);
       } else if ((bare || observer) && existingActionHandler) {
         console.warn(`vvvvvvvvv ${actionDescription} may not be called due to an existing Action listener`)
-        console.dir(handler)
+        console.dir(handler, "<----<<< may not be called")
       }
       if (this.listening[name]) {
         console.warn(`there are existing listeners that may modify or stop the event before ${actionDescription} sees it;`)
@@ -1367,6 +1381,7 @@ export class Action extends React.Component {
       name,
       returnsResult,
       observer="",
+      bare,
       capture,
       client="‹unknown›",
       debug,
