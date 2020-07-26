@@ -105,6 +105,7 @@ const Listener = (componentClass) => {
       throw new Error("listeners must provide an instance-level property unlistenDelay, for scheduling listener cleanups");
     }
     listen(eventName, handler, capture, {
+      at,
       isInternal,
       bare,
       observer,
@@ -113,6 +114,7 @@ const Listener = (componentClass) => {
       logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       return this._listen(eventName, handler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -153,6 +155,7 @@ const Listener = (componentClass) => {
     }
 
     _listen(eventName, rawHandler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -163,7 +166,7 @@ const Listener = (componentClass) => {
       // console.warn("_listen: ", eventName, handler);
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
-      this._listenerRef.current.addEventListener(eventName, handler, {capture});
+      const listeningNode = at || this._listenerRef.current;
       const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {
         eventName,
         isInternal,
@@ -171,12 +174,13 @@ const Listener = (componentClass) => {
         observer,
         returnsResult
       });
+      listeningNode.addEventListener(eventName, handler, {capture});
       trace("listening", {eventName}, "with handler:", handler, note);
 
       const listenersOfThisType = listening.get(eventName) ||
         listening.set(eventName, new Set()).get(eventName);
 
-      listenersOfThisType.add(handler);
+      listenersOfThisType.add([listeningNode, handler]);
       return handler
     }
 
@@ -218,7 +222,6 @@ const Listener = (componentClass) => {
       if (dbg) {
         console.log(`${this.constructor.name}: unmounting and deferred unlistening all...`);
       }
-      let el = this._listenerRef.current;
       const stack = new Error("Backtrace");
 
       setTimeout(() => {
@@ -228,7 +231,9 @@ const Listener = (componentClass) => {
         if (dbg) console.warn(`${this.constructor.name} deferred unlisten running now`);
 
         for (const [type, listeners] of listening.entries()) {
-          for (const handler of listeners.values()) {
+          for (const listener of listeners.values()) {
+            const [node, handler] = listener;
+
             if (!stdHandlers[type]) {
               const thisPubSubEvent = this.events[type];
               if (thisPubSubEvent) {
@@ -240,27 +245,39 @@ const Listener = (componentClass) => {
               }
             }
 
-            this.unlisten([type, handler], el);
+            this.unlisten(type, listener);
           }
         }
       }, this.unlistenDelay);
     }
 
-    unlisten(typeAndHandler, el=this._listenerRef.current) {
-      let [type,handler] = typeAndHandler;
+    unlisten(type, listener) {
+      let [node,handler] = listener;
       let listenersOfThisType = this.listening.get(type);
 
-      let foundListening = listenersOfThisType.has(handler);
+      let foundListening = (listenersOfThisType.has(listener) && listener)
 
       if (!foundListening) {
+        // published-events and actions being unmounted
+        // separately from the Reactor use this slower path
+        // because they don't currently store a reference
+        //   to the [node, handler] pair; they pass us
+        //   an equivalent array, we compare its elements.
+        for (const listener of listenersOfThisType.values()) {
+          const [n,h] = listener;
+          if ((n === node) && (h === handler))
+              foundListening = listener;
+        }
+        if (!foundListening || !listenersOfThisType.has(foundListening)) {
           console.warn(`${type} listener not found/matched `, handler, `\n   ...in listeners`, [...listenersOfThisType.values()]);
           debugger
           return;
         }
-      if (!el) throw new Error(`no el to unlisten for ${type}` );
+      }
+      if (!node) throw new Error(`no el to unlisten for ${type}` );
 
-      el.removeEventListener(type, handler);
-      listenersOfThisType.delete(handler)
+      node.removeEventListener(type, handler);
+      listenersOfThisType.delete(foundListening)
     }
 
     _wrapHandler(handler, {
@@ -451,6 +468,7 @@ export const Actor = (componentClass) => {
     }
 
     listen(eventName, handler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -464,6 +482,7 @@ export const Actor = (componentClass) => {
         console.log(`${this.constructor.name}: listening to ${eventName}`);
       }
       return this._listen(eventName, handler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -640,6 +659,7 @@ const Reactor = (componentClass) => {
     }
 
     listen(eventName, handler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -648,6 +668,7 @@ const Reactor = (componentClass) => {
     ) { // satisfy listener
       if (observer && returnsResult) throw new Error(`Action observer('${eventName}') can't also be returnsResult.  It's fine to observe a returnsResult event, but don't mark the observer with returnsResult.`)
       let effectiveHandler = this._listen(eventName, handler, capture, {
+        at,
         isInternal,
         bare,
         observer,
@@ -688,6 +709,7 @@ const Reactor = (componentClass) => {
     registerAction({
         debug,
         event,
+        at,
         name,
         returnsResult,
         isInternal,
@@ -735,6 +757,7 @@ const Reactor = (componentClass) => {
       }
 
       const effectiveHandler = this.listen(name, handler, capture, {
+        at,
         isInternal,
         observer,
         bare,
@@ -750,6 +773,7 @@ const Reactor = (componentClass) => {
       const {
         debug,
         name,
+        at,
         handler,
         observer="",
         bare,
@@ -763,10 +787,11 @@ const Reactor = (componentClass) => {
         logger(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
         console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
       } else {
+        const node = at || this.el
         if (bare || observer) {
-          this.unlisten([name, handler], this.el)
+          this.unlisten(name, [node, handler])
         } else {
-          this.unlisten([name, this.actions[name]], this.el);
+          this.unlisten(name, [node, this.actions[name]]);
           delete this.actions[name];
         }
         event.stopPropagation();
@@ -799,6 +824,7 @@ const Reactor = (componentClass) => {
             publishers: new Set(),
             subscribers: new Set(),
             subscriberOwners: new Map(),
+            at: this._listenerRef.current,
             _listener: this.listen(name, subscriberFanout)
           };
 
@@ -864,7 +890,7 @@ const Reactor = (componentClass) => {
             [...subs.values()].map(s => [ owners.get(s), s ])
           );
         }
-        this.unlisten([name, thisEvent._listener], target);
+        this.unlisten(name, [thisEvent.at, thisEvent._listener]);
         delete this.events[name];
         event.stopPropagation();
       } else {
@@ -1379,6 +1405,7 @@ export class Action extends React.Component {
       children,
       id,
       name,
+      at,
       returnsResult,
       observer="",
       bare,
@@ -1411,6 +1438,7 @@ export class Action extends React.Component {
       returnsResult,
       observer,
       bare,
+      at,
       capture,
       handler,
       debug});
@@ -1427,6 +1455,7 @@ export class Action extends React.Component {
 
     let {
       client,
+      at,
       observer,
       bare,
       debug
@@ -1452,6 +1481,7 @@ export class Action extends React.Component {
         Reactor.trigger(el,
           Reactor.RemoveAction({
             debug,
+            at,
             observer,
             bare,
             name: this.fullName,
