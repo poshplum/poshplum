@@ -107,6 +107,16 @@ export const withStateMachine = (baseClass) => {
       let {currentState="default"} = this.state || {};
       return find(names, (name) => name === currentState);
     }
+    hasStates() {
+      if (!this.states) return {};
+
+      let {currentState="default"} = this.state || {};
+      const states = {};
+      for (const [state, _] of Object.entries(this.states)) {
+        states[state] = (currentState == state);
+      }
+      return states;
+    }
     componentDidMount() {
       this.progress(`${baseName}: -> componentDidMount (super)`);
       if (super.componentDidMount) super.componentDidMount();
