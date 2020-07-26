@@ -530,6 +530,9 @@ export const Actor = (componentClass) => {
         Reactor.RegisterActor({name, actor:this, debug})
       ) || {};
       this._reactor = reactor
+      for (const init of Actor.onInit) {
+        init.call(this)
+      }
 
       this.setState({_reactorDidMount: true});
       trace(`${displayName}: ${name} <- didMount`);
@@ -551,6 +554,7 @@ export const Actor = (componentClass) => {
   Object.defineProperty(clazz, "displayName", {value: displayName});
   return clazz;
 };
+Actor.onInit = []
 
 
 const reactorTag = Symbol("Reactor");
