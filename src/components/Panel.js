@@ -54,7 +54,7 @@ export default class Panel extends Layout {
     let {Title, Icon, HeaderRight, Body, Footer, FixedHeader} = this.slots;
     let {announceTitle} = this.state || {}
     if (!this.node) this.node = React.createRef();
-    if (bareClass) throw new Error("use className=, not class=, for Panel class")
+    // if (bareClass) throw new Error("use className=, not class=, for Panel class")
 
     return <div ref={this.node} role="main" className={`屋根裏 panel ${className}`} {...otherProps}>
       {(FixedHeader || Icon || Title || HeaderRight) && <div className="頭 panel-header">

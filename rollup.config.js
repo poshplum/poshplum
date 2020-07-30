@@ -4,12 +4,13 @@ const resolve = require("rollup-plugin-node-resolve")
 const babel = require("rollup-plugin-babel")
 const fg = require('fast-glob');
 import scss from 'rollup-plugin-scss'
+import alias from '@rollup/plugin-alias';
 
 const components = fg.sync(["./src/components/**/*.js"]);
 const helpers = fg.sync(["./src/helpers/**/*.js"]);
 
 const externals = [
-  'react', 'react-dom', 'prop-types', 'util', 'debug', 'react-router-dom', 'react-router', 'lodash'
+  'preact', 'preact-compat', 'prop-types', 'util', 'debug', 'react-router-dom', 'react-router', 'lodash'
 ];
 const externalRegexen = externals.map(id => new RegExp(id));
 
@@ -26,6 +27,7 @@ function external(id) {
 module.exports = [{
   input: [...components, ...helpers, "./src/plum-defaults.scss"],
   external,
+  watch: true,
   output: {
     dir: "dist/",
     entryFileNames: "[name].js",
@@ -47,6 +49,12 @@ module.exports = [{
 function plugins() {
   return [
     // multiEntry(),
+    alias({
+      entries: [
+        { find: 'react', replacement: 'preact/compat' },
+        { find: 'react-dom', replacement: 'preact/compat' }
+      ]
+    }),
     resolve(),
     babel({
       exclude: 'node_modules/**'

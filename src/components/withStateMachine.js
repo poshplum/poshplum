@@ -85,6 +85,7 @@ export const withStateMachine = (baseClass) => {
       let found = matchChildType("State", children, State);
       let states = {};
       map(found, (state) => {
+        if (!state) return;
         let {
           name,
           transitions = [],
