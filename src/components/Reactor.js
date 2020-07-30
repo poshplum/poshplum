@@ -690,15 +690,24 @@ const Reactor = (componentClass) => {
     }
 
     reactorProbe(event) {
-      let {onReactor} = event.detail;
+      let {onReactor, result} = event.detail;
       trace(`${reactorName}: responding to reactorProbe`);
-      if (!onReactor) {
-        this.trigger(Reactor.ErrorEvent({error: "reactorProbe requires an onReactor callback in the event detail"}));
+
+      if (!(result || onReactor)) {
+        this.trigger(Reactor.ErrorEvent({
+            error: "reactorProbe must be called with an {onReactor} callback in the event detail,\n"+
+              "-or- using Reactor.actionResult(<component|dom-node>,'reactorProbe') to return the nearest Reactor\n"
+        }));
+
         return;
       }
-      onReactor(this);
       event.handledBy = handledInternally;
+      if (result) {
+        event.stopPropagation();
+        return event.detail.result = this;
+      }
 
+      onReactor(this);
     }
 
     registerActionEvent(event) {
