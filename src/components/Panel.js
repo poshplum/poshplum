@@ -50,10 +50,12 @@ export default class Panel extends Layout {
 
   }
   render() {
-    let {className="", class:bareClass, ...otherProps} = this.props;
+    let {className="", withRef, ...otherProps} = this.props;
     let {Title, Icon, HeaderRight, Body, Footer, FixedHeader} = this.slots;
     let {announceTitle} = this.state || {}
-    if (!this.node) this.node = React.createRef();
+    if (!this.node) this.node = withRef || React.createRef();
+    if (withRef && this.node !== withRef) throw new Error(`Panel: assertion failure: withRef= isn't expected to be changing`);
+
     // if (bareClass) throw new Error("use className=, not class=, for Panel class")
 
     return <div ref={this.node} role="main" className={`屋根裏 panel ${className}`} {...otherProps}>
