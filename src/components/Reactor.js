@@ -508,21 +508,9 @@ export const Actor = (componentClass) => {
     }
 
     componentDidMount() {
+      let {debug} = this.props;
       let name = this.name();
       trace(`${displayName}: ${name} -> didMount`);
-
-      if (super.componentDidMount) super.componentDidMount();
-      let {debug} = this.props;
-
-      let dbg = debugInt(debug);
-      logger(`${this.constructor.name} didMount`);
-      if (dbg) {
-        console.log(`${this.constructor.name} didMount`);
-      }
-
-      this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction, false, {isInternal:true, observer:true});
-      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, false, {isInternal:true});
-      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
 
       // if(foundKeys[0] == "action") debugger;
       const {detail:{
@@ -534,6 +522,19 @@ export const Actor = (componentClass) => {
       for (const init of Actor.onInit) {
         init.call(this)
       }
+
+      if (super.componentDidMount) super.componentDidMount();
+
+      let dbg = debugInt(debug);
+      logger(`${this.constructor.name} didMount`);
+      if (dbg) {
+        console.log(`${this.constructor.name} didMount`);
+      }
+
+      this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction, false, {isInternal:true, observer:true});
+      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, false, {isInternal:true});
+      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
+
 
       this.setState({_reactorDidMount: true});
       trace(`${displayName}: ${name} <- didMount`);
