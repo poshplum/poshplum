@@ -119,7 +119,7 @@ export const withStateMachine = (baseClass) => {
       return states;
     }
     componentDidMount() {
-      this.progress(`${baseName}: -> componentDidMount (super)`);
+      this.debugLog(`${baseName}: -> componentDidMount (super)`);
       if (super.componentDidMount) super.componentDidMount();
       this.setFsmLogger()
       this.progress(`${baseName}: <- componentDidMount (super); now for self...`);
