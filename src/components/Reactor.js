@@ -334,7 +334,7 @@ const Listener = (componentClass) => {
           if (returnsResult) {
             if ("undefined" === typeof result) {
               const msg = `event('${type}'‹returnsResult›) handler returned undefined result`;
-              console.error(msg, {handler});
+              console.warn(msg, {handler});
               throw new Error(msg)
             }
             if (result && result.then) {
@@ -348,6 +348,7 @@ const Listener = (componentClass) => {
               event.handledBy.push(handled);
 
               event.detail.result = result;
+              event.stopPropagation();
             }
             return result;
           } else if (!observer) {
