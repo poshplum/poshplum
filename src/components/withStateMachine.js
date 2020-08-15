@@ -282,15 +282,16 @@ export const withStateMachine = (baseClass) => {
           {inner}
         </div>
       }
-      return <div  style={{display:"contents"}} className={`stateMachine state-${currentState}`} ref={this._stateRef}>
-        {transitions && Object.entries(transitions).map( ([transitionName, target]) => {
+      return <div key="fsmWrapper" style={{display:"contents"}} className={`stateMachine state-${currentState}`} ref={this._stateRef}>
+        {inner}
+
+        {transitions && <React.Fragment key="my-transitions" children={Object.entries(transitions).map( ([transitionName, target]) => {
           let actionArgs = {
             [transitionName]: this.mkTransition(transitionName)
           };
           return <Action debug={0} client={this} key={`action-${transitionName}`} {...actionArgs} />
-        })}
+        })} />}
 
-        {inner}
       </div>
     }
   };
