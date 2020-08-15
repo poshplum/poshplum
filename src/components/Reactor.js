@@ -98,6 +98,7 @@ const Listener = (componentClass) => {
 
     constructor(props) {
       super(props);
+      this.state = this.state || {};
       this._listenerRef = React.createRef();
       this.listening = new Map();
     }
@@ -536,7 +537,7 @@ export const Actor = (componentClass) => {
       this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
 
 
-      this.setState({_reactorDidMount: true});
+      setTimeout( () => ( this.setState({_reactorDidMount: true}) ), 0);
       trace(`${displayName}: ${name} <- didMount`);
     }
 
@@ -637,14 +638,14 @@ const Reactor = (componentClass) => {
       this.listen(Reactor.Events.removeSubscriber, this.removeSubscriberEvent, false, isInternal);
       trace(`${reactorName}: +mounting flag`);
 
-      this.setState({mounting: true});
+      setTimeout(() => ( this.setState({mounting: true}) ), 0);
       trace(`${reactorName}: <- didMount (self)`)
     }
     componentDidUpdate(...args) {
       const {mounting, _reactorDidMount:mounted} = this.state || {}
       if (!mounted) {
         trace(`${reactorName}: +didMount flag`);
-        this.setState({_reactorDidMount: true});
+        setTimeout(() => ( this.setState({_reactorDidMount: true}) ), 0);
         return
       }
       if (super.componentDidUpdate) return super.componentDidUpdate(...args)
@@ -1541,7 +1542,7 @@ export class Publish extends React.Component {
     );
   }
   componentWillUnmount() {
-    if (super.componentDidMount) super.componentDidMount();
+    if (super.componentWillUnmount) super.componentWillUnmount();
 
     let {children, event:name, global, debug, ...handler} = this.props;
     Reactor.trigger(this._pubRef.current,
