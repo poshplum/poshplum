@@ -1,5 +1,6 @@
 var levenshtein = require('fast-levenshtein');
 
+const EVENT_IS_LOOPING_MAYBE = 20;
 
 // Reactors:
 //  - Take modularized responsibility for local state change
@@ -364,7 +365,7 @@ const Listener = (componentClass) => {
             eventDebug("event observer called")
           } else if (result === undefined || !!result) {
             if (!isInternalEvent) eventDebug("(event was handled)");
-            if (event.handledBy.length > 8) debugger;
+            if (event.handledBy.length > EVENT_IS_LOOPING_MAYBE) debugger;
             event.handledBy.push(handled);
           } else {
             if (!isInternalEvent) eventDebug("(event was not handled at this level)");
