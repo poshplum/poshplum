@@ -54,7 +54,10 @@ export const withStateMachine = (baseClass) => {
     state = {currentState: "default"};
 
     setFsmLogger() {
-      if (this.logger) this.fsmLogger = this.logger.child({name:`${this.logger.loggerName}:fsm`});
+      if (this.logger) this.fsmLogger = this.logger.child({
+        name:`${this.logger.loggerName}:fsm`,
+        addContext: null
+      });
     }
     warn(...args) {
       if (this.fsmLogger) return this.fsmLogger.warn(...args);
