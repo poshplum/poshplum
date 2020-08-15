@@ -37,7 +37,6 @@
     "fast-levenshtein": "^2.0.6",
     "lodash-es": "^4.17.11",
     "preact": "^10.4.6",
-    "preact-compat": "^3.19.0",
     "prop-types": "^15.7.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
