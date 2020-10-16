@@ -267,8 +267,13 @@ const Listener = (componentClass) => {
         //   an equivalent array, we compare its elements.
         for (const listener of listenersOfThisType.values()) {
           const [n,h] = listener;
-          if ((n === node) && (h === handler))
+          if (h === handler) {
+            if (n === node) {
               foundListening = listener;
+            } else {
+              console.warn({detail:{unlisteningNode: node, listeningNode:n, handler:h}}, `Reactor: unlisten found matching handler with mismatched node.  Yikes.`)
+            }
+          }
         }
         if (!foundListening || !listenersOfThisType.has(foundListening)) {
           console.warn(`${type} listener not found/matched `, handler, `\n   ...in listeners`, [...listenersOfThisType.values()]);
