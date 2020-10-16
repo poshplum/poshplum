@@ -21,7 +21,7 @@ export default class ReactorExample extends Component {
         <h5>About Reactors</h5>
 
         <p>Reactors are React components that provide event-oriented services for use by other components.  The Reactor
-          itself is a container that recognizes <code>{`<`}Action/{`>`}</code>s and <code>{`<`}Actor/{`>`}</code>s within
+          itself is a container that recognizes <code>{`<Action/>`}</code>s and <code>{`<Actor/>`}</code>s within
           its subtree, and facilitates other components to have access to those actions.  Reactors facilitate application-level
           services using events.
         </p>
