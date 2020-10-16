@@ -1491,11 +1491,17 @@ export class Action extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     let {
-      client,
+      children,
+      id,
+      name,
       at,
-      observer,
+      returnsResult,
+      observer="",
       bare,
-      debug
+      capture,
+      client="‹unknown›",
+      debug,
+      ...namedHandler
     } = this.props;
 
     const stack = new Error("Backtrace");
@@ -1584,6 +1590,7 @@ export class Subscribe extends React.Component {
     if (super.componentDidMount) super.componentDidMount();
     let subscriberReq = Reactor.SubscribeToEvent(
       {eventName: this.eventName, owner: this, listener: this.listenerFunc, debug: this.debug});
+
     let {optional = false} = this.props;
     this.subscriptionPending = true;
     // defer registering the subscriber for just 1ms, so that
