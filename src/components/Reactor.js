@@ -1410,7 +1410,18 @@ export class Action extends React.Component {
   }
 
   render() {
-    let {children, returnsResult, capture, observer="", bare, id, client, debug, ...handler} = this.props;
+    let {
+      children,
+      id,
+      name,
+      at,
+      returnsResult,
+      observer="",
+      bare,
+      client,
+      debug,
+      ...handler
+    } = this.props;
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
