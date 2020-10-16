@@ -780,6 +780,10 @@ const Reactor = (componentClass) => {
         bare,
         returnsResult,
       });
+      // ensure the event gets the full event name, even if an Actor
+      // did contribute its own augmented version of the full event name.
+      // this happens e.g. when bare= is specified.
+      if (event && event.detail) event.detail.name = name;
       if (!(bare || observer)) {
         this.actions[name] = effectiveHandler;
       }
