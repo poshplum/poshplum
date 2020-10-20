@@ -1150,7 +1150,8 @@ const Reactor = (componentClass) => {
         className={`reactor for-${componentClassName}${isFramework}`}
         {...props}
       >
-        {mounting && Reactor.universalActors}
+        {mounting && Reactor.earlyUniversalActors}
+        {mounted && Reactor.universalActors}
         {mounted && super.render()}
       </div>
     }
@@ -1161,6 +1162,7 @@ const Reactor = (componentClass) => {
 };
 Reactor.pendingResult = Symbol("‹pending›")
 Reactor.onInit = []
+Reactor.earlyUniversalActors = []
 Reactor.universalActors = []
 
 Reactor.actionResult = function getEventResult(target, eventName, detail={}, onUnhandled) {
