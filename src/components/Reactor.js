@@ -351,6 +351,7 @@ const Listener = (componentClass) => {
         trace(`${displayName}:  ⚡'${type}'`);
         try {
           const result = handler.call(this,event); // retain event's `this` (target of event)
+
           if (returnsResult) {
             if ("undefined" === typeof result) {
               const msg = `event('${type}'‹returnsResult›) handler returned undefined result`;
@@ -476,7 +477,8 @@ export const Actor = (componentClass) => {
       let {name, debug, observer, bare} = registrationEvent.detail;
       let dbg = debugInt(debug);
       let moreDebug = (dbg > 1);
-      let newName = (bare || observer) ? name : `${this.name()}:${name}`;
+      const actorName = this.name();
+      let newName = (bare || observer) ? name : `${actorName}:${name}`;
       logger(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (dbg) console.log(`${this.constructor.name} delegating registerAction(${name} -> ${newName}) to upstream Reactor`);
       if (moreDebug) {
@@ -485,6 +487,9 @@ export const Actor = (componentClass) => {
       }
 
       registrationEvent.detail.name = newName;
+      registrationEvent.detail.actorName = actorName;
+      registrationEvent.detail.shortName = name;
+
       // super.registerActionEvent(registrationEvent);
       // registrationEvent.stopPropagation();
     }
@@ -584,11 +589,14 @@ const reactorTag = Symbol("Reactor");
 const Reactor = (componentClass) => {
   if (componentClass[reactorTag]) return componentClass;
 
+  const wrappedName = componentClass.wrappedName || componentClass.name
   const listenerClass = Listener(componentClass);
   const componentClassName = componentClass.name;
   const reactorName = inheritName(componentClass, "Rx");
   trace(`Reactor creating branch+leaf subclass ${reactorName}`);
   const clazz = class ReactorInstance extends listenerClass {
+    get wrappedName() { return super.wrappedName || wrappedName }
+    static wrappedName = wrappedName;
     // registerActionEvent = Reactor.bindWithBreadcrumb(this.registerActionEvent, this);
     constructor(props) {
       trace(`${reactorName}: -> constructor(super)`);
@@ -744,8 +752,8 @@ const Reactor = (componentClass) => {
     }
 
     registerActionEvent(event) {
-      const {debug, name, capture, handler, ...moreDetails} = event.detail;
-      const effectiveHandler = this.registerAction({debug, event, name, handler, capture, ...moreDetails});
+      const {debug, name, actorName, action, capture, handler, ...moreDetails} = event.detail;
+      const effectiveHandler = this.registerAction({debug, actorName, action, event, name, handler, capture, ...moreDetails});
       event.stopPropagation();
       event.handledBy = handledInternally;
       // satisfies the returnsResult/actionResult interface, without wrapper overhead.
@@ -757,6 +765,9 @@ const Reactor = (componentClass) => {
         event,
         at,
         name,
+        actorName,
+        shortName = name,
+        action: actionInstance,
         returnsResult,
         isInternal,
         handler,
@@ -775,7 +786,8 @@ const Reactor = (componentClass) => {
       const priorityHandlers = [];
 
       const actionDescription = bare ? `bare '${name}' event ${observer || "handler"}` : `Action ${observer && "observer: "}'${name}'`;
-      const existingActionHandler = this.actions[name];
+      const existingAction = this.actions[name];
+      const existingActionHandler = existingAction && existingAction.handler;
       if (existingActionHandler && !bare && !observer) {
         let info = {
           listenerFunction: (existingActionHandler.targetFunction || existingActionHandler).name,
@@ -813,9 +825,19 @@ const Reactor = (componentClass) => {
       // did contribute its own augmented version of the full event name.
       // this happens e.g. when bare= is specified.
       if (event && event.detail) event.detail.name = name;
-      if (!(bare || observer)) {
-        this.actions[name] = effectiveHandler;
+      this.actions[name] = {
+        handler: effectiveHandler,
+        instance: actionInstance,
+        shortName,
+        bare,
+        observer,
+        returnsResult,
+        actorName,
+        isInternal,
+        capture,
+        at,
       }
+
       return effectiveHandler
     }
 
@@ -838,12 +860,10 @@ const Reactor = (componentClass) => {
         console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
       } else {
         const node = at || this.el
-        if (bare || observer) {
-          this.unlisten(name, [node, handler])
-        } else {
-          this.unlisten(name, [node, this.actions[name]]);
-          delete this.actions[name];
-        }
+        const {handler} = this.actions[name]
+        this.unlisten(name, [node, handler]);
+        delete this.actions[name];
+
         event.stopPropagation();
         event.handledBy = handledInternally;
       }
@@ -1514,6 +1534,7 @@ export class Action extends React.Component {
       single: true,
       name,
       returnsResult,
+      action: this,
       observer,
       bare,
       at,
