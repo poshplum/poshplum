@@ -221,7 +221,8 @@ p > .btn {
   .card-title.pop-title {
     background: white;
     border-top: 0.5px solid #ccc;
-    border-radius: 3px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
     margin-left: -0.5em;
     margin-right: -0.5em;
     padding: 0.0em 0.5em;
@@ -280,7 +281,9 @@ p > .btn {
               -1px 0 1px #fff,
               -2px 0 1px #999;
     }
-    .pop-right, .card-label {
+
+
+    .card-label {
       /*border: 2px solid hsl(0, 100%, 50%);*/
       display: inline-block;
       white-space: nowrap;
@@ -289,16 +292,25 @@ p > .btn {
 
       margin-left: -0.75em;
 
-      box-shadow: 3px 0px 0px #ccc,
-        1px -1px 0px #ccc;
-
       min-width: 1em;
       float:right;
       height: 1.25rem;
 
       right: -1.7em;
       top: -1.5em;
+    }
+
+    .zero-h {
+      overflow-x: visible;
+      /*height:0;*/
+      margin-bottom:-1.75em;  /* effectively removes from vertical flow*/
+    }
+
+    .pop-right {
       background: linear-gradient(to left, #eef0f3ff, #eef0f333 1.9em), linear-gradient(to bottom, #eef0f3ff, #eef0f3ff 0.1em, #eef0f333 0.5em);
+      box-shadow: 3px 0px 0px #ccc,
+        1px -1px 0px #ccc;
+
       &.chip-sm {
         right: -0.6em;
         top: -0.5rem;

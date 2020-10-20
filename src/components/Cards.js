@@ -24,9 +24,15 @@ let Icon = Layout.namedSlot("Icon").withMarkup(({className="", icon, children, .
   </div>
 });
 
-const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(
-  ({className="", children, ...moreProps }) =>
-    <div className={`float-right header-right ${className}`} {...moreProps}>{children}</div>
+const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(({
+    style={},
+    className="",
+    children,
+    ...moreProps
+  }) => {
+    const defaultFloatClass = className.match(/\bfloat-/) ? "": "float-right ";
+    return <div className={`header-right ${defaultFloatClass}${className}`} {...moreProps}>{children}</div>
+  }
 );
 
 let Body = Layout.defaultSlot("Body").withMarkup(({className="", children, ...props}) => {
@@ -42,8 +48,17 @@ let Footer = Layout.namedSlot("Footer").withMarkup(({className="", ...props}) =>
   </div>
 });
 
-let Label = Layout.namedSlot("Label").withMarkup(({className="",children}) =>
-  <div className={`chip pop-right zero-h card-label ${className}`}>{children}</div>);
+let Label = Layout.namedSlot("Label").withMarkup(({
+    className="chip pop-right",
+    as:As="div",
+    style,
+    children
+}) => {
+  return <As className={`zero-h card-label ${className}`}
+    {...{style}}>
+      {children}
+  </As>;
+});
 
 // Cards.Route = ({className="",children}) => <div className={`chip pop-right ${className}`}>{children}</div>;
 // Cards.Route.displayName="Cards.Route";
