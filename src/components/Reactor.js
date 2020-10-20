@@ -127,6 +127,7 @@ const Listener = (componentClass) => {
       if (event instanceof Event) {
         throw new Error("notify() requires event name, not Event object");
       }
+      detail.single=true;
       event = this.eventPrefix() + event;
       eventDebug(`${this.name()}: notify '${event}':`, {detail});
       return this.trigger(event, detail, () => {});
@@ -169,7 +170,19 @@ const Listener = (componentClass) => {
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
       const listeningNode = at || this._listenerRef.current;
-      const handler = isInternal ? rawHandler : this._wrapHandler(rawHandler, {
+      const handler = isInternal ? (e) => {
+        if (!e.detail.single) return rawHandler(e);
+
+        const result = rawHandler(e);
+        if (observer) return;
+        if (returnsResult || (
+          // didn't explicitly return something falsey:
+          !!result || ("undefined" === typeof result)
+        )) {
+          e.stopPropagation()
+        }
+        return result;
+      }: this._wrapHandler(rawHandler, {
         eventName,
         isInternal,
         bare,
@@ -303,7 +316,7 @@ const Listener = (componentClass) => {
           return;
         }
         const {type, detail} = (event || {});
-        const {debug} = (detail || {});
+        const {debug, single, multiple} = (detail || {});
 
         const dbg = debugInt(debug);
         const moreDebug  = (dbg > 1);
@@ -361,7 +374,7 @@ const Listener = (componentClass) => {
           } else if (!observer) {
             if (event.detail && event.detail.result == Reactor.pendingResult) {
               console.error("handler without returnsResult:", handler);
-              throw new Error(`event called with eventResult, but the handler isn't marked with returnsResult.  Fix one, or fix the other.`)
+              throw new Error(`event called with eventResult(), but the handler isn't marked with returnsResult.  Fix one, or fix the other.`)
             }
           }
 
@@ -372,6 +385,7 @@ const Listener = (componentClass) => {
             if (!isInternalEvent) eventDebug("(event was handled)");
             if (event.handledBy.length > EVENT_IS_LOOPING_MAYBE) debugger;
             event.handledBy.push(handled);
+            if (single) event.stopPropagation();
           } else {
             if (!isInternalEvent) eventDebug("(event was not handled at this level)");
           }
@@ -523,7 +537,7 @@ export const Actor = (componentClass) => {
       const {detail:{
         registeredWith:reactor
       }} = this.trigger(
-        Reactor.RegisterActor({name, actor:this, debug})
+        Reactor.RegisterActor({name, actor:this, single: true, debug})
       ) || {};
       this._reactor = reactor
       for (const init of Actor.onInit) {
@@ -539,8 +553,8 @@ export const Actor = (componentClass) => {
       }
 
       this.listen(Reactor.Events.registerAction, this.addActorNameToRegisteredAction, false, {isInternal:true, observer:true});
-      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, false, {isInternal:true});
-      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true});
+      this.listen(Reactor.Events.registerPublishedEvent, this.registerPublishedEventEvent, false, {isInternal:true, observer: true});
+      this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true, observer:true});
 
 
       setTimeout( () => ( this.setState({_reactorDidMount: true}) ), 0);
@@ -553,7 +567,7 @@ export const Actor = (componentClass) => {
       let name = this.name();
       trace(`${displayName}: Actor unmounting:`, name);
       Reactor.trigger(this._listenerRef.current,
-        Reactor.RemoveActor({name})
+        Reactor.RemoveActor({name, single:true})
       );
 
     }
@@ -716,7 +730,9 @@ const Reactor = (componentClass) => {
         return event.detail.result = this;
       }
 
-      onReactor(this);
+      // allows the onReactor callback to return true/false
+      // to signal "handled", causing single: true to have its expected effect.
+      return onReactor(this);
     }
 
     registerActionEvent(event) {
@@ -829,7 +845,7 @@ const Reactor = (componentClass) => {
       if (global && !this.isRootReactor) {
         logger(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
         if (debug) console.warn(`${this.constructor.name}: passing global registerPublishedEvent to higher reactor`, event.detail);
-        return;
+        return false;
       }
       this.registerPublishedEvent({name,debug, target, actor});
       event.handledBy = handledInternally;
@@ -866,10 +882,10 @@ const Reactor = (componentClass) => {
           eventDebug(`'${name}: delivering to subscriber`, subscriberFunc);
 
           const r = subscriberFunc(event);
-          if (r == undefined || !!r) {
-            anyHandled = r
+          if (!!r || typeof r === "undefined") {
+            anyHandled = r || anyHandled
           }
-          // ?? honor stopPropagation[immediate] ?
+          // stopPropagation isn't honored because that would break our promise to notify subscribers.
         }
         return anyHandled;
       }
@@ -1146,6 +1162,8 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
     eventName = event.type
   } else {
     if ("string" !== typeof eventName) throw new Error("actionResult: must give a string eventName or Event.");
+    const {single=true}=detail;
+    detail.single = single;
     event = new CustomEvent(eventName, {bubbles: true, detail});
   }
 
@@ -1188,17 +1206,25 @@ Reactor.dispatchTo =
 
     onUnhandled = detail;
     detail = {}
+  } else if (event instanceof Event) {
+    detail = event.detail
   } else {
     if (!detail) detail = {};
-    if (detail.bubbles) {
+    if ("undefined" !== typeof detail.bubbles) {
       bubbles = detail.bubbles;
       delete detail.bubbles;
     }
-  }
-
-  if (!(event instanceof Event)) {
     event = new CustomEvent(event, {bubbles, detail});
   }
+
+  const {single, multiple} = detail;
+  if (!single && !multiple) {
+    console.warn(
+      `Reactor.trigger(${event.type}, {...options}): add 'multiple' option to allow multiple actors to be triggered (or 'single' to prevent it)`,
+      new Error("stack").stack
+    )
+  }
+
   if (!(target instanceof Element)) {
     try {
       target = ReactDOM.findDOMNode(target)
@@ -1471,6 +1497,7 @@ export class Action extends React.Component {
     name = name || foundName;
 
     let registerEvent = Reactor.RegisterAction({
+      single: true,
       name,
       returnsResult,
       observer,
@@ -1523,6 +1550,7 @@ export class Action extends React.Component {
       try {
         Reactor.trigger(el,
           Reactor.RemoveAction({
+            single: true,
             debug,
             at,
             observer,
@@ -1565,7 +1593,7 @@ export class Publish extends React.Component {
       throw new Error("‹Publish event=\"eventName\"› events should only have the 'event' name, and optionally 'global' or 'debug')\n");
     }
     Reactor.trigger(this._pubRef.current,
-      Reactor.PublishEvent({name, global, debug})
+      Reactor.PublishEvent({single: true, name, global, debug})
     );
   }
   componentWillUnmount() {
@@ -1573,11 +1601,9 @@ export class Publish extends React.Component {
 
     let {children, event:name, global, debug, ...handler} = this.props;
     Reactor.trigger(this._pubRef.current,
-      Reactor.RemovePublishedEvent({name, global, debug})
+      Reactor.RemovePublishedEvent({single: true, name, global, debug})
     );
   }
-
-  // !!! unpublish on unmount
 }
 Reactor.Publish = Publish;
 
@@ -1588,8 +1614,13 @@ export class Subscribe extends React.Component {
   }
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
-    let subscriberReq = Reactor.SubscribeToEvent(
-      {eventName: this.eventName, owner: this, listener: this.listenerFunc, debug: this.debug});
+    let subscriberReq = Reactor.SubscribeToEvent({
+        eventName: this.eventName,
+        single: true,
+        owner: this,
+        listener: this.listenerFunc,
+        debug: this.debug
+    });
 
     let {optional = false} = this.props;
     this.subscriptionPending = true;
