@@ -663,10 +663,18 @@ const Reactor = (componentClass) => {
     }
     componentDidUpdate(...args) {
       const {mounting, _reactorDidMount:mounted} = this.state || {}
+      // autoFocus
       if (!mounted) {
         trace(`${reactorName}: +didMount flag`);
         setTimeout(() => ( this.setState({_reactorDidMount: true}) ), 0);
         return
+      } else if (!this.mountConfirmed) {
+        this.mountConfirmed = true;
+        const node = this._listenerRef && this._listenerRef.current;
+        const focusable = node && node.querySelector && node.querySelector("[autofocus]")
+        if (focusable) {
+          focusable.focus();
+        }
       }
       if (super.componentDidUpdate) return super.componentDidUpdate(...args)
     }
