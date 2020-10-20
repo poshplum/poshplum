@@ -1461,6 +1461,7 @@ export class Action extends React.Component {
       returnsResult,
       observer="",
       bare,
+      capture="",
       client,
       debug,
       ...handler
@@ -1468,7 +1469,10 @@ export class Action extends React.Component {
     const foundKeys = Object.keys(handler);
     const foundName = foundKeys[0];
 
-    return <div {...{id}} style={{display:"none"}} className={`action${observer && " observer"} action-${foundName}${returnsResult && " use-actionResult" || ""}`} ref={this._actionRef} />;
+    return <div {...{id}} style={{display:"none"}}
+      className={`action${observer && " observer"}${capture && " capture-event" } action-${foundName}${returnsResult && " use-actionResult" || ""}`}
+      ref={this._actionRef}
+    />;
   }
 
   componentDidMount() {
