@@ -790,7 +790,7 @@ const Reactor = (componentClass) => {
         console.warn("existing handler info: ", info);
         throw new Error(msg);
       } else if ((bare || observer) && existingActionHandler) {
-        console.warn(`vvvvvvvvv ${actionDescription} may not be called due to an existing Action listener`)
+        console.warn(`vvvvvvvvv ${actionDescription} may be called out of order or skipped, due to an existing Action listener`)
         console.dir(handler, "<----<<< may not be called")
       }
       if (this.listening[name]) {
