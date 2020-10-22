@@ -43,7 +43,7 @@ export default class AboutLayouts extends React.Component {
 <Card>
   <Card.Icon>🔥</Card.Icon>
   <Card.Title>Urgent item</Card.Title>
-  <Card.Label className="bg-error">Problems</Card.Label>
+  <Card.Label className="chip pop-right bg-error">Problems</Card.Label>
 
   <p className="text-error text-bold">
     An item needing prompt attention</p>
@@ -73,7 +73,7 @@ export default class AboutLayouts extends React.Component {
         <Card>
           <Card.Icon>🍭</Card.Icon>
           <Card.Title>Simple cards</Card.Title>
-          <Card.Label className="bg-success">Sweet</Card.Label>
+          <Card.Label className="chip pop-right bg-success">Sweet</Card.Label>
         </Card>
         <Card>
           <Card.Icon>⏱️</Card.Icon>
@@ -84,7 +84,7 @@ export default class AboutLayouts extends React.Component {
         <Card>
           <Card.Icon>🔥</Card.Icon>
           <Card.Title>Urgent item</Card.Title>
-          <Card.Label className="bg-error">Problems</Card.Label>
+          <Card.Label className="chip pop-right bg-error">Problems</Card.Label>
           <p className="text-error text-bold">An item needing prompt attention</p>
         </Card>
         <br/>
