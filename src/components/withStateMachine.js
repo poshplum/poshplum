@@ -43,7 +43,7 @@ export class State extends React.Component {
 
 
 export const withStateMachine = (baseClass) => {
-  let baseName = baseClass.name;
+  let baseName = baseClass.wrappedName || baseClass.name;
   let dName = inheritName(baseClass,`FSM`);
   const enhancedBaseClass = class withStateMachine extends baseClass {
     constructor(props) {
@@ -54,14 +54,21 @@ export const withStateMachine = (baseClass) => {
     state = {currentState: "default"};
 
     setFsmLogger() {
+      let component = this.wrappedName || baseName;
+
       if (this.logger) this.fsmLogger = this.logger.child({
         name:`${this.logger.loggerName}:fsm`,
+        component,
         addContext: null
       });
     }
     warn(...args) {
       if (this.fsmLogger) return this.fsmLogger.warn(...args);
       console.warn(...args);
+    }
+    error(...args) {
+      if (this.fsmLogger) return this.fsmLogger.error(...args);
+      console.error(...args);
     }
     info(...args) {
       if (this.fsmLogger) return this.fsmLogger.info(...args);
@@ -75,6 +82,10 @@ export const withStateMachine = (baseClass) => {
       if (this.fsmLogger) return this.fsmLogger.progress(...args)
       trace(...args)
     }
+    progressInfo(...args) {
+      if (this.fsmLogger) return this.fsmLogger.progressInfo(...args)
+      trace(...args)
+    }
     debugLog(...args) {
       if (this.fsmLogger) {
         return this.fsmLogger.debug(...args)
@@ -84,7 +95,7 @@ export const withStateMachine = (baseClass) => {
       }
     }
     findStates(children) {
-      this.debugLog(`${baseName}: -> findStates(${children.length} children)`);
+      this.debugLog({detail:{childrenCount: children.length}}, `-> findStates`);
       let found = matchChildType("State", children, State);
       let states = {};
       map(found, (state) => {
@@ -99,11 +110,13 @@ export const withStateMachine = (baseClass) => {
         states[name] = {onEntry, transitions, path, children};
       });
       if (0 === (keys(states).length) && (typeof(children) == "object") && children.props && children.props.children) {
-        this.debugLog(this.constructor.name +": single child found; finding states inside that child");
+        this.debugLog("single child found; finding states inside that child");
         return this.findStates(children.props.children);
       }
       if (!this.states) {
-        this.info(`created state machine ${baseName} with ${Object.keys(states).length} states`);
+        this.info({detail:{
+          stateCount: Object.keys(states).length
+        }}, `created state machine`);
       }
       return states;
     }
@@ -122,29 +135,28 @@ export const withStateMachine = (baseClass) => {
       return states;
     }
     componentDidMount() {
-      this.debugLog(`${baseName}: -> componentDidMount (super)`);
+      this.debugLog(`-> componentDidMount (super)`);
       if (super.componentDidMount) super.componentDidMount();
       this.setFsmLogger()
-      this.progress(`${baseName}: <- componentDidMount (super); now for self...`);
+      this.progress(`<- componentDidMount (super); now for self...`);
 
       if (!this.states) {
         this.warn("withStateMachine should always have states before it gets componentDidMount.")
       } else {
         const {currentState="default"} = (this.state || {});
         const initialState = this.states[currentState];
-        this.debugLog(`${baseName}: `, {initialState});
         if (!initialState) {
           this.trigger("error", {error: `${this.constructor.name}: state machine should have a 'default' state.`});
           return;
         }
         if (initialState.onEntry) {
           setTimeout( () => {
-            this.debugLog(`${baseName}: -> onEntry to ${currentState}`);
+            this.progressInfo({detail:{initialState: currentState}}, `🡆 onEntry()`);
             initialState.onEntry();
-            this.progress(`${baseName}: <- onEntry to ${currentState}`);
+            this.debugLog({detail:{currentState}}, `<- onEntry`);
           }, 1)
         }
-        this.progress(`${baseName}: <- componentDidMount (self)`)
+        this.progress(`<- componentDidMount (self)`)
       }
     }
     mkTransition(name) {
@@ -152,7 +164,6 @@ export const withStateMachine = (baseClass) => {
 
       let displayName = `stateTransition‹${name}›`;
       if (!this._transitions[name]) {
-        this.debugLog(`${baseName}: mkTransition(): +${displayName}⭞`);
         this._transitions[name] = {
           [displayName]: (event) => {
             event && event.stopPropagation();
@@ -163,66 +174,48 @@ export const withStateMachine = (baseClass) => {
 
       return this._transitions[name];
     }
-    transition(name) {
+    transition(transitionName) {
       let {currentState="default"} = (this.state || {});
-      this.transitionsUnderway = (this.transitionsUnderway || 0) + 1;
-      const tLevel = this.transitionsUnderway > 1 ? `@L${this.transitionsUnderway} ` : ""
-      this.progress(`${baseName}: ${tLevel}-> ${name}⭞ transition`);
 
       let thisState = this.states[currentState];
-      let nextState = thisState.transitions[name];
+      let nextState = thisState.transitions[transitionName];
       let goodTransitions = keys(thisState.transitions);
       let predicate, effectFn;
 
       if (Array.isArray(nextState)) {
         [predicate=() => {
-          let e = new Error(`missing predicate definition for attempted transition '${name}' from state '${currentState}'`);
+          let e = new Error(`missing predicate definition for attempted transition '${transitionName}' from state '${currentState}'`);
           e.name = "warning";
           this.warn(e);
         }, nextState, effectFn] = nextState;
       }
       if (!nextState) {
-        this.infoEnabled && console.groupEnd();
-
-        throw new Error(`${this.constructor.name}: INVALID transition('${name}') attempted from state '${currentState}' (suggested: ${goodTransitions.join(',')})}`);
-      }
-      if (this.infoEnabled) {
-        const msg = `${baseName}: transition${
-          this.props.item && ` (rec ${this.props.item.id})` || ""
-        } ${tLevel}${name}⭞ ${nextState}`;
-        this.info(msg);
-        console.group(msg)
+        this.error({detail:{transitionName, currentState}}, `invalid transition attempt`);
+        throw new Error(`${baseName}: INVALID transition('${transitionName}') attempted from state '${currentState}' (suggested: ${goodTransitions.join(',')})}`);
       }
       const nextStateDef = this.states[nextState];
 
       if (!nextStateDef) {
-        this.infoEnabled && console.groupEnd();
-
-        throw new Error(`${this.constructor.name}: INVALID target state in '${currentState}:transitions['${name}'] -> state '${nextState}'`);
+        this.error({detail:{transitionName, nextState}}, `invalid target state in transition definition`);
+        throw new Error(`${baseName}: INVALID target state in '${currentState}:transitions['${transitionName}'] -> state '${nextState}'`);
       }
-      this.progress({detail: {def: this._transitions[name]}}, `${this.constructor.name}: transition ${name}⭞ ${nextState}`);
-
+      this.progress({
+        detail: {transitionName, nextState, transitionDef: this._transitions[transitionName]},
+        summary: `${transitionName}⭞ ${nextState}`
+      }, `transition`);
 
       if (predicate) {
-        const detail = {predicate};
-        const msg = `   trans predicate ${tLevel}${currentState} -> ${
-          (predicate.name || "‹unnamed›")+ " ->"} ${nextState}`;
-
-        if (this.infoEnabled) {
-          this.info(msg)
-        } else {
-          detail.stack = new Error("trace");
-          this.progress({detail}, msg);
-        }
-
         if (typeof(predicate) !== 'function') {
-          this.infoEnabled && console.groupEnd();
-          throw new Error(`${this.constructor.name}: INVALID predicate (${predicate}); function required.\n...in transition(${name}) from state '${currentState}'`);
+          throw new Error(`${baseName}: INVALID predicate (${predicate}); function required.\n...in transition(${transitionName}) from state '${currentState}'`);
         }
+
+        this.progressInfo({
+          detail: {currentState, nextState, predicate: predicate.name, stack: new Error("trace")},
+          summary: `${currentState} -> ${predicate.name || "predicate"}() -> ${nextState}`,
+        }, `running transition predicate`);
+
         if (predicate.call(this) === false) {
-          this.warn(`${this.constructor.name}: ${tLevel}transition(${name}) from state '${currentState}' denied by predicate in state machine`);
-          this.infoEnabled && console.groupEnd();
-          this.transitionsUnderway = this.transitionsUnderway - 1;
+          this.progressInfo(`${this.constructor.name}: transition(${transitionName}) from state '${currentState}' denied by predicate in state machine`);
 
           return false
         }
@@ -231,25 +224,30 @@ export const withStateMachine = (baseClass) => {
       if (currentState !== nextState) this.setState({currentState: nextState});
       if (effectFn) {
         try {
-          this.debugLog(`${baseName}: ${tLevel}-> ${name}⭞ effect callback`);
+          this.progress({
+            detail:{transitionName, nextState},
+            summary:`-> ${transitionName}⭞ effect() 🡆 ${nextState}`,
+          }, `transition effect`);
+
           effectFn();
-          this.progress(`${baseName}: ${tLevel}<- ${name}⭞ effect callback`);
+          this.progress(`<- ${transitionName}⭞ effect callback`);
         } catch(e) {
-          this.progress(`${baseName}: ${tLevel}<-!${name}⭞ error in effect callback`, e);
+          this.error({
+            detail: {currentState, transitionName, nextState, error: e.stack||e },
+            summary: `<-!${transitionName}⭞ ERROR: ${e.stack||JSON.stringify(e)}`,
+          }, `error in effect callback`);
           this.trigger("error", {error: e});
         }
       }
       if (currentState !== nextState && nextStateDef.onEntry) {
         setTimeout( () => {
-          this.debugLog(`${baseName}: ${tLevel}-> onEntry to '${nextState}'`);
+          this.progress({summary: nextState}, `  ... onEntry() 🡆 `);
           nextStateDef.onEntry();
-          this.progress(`${baseName}: ${tLevel}<- onEntry to '${nextState}'`);
-        }, 0)
+          this.debugLog({detail:{nextState}}, `<- onEntry()'`);
+        }, 0);
       }
 
-      this.progress(`${baseName}: ${tLevel}<- ${name}⭞ transition`);
-      this.infoEnabled && console.groupEnd();
-      this.transitionsUnderway = this.transitionsUnderway - 1;
+      this.progressInfo({summary:nextState}, " 🗸 transitioned 🡆 ");
     }
     render() {
       this.debugLog(`${baseName}: -> render (super)`);
