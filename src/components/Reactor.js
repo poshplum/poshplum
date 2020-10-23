@@ -413,22 +413,13 @@ const Listener = (componentClass) => {
           }
           return result;
         } catch(error) {
-          if (observer) {
-            const message = `event('${event.type}') observer ${listenerName}() threw an error: `;
+          const message = `${bare && "bare " || ""
+            }event('${event.type}') ${observer && "observer" || "handler"} ${listenerName}() threw an error: `;
           console.error(message, error)
-            Reactor.trigger(event.target, "error", {error:message + error.message});
-          } else if (bare) {
-            const message = `bare event('${event.type}') handler ${listenerName}() threw an error: `;
-            console.error(message, error)
-            Reactor.trigger(event.target, "error", {
-              error: message + error.message
-            });
-          } else {
+
+          // double errors being reported?  see commit message
+          Reactor.trigger(event.target, "error", {single: true, error:message + error.message});
           event.error = error
-          }
-          // console.error(error);
-          // logger(error);
-          // throw(error)
         } finally {
           if (showDebug) console.groupEnd();
         }
@@ -1344,6 +1335,8 @@ Reactor.dispatchTo =
     if (!isErrorAlready) {
       // console.error(event);
       const error = (caughtError ? "Error thrown in" : "unhandled event:");
+
+      // double errors being reported?  see commit message
       const errorWithFriendlyStack = new Error(""); {
         let foundFramework = false;
         let callerStack = [];
