@@ -1049,7 +1049,9 @@ const Reactor = (componentClass) => {
 
       if (debug) console.info(this.constructor.name, `registering actor '${name}'`);
       if (this.actors[name]) {
-        console.error(`Actor named '${name}' already registered`, this.actors[name]);
+        const message = `Actor name already registered`;
+        console.error({detail:{actorName: name, actorInstance: this.actors[name]}}, message);
+        throw new Error(message)
       } else {
         this.actors[name] = actor;
         event.detail.registeredWith = this;
