@@ -1411,15 +1411,12 @@ Reactor.dispatchTo =
         (isErrorAlready ? "" : "Add an 'error' event handler to catch errors for presentation in the UI.");
 
 
-    logger(message,
+    logger(`${message}\n  ...at DOM Target: ${event.target && elementInfo(event.target)}\n`,
       event.detail,
-      `...at DOM Target:  `, (event.target && event.target.outerHTML), "\n",
-      backTrace
+      stackTrace
     );
-    console.error(message,
-      event.detail,
-      `...at DOM Target:  `, (event.target && event.target.outerHTML), "\n",
-      backTrace
+    console.error(message, event.detail,
+      `\n  ...at DOM Target:  `, (event.target && event.target), "\n",
     );
   }
 };
