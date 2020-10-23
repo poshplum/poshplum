@@ -156,6 +156,25 @@ const Listener = (componentClass) => {
       }
       return Reactor.actionResult(this._listenerRef.current, event, detail, onUnhandled);
     }
+    mkInternalHandler(rawHandler, observer, returnsResult) {
+      const bound = internalHandler.bind(this, observer, returnsResult, rawHandler);
+      bound.innerFunction = rawHandler.innerFunction || rawHandler;
+      return bound;
+
+      function internalHandler (observer, returnsResult, rawHandler, event) {
+        if (!event.detail.single) return rawHandler(event);
+
+        const result = rawHandler(event);
+        if (observer) return;
+        if (returnsResult || (
+          // didn't explicitly return something falsey:
+          !!result || ("undefined" === typeof result)
+        )) {
+          event.stopPropagation()
+        }
+        return result;
+      }
+    }
 
     _listen(eventName, rawHandler, capture, {
         at,
@@ -163,6 +182,7 @@ const Listener = (componentClass) => {
         bare,
         observer,
         returnsResult,
+        existing=false,
       }={}
     ) {
       const listening = this.listening;
@@ -170,25 +190,15 @@ const Listener = (componentClass) => {
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
       const listeningNode = at || this._listenerRef.current;
-      const handler = isInternal ? (e) => {
-        if (!e.detail.single) return rawHandler(e);
-
-        const result = rawHandler(e);
-        if (observer) return;
-        if (returnsResult || (
-          // didn't explicitly return something falsey:
-          !!result || ("undefined" === typeof result)
-        )) {
-          e.stopPropagation()
-        }
-        return result;
-      }: this._wrapHandler(rawHandler, {
+      const handler = (isInternal ?
+        this.mkInternalHandler(rawHandler, observer, returnsResult)
+      : this._wrapHandler(rawHandler, {
         eventName,
         isInternal,
         bare,
         observer,
         returnsResult
-      });
+      }));
       listeningNode.addEventListener(eventName, handler, {capture});
       trace("listening", {eventName}, "with handler:", handler, note);
 
