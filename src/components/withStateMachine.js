@@ -164,13 +164,12 @@ export const withStateMachine = (baseClass) => {
 
       let displayName = `stateTransition‹${name}›`;
       if (!this._transitions[name]) {
-        this._transitions[name] = {
-          [displayName]: (event) => {
+        this._transitions[name] = Reactor.bindWithBreadcrumb(function(event) {
             event && event.stopPropagation();
             return this.transition(name)
-          }
-        }[displayName];
-      }
+          }, this,
+        displayName
+      );}
 
       return this._transitions[name];
     }

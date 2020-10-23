@@ -300,17 +300,28 @@ const Listener = (componentClass) => {
       listenersOfThisType.delete(foundListening)
     }
 
-    _wrapHandler(handler, {
-        eventName,
-        isInternal,
-        bare,
-        observer,
-        returnsResult
-      }={}
-    ) {
-      const reactor = this;
+    _wrapHandler(handler, details) {
       const createdBy = new Error("stack");
-      function wrappedHandler(event) {
+
+      if (!handler.innerFunction) {
+        console.warn("Reactor: listener not bound or can't be attributed to a target function\n"+Reactor.bindWarning, handler)
+        debugger
+      }
+      // avoids closure
+      const wrapped = wrappedHandler.bind(this, createdBy, details, handler)
+      wrapped.innerFunction = handler.innerFunction || handler;
+      return wrapped;
+
+      function wrappedHandler(createdBy, details, handler, event) {
+        const reactor = this
+        const {
+          eventName,
+          isInternal,
+          bare,
+          observer,
+          returnsResult
+        }=details;
+
         if (returnsResult && !event.detail.result) {
           event.error = new Error(`Developer error: event('${eventName}'‹returnsResult›): use Reactor.actionResult(...) or ‹actor›.actionResult(...)`);
           return;
@@ -323,20 +334,20 @@ const Listener = (componentClass) => {
 
         event.handledBy = event.handledBy || [];
         const listenerObj = handler.boundThis || Reactor.bindWarning;
+        const listenerFunction = (handler.innerFunction || handler);
         let handled = {
           reactor,
           reactorNode: this,
           eventName,
           listenerObj,
           createdBy,
-          listenerFunction: handler.targetFunction || handler
+          listenerFunction
         };
         if (!handled.reactorNode) debugger;
 
         const isInternalEvent = type in Reactor.Events || isInternal;
         const listenerTarget = handler.boundThis && handler.boundThis.constructor.name;
-        const listenerFunction = (handler.targetFunction || handler);
-        const listenerName = listenerFunction.name;
+        const listenerName = listenerFunction.boundName || listenerFunction.name;
 
         const showDebug = !isInternalEvent && (dbg || eventDebug.enabled);
         if (showDebug) {
@@ -394,7 +405,7 @@ const Listener = (componentClass) => {
         } catch(error) {
           if (observer) {
             const message = `event('${event.type}') observer ${listenerName}() threw an error: `;
-            console.error(message, error)
+          console.error(message, error)
             Reactor.trigger(event.target, "error", {error:message + error.message});
           } else if (bare) {
             const message = `bare event('${event.type}') handler ${listenerName}() threw an error: `;
@@ -403,7 +414,7 @@ const Listener = (componentClass) => {
               error: message + error.message
             });
           } else {
-            event.error = error
+          event.error = error
           }
           // console.error(error);
           // logger(error);
@@ -412,8 +423,6 @@ const Listener = (componentClass) => {
           if (showDebug) console.groupEnd();
         }
       }
-      wrappedHandler.innerHandler = handler && handler.targetFunction || handler;
-      return wrappedHandler
     }
   }
   Object.defineProperty(clazz, "name", {value: displayName});
@@ -785,12 +794,16 @@ const Reactor = (componentClass) => {
 
       const priorityHandlers = [];
 
-      const actionDescription = bare ? `bare '${name}' event ${observer || "handler"}` : `Action ${observer && "observer: "}'${name}'`;
+      const actionDescription = bare ?
+        `${(capture && "capturing ")||""}bare '${name}' event ${(observer && "observer") || "handler"}`
+        : `${(capture && "capturing ")||""}Action ${observer && "observer: "}'${name}'`;
       const existingAction = this.actions[name];
       const existingActionHandler = existingAction && existingAction.handler;
+      const existingIsMulti = existingAction && existingAction.get && existingAction.get("_isMulti");
       if (existingActionHandler && !bare && !observer) {
         let info = {
-          listenerFunction: (existingActionHandler.targetFunction || existingActionHandler).name,
+          existingAction,
+          listenerFunction: (existingActionHandler.innerFunction || existingActionHandler).name,
           listenerTarget: (
             (existingActionHandler.boundThis && existingActionHandler.boundThis.constructor.name)
             || Reactor.bindWarning
@@ -810,7 +823,7 @@ const Reactor = (componentClass) => {
         for (const listener of (this.listening[name])) {
           if (listener == existingActionHandler) continue;
 
-          console.dir(listener)
+          console.warn("existing listener: ", {listener})
         }
       }
 
@@ -821,6 +834,7 @@ const Reactor = (componentClass) => {
         bare,
         returnsResult,
       });
+
       // ensure the event gets the full event name, even if an Actor
       // did contribute its own augmented version of the full event name.
       // this happens e.g. when bare= is specified.
@@ -861,8 +875,8 @@ const Reactor = (componentClass) => {
       } else {
         const node = at || this.el
         const {handler} = this.actions[name]
-        this.unlisten(name, [node, handler]);
-        delete this.actions[name];
+          this.unlisten(name, [node, handler]);
+          delete this.actions[name];
 
         event.stopPropagation();
         event.handledBy = handledInternally;
@@ -888,15 +902,19 @@ const Reactor = (componentClass) => {
       if (debug) console.warn(message);
 
 
-      const thisEvent =
-        this.events[name] =
-          this.events[name] || {
-            publishers: new Set(),
-            subscribers: new Set(),
-            subscriberOwners: new Map(),
-            at: this._listenerRef.current,
-            _listener: this.listen(name, subscriberFanout)
-          };
+      let subscriberRegistry = this.events[name];
+      if (!subscriberRegistry) {
+        subscriberRegistry = {
+          publishers: new Set(),
+          subscribers: new Set(),
+          subscriberOwners: new Map(),
+          at: this._listenerRef.current,
+        };
+        const handler = subscriberFanout.bind(this, name, subscriberRegistry);
+        handler.innerFunction = "self (subscriberFanout)"
+        subscriberRegistry._listener = this.listen(name, handler);
+        this.events[name] = subscriberRegistry
+      }
 
       thisEvent.publishers.add(actor);
 
@@ -912,7 +930,7 @@ const Reactor = (componentClass) => {
           const r = subscriberFunc(event);
           if (!!r || typeof r === "undefined") {
             anyHandled = r || anyHandled
-          }
+        }
           // stopPropagation isn't honored because that would break our promise to notify subscribers.
         }
         return anyHandled;
@@ -1040,7 +1058,7 @@ const Reactor = (componentClass) => {
           logger(`${this.constructor.name}: unknown registerSubscriber request; passing to higher reactor`, event.detail);
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
         }
-        return false
+          return false
       } else {
         eventDebug(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
         logger(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
@@ -1403,13 +1421,44 @@ Reactor.dispatchTo =
   }
 };
 
-Reactor.bindWarning = "unknown binding (use Reactor.bindWithBreadcrumb to fix)";
-Reactor.bindWithBreadcrumb = function(fn, boundThis) {
-  const bound = fn.bind(boundThis);
+Reactor.bindWarning = "use @autobind (with 'import {autobind} from Reactor;') or Reactor.bindWithBreadcrumb to fix";
+Reactor.bindWithBreadcrumb = function(fn, boundThis, fnName, ...args) {
+  if (!fn) throw new Error(`Reactor.bindWithBreadcrumb(fn, targetObj, fnName): no function provided`)
+  const bound = fn.bind(boundThis, ...args);
+  if (!fnName) fnName = fn;
+  if (!fnName) throw new Error(`Reactor.bindWithBreadcrumb(fn, targetObj, fnName) requires function to have a name or arg3`)
   bound.boundThis = boundThis;
+  bound.boundName = fnName;
+  bound.boundArgs = args;
   bound.targetFunction = fn;
+  bound.innerFunction = fn.innerFunction || fn;
+  bound.innerThis = fn.innerThis || fn.boundThis || boundThis;
+
   return bound;
 };
+
+export function autobind(proto, name, descriptor) {
+  let func = descriptor.value;
+
+  if ("function" !== typeof func) {
+    throw new TypeError(`@autobind must only be used on instance methods`);
+  }
+
+  return {
+    configurable: true,
+    get() {
+      const bound = Reactor.bindWithBreadcrumb(func, this, name);
+      Object.defineProperty(this, name, {
+        configurable: false,
+        get() {
+          return bound;
+        }
+      });
+      return bound;
+    }
+  };
+}
+
 
 Reactor.Events = {
   reactorProbe: "reactorProbe",
