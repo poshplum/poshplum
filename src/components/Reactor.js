@@ -1067,6 +1067,7 @@ const Reactor = (componentClass) => {
         event.handledBy = handledInternally;
       } else {
         console.error(`ignoring removeActor event for name '${name}' (not registered)`)
+        return false;
       }
     }
 
