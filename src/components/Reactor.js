@@ -1302,8 +1302,8 @@ Reactor.dispatchTo =
     target, event, detail,
     onUnhandled
   ) {
-  let backTrace = new Error("trace");
-  backTrace.stack = backTrace.stack.split("\n").slice(2).join("\n");
+  let stackTrace = new Error("trace");
+  stackTrace.stack = stackTrace.stack.split("\n").slice(2).join("\n");
   let bubbles = true;
   if ("function" == typeof(detail)) {
     if (!(event instanceof Event)) throw new Error("missing object for event details in arg 3");
@@ -1324,7 +1324,7 @@ Reactor.dispatchTo =
   const {single, multiple} = detail;
   if (!single && !multiple) {
     console.warn(
-      `Reactor.trigger(${event.type}, {...options}): add 'multiple' option to allow multiple actors to be triggered (or 'single' to prevent it)`,
+      `Reactor.trigger('${event.type}', {...options}): add 'multiple' option to allow multiple actors to be triggered (or 'single' to prevent it)`,
       new Error("stack").stack
     )
   }
@@ -1344,9 +1344,9 @@ Reactor.dispatchTo =
     }
     const msg = `Reactor.dispatchTo: ${event.type} event missing required arg1 (must be a DOM node or React Component that findDOMNode() can use)`;
     logger(msg);
-    backTrace.stack = msg + backTrace.stack;
-    console.warn(backTrace);
-    throw backTrace;
+    stackTrace.stack = msg + stackTrace.stack;
+    console.warn(stackTrace);
+    throw stackTrace;
   }
 
   target.dispatchEvent(event);
@@ -1472,6 +1472,7 @@ Reactor.dispatchTo =
     );
     console.error(message, event.detail,
       `\n  ...at DOM Target:  `, (event.target && event.target), "\n",
+      stackTrace
     );
   }
 };
