@@ -926,24 +926,20 @@ const Reactor = (componentClass) => {
         this.events[name] = subscriberRegistry
       }
 
-      thisEvent.publishers.add(actor);
+      subscriberRegistry.publishers.add(actor);
 
 
-      function subscriberFanout(event) {
-        logger(`got event ${name}, dispatching to ${thisEvent.subscribers.size} listeners`);
-        if (debug) console.warn(`got event ${name}, dispatching to ${thisEvent.subscribers.size} listeners`);
+      function subscriberFanout(eventName, subscriberRegistry, event) {
+        logger(`got event ${eventName}, dispatching to ${subscriberRegistry.subscribers.size} listeners`);
+        if (debug) console.warn(`got event ${eventName}, dispatching to ${subscriberRegistry.subscribers.size} listeners`);
 
-        let anyHandled = null;
-        for (const subscriberFunc of thisEvent.subscribers) {
-          eventDebug(`'${name}: delivering to subscriber`, subscriberFunc);
+        event.handledBy.push(handledInternally)
+        for (const subscriberFunc of subscriberRegistry.subscribers) {
+          eventDebug(`'${eventName}: delivering to subscriber`, subscriberFunc);
 
-          const r = subscriberFunc(event);
-          if (!!r || typeof r === "undefined") {
-            anyHandled = r || anyHandled
+          subscriberFunc(event);
+          // no falsy-return -> stopPropagation; that would break our promise to notify subscribers.
         }
-          // stopPropagation isn't honored because that would break our promise to notify subscribers.
-        }
-        return anyHandled;
       }
     }
 
@@ -955,7 +951,7 @@ const Reactor = (componentClass) => {
       if (global && !this.isRootReactor) {
         logger(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
         if (debug) console.warn(`${this.constructor.name}: passing global removePublishedEvent to higher reactor`, event.detail);
-        return;
+        return false;
       }
 
       const thisEvent = this.events[name]; if (!thisEvent) {
@@ -965,7 +961,10 @@ const Reactor = (componentClass) => {
       const {subscriberOwners: owners, publishers} = thisEvent;
       if (!publishers.has(actor)) {
         console.warn(`can't removePublishedEvent('${name}') - actor not same as those who have registered`, {actor, publishers});
-        return;
+        event.detail.cantFindIt = true
+        return false; // pass to higher-level reactor.
+      } else if (event.detail.cantFindIt) {
+        console.warn(`^^^^^^^^^^^^ okay, a higher-level reactor was able to find the event with a matching actor`);
       }
       publishers.delete(actor);
 
@@ -1067,8 +1066,8 @@ const Reactor = (componentClass) => {
 
           logger(`${this.constructor.name}: unknown registerSubscriber request; passing to higher reactor`, event.detail);
           if (debug) console.warn(`${this.constructor.name}: ignored unknown registerSubscriber request`, event.detail);
-        }
           return false
+        }
       } else {
         eventDebug(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
         logger(`${this.constructor.name}: +subscriber:`, {eventName, debug, listener});
@@ -1098,7 +1097,7 @@ const Reactor = (componentClass) => {
             `\n---> have you subscribed using a method in your class as an event handler?  \n`+
               `     you should probably bind that function to its instance in constructor.`
           );
-          return;
+          return false;
         } else {
           const pOwner = owners.get(subscriberFn);
           if (pOwner) {
@@ -1138,13 +1137,13 @@ const Reactor = (componentClass) => {
             Reactor.ErrorEvent({error: message, backtrace: new Error("stack"), listener})
           )
         }
-        return
+        return false
       }
       eventDebug(`${this.constructor.name}: -subscriber removed:`, {eventName, debug, listener});
       event.handledBy = handledInternally;
 
       event.stopPropagation();
-      this.removeSubscriber(eventName, owner, listener, debug);
+      return this.removeSubscriber(eventName, owner, listener, debug);
     }
 
     removeSubscriber(eventName, owner, subscriberFn, debug) {
@@ -1159,6 +1158,7 @@ const Reactor = (componentClass) => {
       if (!subscribers.delete(subscriberFn)) {
         logger(`${this.constructor.name}: no subscribers removed for ${eventName}`);
         console.warn(`${this.constructor.name}: no subscribers removed for ${eventName}`)
+        return false
       } else {
         // it's ok to just delete the owner entry here - it's only needed during
         //   Publish-removal, when it's possible that this code path can't run
@@ -1744,7 +1744,7 @@ export class Subscribe extends React.Component {
 
     if (this.failedOptional) return;
     if (!this.subscriptionPending && !this.pubUnmounted) Reactor.trigger(this._subRef.current,
-      Reactor.StopSubscribing({eventName: this.eventName, listener: this.listenerFunc})
+      Reactor.StopSubscribing({eventName: this.eventName, single: true, listener: this.listenerFunc})
     );
     this.unmounting = true;
   }
