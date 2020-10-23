@@ -123,7 +123,7 @@ const Listener = (componentClass) => {
         returnsResult
       });
     }
-    notify(event, detail) {
+    notify(event, detail={}) {
       if (event instanceof Event) {
         throw new Error("notify() requires event name, not Event object");
       }
