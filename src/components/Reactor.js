@@ -190,7 +190,7 @@ const Listener = (componentClass) => {
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
       const listeningNode = at || this._listenerRef.current;
-      const handler = (isInternal ?
+      const handler = existing || (isInternal ?
         this.mkInternalHandler(rawHandler, observer, returnsResult)
       : this._wrapHandler(rawHandler, {
         eventName,
@@ -716,7 +716,8 @@ const Reactor = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+        returnsResult,
+        existing,
       }={}
     ) { // satisfy listener
       if (observer && returnsResult) throw new Error(`Action observer('${eventName}') can't also be returnsResult.  It's fine to observe a returnsResult event, but don't mark the observer with returnsResult.`)
@@ -725,7 +726,8 @@ const Reactor = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+        returnsResult,
+        existing
       });
       trace(`${reactorName}: +listen ${eventName}`);
 
@@ -781,7 +783,7 @@ const Reactor = (componentClass) => {
         returnsResult,
         isInternal,
         handler,
-        capture,
+        capture="",
         observer="",
         bare,
         ...moreDetails
@@ -815,9 +817,14 @@ const Reactor = (componentClass) => {
         console.error(msg);
         console.warn("existing handler info: ", info);
         throw new Error(msg);
-      } else if ((bare || observer) && existingActionHandler) {
-        console.warn(`vvvvvvvvv ${actionDescription} may be called out of order or skipped, due to an existing Action listener`)
-        console.dir(handler, "<----<<< may not be called")
+      } else if (observer && existingIsMulti) {
+        if ([...existingAction.values()].find(x => (!!x.bare))) {
+          console.warn(`vvvvvvvvv ${actionDescription} may be called out of order or skipped, due to an existing Action handler`, {
+            existingAction,
+            thisHandler: handler.innerFunction || handler,
+            existing: existingActionHandler.innerFunction || existingActionHandler
+          });
+        }
       }
       if (this.listening[name]) {
         console.warn(`there are existing listeners that may modify or stop the event before ${actionDescription} sees it;`)
@@ -840,7 +847,8 @@ const Reactor = (componentClass) => {
       // did contribute its own augmented version of the full event name.
       // this happens e.g. when bare= is specified.
       if (event && event.detail) event.detail.name = name;
-      this.actions[name] = {
+
+      const handlerDetails = {
         handler: effectiveHandler,
         instance: actionInstance,
         shortName,
@@ -851,8 +859,27 @@ const Reactor = (componentClass) => {
         isInternal,
         capture,
         at,
-      }
+      };
+      if (!(bare || observer)) {
+        this.actions[name] = handlerDetails
+      } else {
+        let multiHandlers = existingAction
+        if (!multiHandlers || !multiHandlers.get) {
+          multiHandlers = this.actions[name] = new Map();
+          multiHandlers.set("_isMulti", true)
+          if (existingAction) {
+            console.log(`reordering listeners to enable observer of existing action ${name}`);
+            const node = existingAction.at || this.el;
+            const replacingHandler = existingAction.handler
+            this.unlisten(name, [node, replacingHandler]);
+            this.listen(name, null, existingAction.capture, {...existingAction, existing: replacingHandler})
 
+            multiHandlers.set(existingAction.instance, existingAction);
+          }
+        }
+        multiHandlers.set(actionInstance, handlerDetails)
+        this.actions[name] = multiHandlers
+      }
       return effectiveHandler
     }
 
@@ -860,6 +887,7 @@ const Reactor = (componentClass) => {
       const {
         debug,
         name,
+        instance,
         at,
         handler,
         observer="",
@@ -870,15 +898,42 @@ const Reactor = (componentClass) => {
       if(debug) console.log(`${this.constructor.name}: removing action:`, event.detail);
       // debugger
 
-      if (!this.actions[name] && !(bare || observer)) {
+      const node = at || this.el
+
+      const foundAction = this.actions[name];
+      if (!foundAction && !(bare || observer)) {
         logger(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
         console.warn(`can't removeAction '${name}' (not registered)`, new Error("Backtrace"));
+        return false
       } else {
-        const node = at || this.el
-        const {handler} = this.actions[name]
+        if (foundAction && foundAction.handler) {
+          const {handler:t} = foundAction
+          if (handler !== t) {
+            console.error({detail:{actionName: name, listening: t, removing: handler}},
+              `listener mismatch in removeAction`);
+            debugger
+            throw new Error(`ruh roh.  these should match, shaggy.`);
+          }
           this.unlisten(name, [node, handler]);
           delete this.actions[name];
+        } else if (foundAction && foundAction.get && foundAction.get('_isMulti')) {
+          if (!instance) throw new Error(`removeAction event missing required detail.instance, which must point to the specific action instance being removed`);
+          const multiAction = foundAction;
+          const matchedAction = foundAction.get(instance);
+          if (!matchedAction) throw new Error(`removeAction event's detail.instance does not match`);
+          const {handler, at: node=this.el} = matchedAction;
 
+          this.unlisten(name, [node, handler]);
+
+          const remainingCount = multiAction.size - 2; // _isMulti key plus the matched action are removed from this count
+          if (remainingCount) {
+            multiAction.delete(instance)
+          } else {
+            delete this.actions[name]
+          }
+        } else {
+          this.unlisten(name, [node, handler])
+        }
         event.stopPropagation();
         event.handledBy = handledInternally;
       }
@@ -1635,6 +1690,7 @@ export class Action extends React.Component {
         Reactor.trigger(el,
           Reactor.RemoveAction({
             single: true,
+            instance: this,
             debug,
             at,
             observer,
