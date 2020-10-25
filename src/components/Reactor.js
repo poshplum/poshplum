@@ -1244,6 +1244,7 @@ const Reactor = (componentClass) => {
       return <div
         style={{display:"contents"}}
         ref={this._listenerRef}
+        key="reactor-node"
         className={`reactor for-${componentClassName}${isFramework}`}
         {...props}
       >
