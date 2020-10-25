@@ -652,12 +652,21 @@ const Reactor = (componentClass) => {
       trace(`${reactorName}: -> mounting(self)`);
 
       this.el = this._listenerRef.current;
+
+      // provides early registration of events for notifications.
+      // can this be replaced?
       if (this.hasNotifications) {
         this.registerPublishedEvent({name:"success", target: this});
         this.registerPublishedEvent({name:"warning", target: this});
         this.registerPublishedEvent({name:"error", target: this});
       } else {
-        this.registerAction({observer:true, isInternal: true, name:"error", handler:this.addReactorName});
+        //
+        this.registerAction({
+          observer:true,
+          isInternal: true,
+          action: {errorEventDecoratorStub: true},
+          name:"error",
+          handler:this.addReactorName});
       }
       const _l = this.internalListeners = new Set();
       const isInternal = {isInternal: true};
