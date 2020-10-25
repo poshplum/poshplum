@@ -826,9 +826,9 @@ const Reactor = (componentClass) => {
           });
         }
       }
-      if (this.listening[name]) {
+      if (this.listening.get(name)) {
         console.warn(`there are existing listeners that may modify or stop the event before ${actionDescription} sees it;`)
-        for (const listener of (this.listening[name])) {
+        for (const listener of this.listening.get(name).values()) {
           if (listener == existingActionHandler) continue;
 
           console.warn("existing listener: ", {listener})
