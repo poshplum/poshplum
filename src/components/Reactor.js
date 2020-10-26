@@ -1262,7 +1262,10 @@ const Reactor = (componentClass) => {
       if (isFramework) isFramework=" _fw_";
       if (this.debug || this.props.debug) debugger;
 
+      const {wrappedName:wn}= this;
+      const wrappedName = wn ? {"data-wrapped-name": wn} : {}
       return <div
+        {...wrappedName}
         style={{display:"contents"}}
         ref={this._listenerRef}
         key="reactor-node"
