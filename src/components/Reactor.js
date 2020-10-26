@@ -1101,7 +1101,7 @@ const Reactor = (componentClass) => {
     // When the requested event-name is found, it stops the registerSubscriber from further
     // propagation and calls through to registerSubscriberEvent().
     registerSubscriber(event) {
-      let {eventName, owner, candidates: deeperCandidates = [], listener, debug} = event.detail;
+      let {eventName, optional, owner, candidates: deeperCandidates = [], listener, debug} = event.detail;
       eventName = eventName.replace(/\u{ff3f}/u, ':');
       if (!this.events[eventName]) {
         const possibleMatches = Object.keys(this.events);
@@ -1120,6 +1120,7 @@ const Reactor = (componentClass) => {
         ];
 
         if (this.isRootReactor) {
+          if (optional) return false;
           const candidatesMessage = allKnownCandidates ? ` (try one of: ${allKnownCandidates.join(",")})` : "";
           const message = `${this.constructor.name}: ‹Subscribe ${eventName}›: no matching ‹Publish›${candidatesMessage}`;
           console.warn(message);
@@ -1208,11 +1209,11 @@ const Reactor = (componentClass) => {
         }
         return false
       }
-      eventDebug(`${this.constructor.name}: -subscriber removed:`, {eventName, debug, listener});
-      event.handledBy = handledInternally;
-
-      event.stopPropagation();
-      return this.removeSubscriber(eventName, owner, listener, debug);
+      const result = this.removeSubscriber(eventName, owner, listener, debug);
+      if (false !== result) {
+        event.handledBy = handledInternally;
+      }
+      return result;
     }
 
     removeSubscriber(eventName, owner, subscriberFn, debug) {
@@ -1779,23 +1780,34 @@ export class Subscribe extends React.Component {
   }
   componentDidMount() {
     if (super.componentDidMount) super.componentDidMount();
+    let {skipLevel, optional = false} = this.props;
+
     let subscriberReq = Reactor.SubscribeToEvent({
         eventName: this.eventName,
         single: true,
+        optional: true,
         owner: this,
         listener: this.listenerFunc,
         debug: this.debug
     });
 
-    let {optional = false} = this.props;
     this.subscriptionPending = true;
     // defer registering the subscriber for just 1ms, so that
     // any <Publish>ed events from Actors will have their chance
     // to be mounted and registered:
+
+    let skipped = false;
+    this.reactor = Reactor.actionResult(this._subRef.current, "reactorProbe", {single:true,
+      onReactor(r) {
+        if (skipLevel && !skipped) { skipped = true; return false }
+        return r;
+      }
+    });
+
     setTimeout(() => {
       delete this.subscriptionPending;
       if (!this.unmounting && this._subRef.current) {
-        Reactor.trigger(this._subRef.current, subscriberReq, {},
+        Reactor.trigger(this.reactor.el, subscriberReq, {},
           optional ? (unhandledEvent) => {
               this.failedOptional = true;
               console.warn(`unhandled subscribe to '${this.eventName}' was optional, so no error event.`)
@@ -1814,7 +1826,7 @@ export class Subscribe extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     if (this.failedOptional) return;
-    if (!this.subscriptionPending && !this.pubUnmounted) Reactor.trigger(this._subRef.current,
+    if (!this.subscriptionPending && !this.pubUnmounted) Reactor.trigger(this.reactor.el,
       Reactor.StopSubscribing({eventName: this.eventName, single: true, listener: this.listenerFunc})
     );
     this.unmounting = true;
@@ -1824,11 +1836,12 @@ export class Subscribe extends React.Component {
   }
 
   render() {
-    let {children, optional, debug, ...handler} = this.props;
+    let {children, skipLevel, optional, debug, ...handler} = this.props;
 
     const foundKeys = Object.keys(handler);
     if (foundKeys.length > 1) {
-      throw new Error("‹Subscribe eventName={notifyFunction}› events should only have a single prop - the eventName to subscribe. ('optional' and 'debug' props also allowed)\n");
+      throw new Error(`ambiguous event-name (${foundKeys.join(",")}\n`+
+        `  usage: ‹Subscribe [skipLevel] [optional] [debug] ‹eventName›={notifyFunction}›`);
     }
     this.eventName = foundKeys[0];
     this.debug = debug;
