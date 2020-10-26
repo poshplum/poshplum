@@ -762,14 +762,25 @@ const Reactor = (componentClass) => {
         return;
       }
       event.handledBy = handledInternally;
+      let foundReactor = null;
+      if (onReactor) {
+        foundReactor = onReactor(this);
+        if (false === foundReactor) return false;
+        if ("undefined" == typeof foundReactor) {
+          const message = `reactorProbe: onReactor() returned undefined result (should be truthy or false)`;
+          console.error(message, {onReactor})
+          throw new Error(`${message} (see console error to trace)`)
+        }
+        if (!!foundReactor) foundReactor = this;
+      }
       if (result) {
         event.stopPropagation();
-        return event.detail.result = this;
+        return event.detail.result = foundReactor;
       }
 
       // allows the onReactor callback to return true/false
       // to signal "handled", causing single: true to have its expected effect.
-      return onReactor(this);
+      return foundReactor;
     }
 
     registerActionEvent(event) {
