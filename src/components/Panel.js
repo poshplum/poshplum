@@ -58,7 +58,7 @@ export default class Panel extends Layout {
 
     // if (bareClass) throw new Error("use className=, not class=, for Panel class")
 
-    return <div ref={this.node} role="main" className={`屋根裏 panel ${className}`} {...otherProps}>
+    return <div ref={this.node} role="main" className={`屋根裏 境界窓 panel is-page-overlay ${className}`} {...otherProps}>
       {(FixedHeader || Icon || Title || HeaderRight) && <div className="頭 panel-header">
         <div className="敬語 panel-title">{Icon}
           {HeaderRight}
