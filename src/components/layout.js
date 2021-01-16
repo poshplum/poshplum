@@ -62,7 +62,11 @@ export default class Layout extends Component {
   // returns a ready-to-use map of slot-names to rendered content.
   get slots() {
     let slots = this.constructor.getSlots();
-    if (!this.constructor._slotsVerified) {
+    let slotToSlotNames;
+    if (this.constructor.hasOwnProperty("_slotsVerified")) {
+      slotToSlotNames = this.constructor._slotsVerified;
+    } else {
+      slotToSlotNames = new Map();
       map(slots, (slot,k) => {
         let slotName = slot.displayName || slot.constructor.displayName || slot.name || slot.constructor.name;
         // console.log("slot: ", k, slotName, slot );
@@ -70,8 +74,9 @@ export default class Layout extends Component {
         if ((!foundSlot) || foundSlot !== slot) {
           console.warn(`Layout: ${this.constructor.name}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
         }
+        slotToSlotNames.set(slot, slotName);
       })
-      this.constructor._slotsVerified = true;
+      this.constructor._slotsVerified = slotToSlotNames
     }
     let {children=[]} = this.props;
     if (!Array.isArray(children)) {
@@ -91,16 +96,21 @@ export default class Layout extends Component {
           console.log("child:", child, child.type, child.type && child.type.displayName);
       if (child.props && child.props.debug) debugger
 
-      let foundName = find(Object.keys(slots),(key) => {
+      let foundName = slotToSlotNames.get(child.type) || find(Object.keys(slots),(key) => {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
 
         const slotType = slots[key];
+        const slotName = slotToSlotNames.get(slotType);
+        if (!slotName) {
+          debugger
+          throw new Error(`‹impossible?› iterated slot doesn't have a name`)
+        }
         if (slotType.debug) debugger
         if (module.hot) {
           let childName = child.type && child.type.displayName || child.type;
 
           //  ✓ works with react webpack hot loader
-          if (slotType.displayName === childName) return true;
+          if (slotName === childName) return true;
         }
         if (slotType.tagName && (slotType.tagName === child.type)) {
           return true;
@@ -109,7 +119,7 @@ export default class Layout extends Component {
         return (slotType === child.type)
       });
       let foundSlot = foundName && slots[foundName]
-      let foundDisplayName = foundSlot && (foundSlot.displayName || foundSlot.name);
+      let foundDisplayName = foundSlot && slotToSlotNames.get(foundSlot)
       if (!foundSlot) {
         // console.log("slot: default", foundSlot, child)
         foundName = "default";
