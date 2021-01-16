@@ -15,17 +15,24 @@ export default class Layout extends Component {
     slot.isDefault = true;
     return slot;
   }
-  static withMarkup(slot, RenderComponent) {
-    let componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}>{children}</RenderComponent>
-    componentWithMarkup.raw = RenderComponent;
-    componentWithMarkup.displayName = slot.displayName;
+  static withMarkup(basedOnSlot, RenderComponent) {
+    let componentWithMarkup;
+    let slot = componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}>{children}</RenderComponent>
+    slot.raw = RenderComponent;
+    slot.displayName = basedOnSlot.displayName;
 
-    if (slot.isDefault) componentWithMarkup.isDefault = slot.isDefault;
-    if (!RenderComponent.displayName) RenderComponent.displayName = `slot‹${slot.displayName}›`;
-
+    // if (basedOnSlot.tagName) throw new Error(`slot: withTagName("${basedOnSlot.tagName}"): .withMarkup(...) conflicts with bare tag name.`)
+    if (basedOnSlot.isMultiple) slot.isMultiple = basedOnSlot.isMultiple;
+    if (basedOnSlot.isDefault) slot.isDefault = basedOnSlot.isDefault;
+    if (!RenderComponent.displayName) RenderComponent.displayName = `slot‹${basedOnSlot.displayName}›`;
     if (slot.tagName) componentWithMarkup.tagName = slot.tagName;
 
-    return componentWithMarkup;
+    slot.withTagName = (tn) => { throw new Error(
+      `slot: withMarkup(...): withTagName("${tn}") primitive conflicts with markup-based slot - try withTagName().withMarkup() instead?`
+    ) };
+
+    slot.multiple = () => { slot.isMultiple = true; return  slot };
+    return slot;
   }
   static namedSlot(name) {
     let slot = ({children}) => [children];
