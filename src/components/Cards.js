@@ -19,7 +19,7 @@ let Title = Layout.namedSlot("Title").withMarkup(({className="", children, ...pr
 // console.log("Title is ", Title, Title.displayName);
 
 let Icon = Layout.namedSlot("Icon").withMarkup(({className="", icon, children, ...props}) => {
-  return <div key="icon" className={`chip icon pop-left zero-h ${className}`} {...props}>
+  return <div key="icon" className={`chip icon pop-left zero-height ${className}`} {...props}>
     {icon || children}
   </div>
 });
@@ -54,7 +54,7 @@ let Label = Layout.namedSlot("Label").withMarkup(({
     style,
     children
 }) => {
-  return <As className={`zero-h card-label ${className}`}
+  return <As className={`zero-height card-label ${className}`}
     {...{style}}>
       {children}
   </As>;
