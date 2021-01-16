@@ -1310,7 +1310,7 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
     } else {
       const msg = `actionResult('${eventName}'): Error: no responders (check the event name carefully)!`;
       error = new Error(msg);
-      console.error("unhandled event:", unhandledEvent, "\n", error);
+      console.error("unhandled actionResult event:", unhandledEvent, "\n", error);
       throw error;
     }
   };
