@@ -606,6 +606,7 @@ const Reactor = (componentClass) => {
   trace(`Reactor creating branch+leaf subclass ${reactorName}`);
   const clazz = class ReactorInstance extends listenerClass {
     get wrappedName() { return super.wrappedName || wrappedName }
+    get displayName() { return componentClass.displayName || componentClass.name }
     static wrappedName = wrappedName;
     // registerActionEvent = Reactor.bindWithBreadcrumb(this.registerActionEvent, this);
     constructor(props) {

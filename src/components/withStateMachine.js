@@ -46,6 +46,9 @@ export const withStateMachine = (baseClass) => {
   let baseName = baseClass.wrappedName || baseClass.name;
   let dName = inheritName(baseClass,`FSM`);
   const enhancedBaseClass = class withStateMachine extends baseClass {
+    get displayName() {
+      return baseClass.displayName || baseClass.name
+    }
     constructor(props) {
       super(props);
       this._stateRef = React.createRef();
