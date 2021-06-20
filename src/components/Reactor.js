@@ -1813,31 +1813,55 @@ export class Subscribe extends React.Component {
       if (super.componentDidMount) super.componentDidMount();
       let {skipLevel, optional = false} = this.props;
 
-    let subscriberReq = Reactor.SubscribeToEvent({
-        eventName: this.eventName,
-        single: true,
-        optional: true,
-        owner: this,
-        listener: this.listenerFunc,
-        debug: this.debug
-    });
-
       this.subscriptionPending = true;
-    // defer registering the subscriber for just 1ms, so that
-    // any <Publish>ed events from Actors will have their chance
-    // to be mounted and registered:
 
+      const attempt = tryNow.bind(this)
+      attempt()
+
+      function tryNow() {
           let skipped = false;
-    this.reactor = Reactor.actionResult(this._subRef.current, "reactorProbe", {single:true,
+          let retry;
+          const reactor = Reactor.actionResult(this._subRef.current, "reactorProbe", {single:true,
             onReactor(r) {
               if (skipLevel && !skipped) { skipped = true; return false }
               return r;
             }
+          }, (caughtError) => { // no reactor yet
+              console.warn("no reactor yet for ‹Subscribe›... will retry (in catch)")
+              retry = setTimeout(attempt, 100);
           });
+          if (!reactor) {
+            if (!retry) {
+              console.warn("no reactor yet for ‹Subscribe›... will retry (outside catch)")
+              retry = setTimeout(attempt, 100);
+            }
+            return;
+          }
+          this.reactor = reactor;
 
-    setTimeout(() => {
+        // defer registering the subscriber for just 1ms, so that
+        // any <Publish>ed events from Actors will have their chance
+        // to be mounted and registered:
+        setTimeout(this.doSubscribe, 1)
+      }
+  }
+
+  @autobind
+  doSubscribe() {
     delete this.subscriptionPending;
-      if (!this.unmounting && this._subRef.current) {
+
+    let {optional = false} = this.props;
+
+    let subscriberReq = Reactor.SubscribeToEvent({
+      eventName: this.eventName,
+      single: true,
+      optional: true,
+      owner: this,
+      listener: this.listenerFunc,
+      debug: this.debug
+    });
+
+    if (!this._unmounting && this._subRef.current) {
       Reactor.trigger(this.reactor.el, subscriberReq, {},
         optional ? (unhandledEvent) => {
           this.failedOptional = true;
@@ -1850,7 +1874,6 @@ export class Subscribe extends React.Component {
         `NOTE: In tests, you probably want to prevent this with "await delay(1);" after mounting.`
       );
     }
-    }, 1)
   }
 
   componentWillUnmount() {
