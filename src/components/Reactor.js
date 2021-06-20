@@ -1021,6 +1021,7 @@ const Reactor = (componentClass) => {
 
         event.handledBy.push(handledInternally)
         for (const subscriberFunc of subscriberRegistry.subscribers) {
+          if (!subscriberFunc) continue;
           eventDebug(`'${eventName}: delivering to subscriber`, subscriberFunc);
 
           subscriberFunc(event);
@@ -1180,6 +1181,9 @@ const Reactor = (componentClass) => {
       const thisEvent = this.events[eventName];
       if (thisEvent) {
         const {subscribers, subscriberOwners:owners} = thisEvent;
+        if (!subscriberFn) {
+          console.error(`Subscribe: event '${eventName}': missing handler function.  owner ->`, owner)
+        }
         if (subscribers.has(subscriberFn)) {
           const existingOwner = owners.get(subscriberFn);
           const ownerBit = existingOwner ? [ "\n...with existing owner", existingOwner ] : [];
