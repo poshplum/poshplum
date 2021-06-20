@@ -1358,7 +1358,8 @@ Reactor.dispatchTo =
 
     onUnhandled = detail;
     detail = {}
-  } else if (event instanceof Event) {
+  }
+  if (event instanceof Event) {
     detail = event.detail
   } else {
     if (!detail) detail = {};
@@ -1371,6 +1372,7 @@ Reactor.dispatchTo =
 
   const {single, multiple} = detail;
   if (!single && !multiple) {
+    debugger
     console.warn(
       `Reactor.trigger('${event.type}', {...options}): add 'multiple' option to allow multiple actors to be triggered (or 'single' to prevent it)`,
       new Error("stack").stack
@@ -1726,7 +1728,7 @@ export class Action extends React.Component {
     client = client || (handler && handler.name || "‹no handler›");
     this._unmounting = true
     const el = this._actionRef.current;
-    if (!el) throw new Error("no el")
+    if (!el) return
 
     logger(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
     if (debug) console.log(`${this.constructor.name}: scheduling action removal: '${this.fullName}'`);
@@ -1748,15 +1750,19 @@ export class Action extends React.Component {
             bare,
             name: this.fullName,
             handler
-          })
+          }), removalFailure
         );
       } catch(e) {
+        debugger
         console.error(`${this.constructor.name}: error while removing action:`, e);
       }
       logger(`<- Removing action '${this.fullName}'`);
       if (debug) console.log(`<- Removing action '${this.fullName}'`);
     // }, 2)
 
+    function removalFailure(event, err) {
+        debugger
+    }
   }
 }
 Object.defineProperty(Action, "displayName", {value: "🏒Action"})
