@@ -554,6 +554,9 @@ export const Actor = (componentClass) => {
     componentDidMount() {
       let {debug} = this.props;
       let name = this.name();
+      if (!name) {
+        return this.trigger('error', {error: `ignoring actor registration without a 'name'`, single: true})
+      }
       trace(`${displayName}: ${name} -> didMount`);
 
       // if(foundKeys[0] == "action") debugger;
@@ -866,7 +869,7 @@ const Reactor = (componentClass) => {
           });
         }
       }
-      if (!existingAction && this.listening.get(name)) {
+      if (!existingAction && this.listening.get(name) && this.listening.get(name).size) {
         console.warn(`there are existing listeners that may modify or stop the event before ${actionDescription} sees it;`)
         for (const listener of this.listening.get(name).values()) {
           if (listener == existingActionHandler) continue;
@@ -1086,6 +1089,9 @@ const Reactor = (componentClass) => {
 
     registerActor(event) {
       let {name, actor, debug} = event.detail;
+      if (!name) {
+          throw new Error(`can't register an unnamed actor`)
+      }
       trace(this.constructor.name, `registering actor '${name}'`);
 
       if (debug) console.info(this.constructor.name, `registering actor '${name}'`);
@@ -1103,6 +1109,10 @@ const Reactor = (componentClass) => {
 
     removeActor(event) {
       let {name} = event.detail;
+      if (!name) {
+        throw new Error(`ignoring request to remove unnamed actor`)
+      }
+
       if(this.actors[name]) {
         delete this.actors[name];
         event.stopPropagation();
