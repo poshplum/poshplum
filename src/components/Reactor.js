@@ -1,6 +1,7 @@
 var levenshtein = require('fast-levenshtein');
 
 const EVENT_IS_LOOPING_MAYBE = 20;
+export let reactorTag = Symbol("Reactor");
 
 // Reactors:
 //  - Take modularized responsibility for local state change
@@ -133,18 +134,24 @@ const Listener = (componentClass) => {
       return this.trigger(event, detail, () => {});
     }
     trigger(event,detail, onUnhandled) {
+      let {_reactorDidMount: mounted} = (this.state || {});
       if (!this._listenerRef.current) {
-
-        let {_reactorDidMount: mounted} = (this.state || {});
-        if (mounted) {
-          console.warn(`attempt to dispatch '${event}' event after Reactor unmounted: ${this.displayName || this.constructor.displayName}}`, {detail})
-          return
-        }
-
-        if (event.type == "error") {
-          console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
-          return;
-        }
+          if (mounted) {
+            console.warn(`attempt to dispatch '${event}' event after Reactor unmounted: ${this.displayName || this.constructor.displayName}}`, {detail})
+            return
+          }
+          if (event.type == "error") {
+            console.error("error from unmounted component: "+ event.detail.error + "\n" + event.detail.stack);
+            return;
+          }
+      }
+      if (this.constructor[reactorTag] && !mounted) {
+        detail = event.detail && event.detail.stack;
+        const name = this.wrappedName || this.name()
+        Reactor.trigger(this._listenerRef.current, 'error', {error:
+            `Reactor ${name} NOT honoring event '${event.type || event}' triggered prior to completion of mounting sequence: ${detail || ""}`
+        });
+        return;
       }
       return Reactor.trigger(this._listenerRef.current, event, detail, onUnhandled);
     }
@@ -242,6 +249,7 @@ const Listener = (componentClass) => {
     componentWillUnmount() {
       if (super.componentWillUnmount) super.componentWillUnmount();
       let {debug} = this.props;
+      this._unmounting = true
       const dbg = debugInt(debug);
       trace(`${this.constructor.name}: unmounting and deferred unlistening all...`);
       if (dbg) {
@@ -572,7 +580,10 @@ export const Actor = (componentClass) => {
       this.listen(Reactor.Events.removePublishedEvent, this.removePublishedEvent, false, {isInternal:true, observer:true});
 
 
-      setTimeout( () => ( this.setState({_reactorDidMount: true}) ), 0);
+      setTimeout( () => {
+          if (this._unmounting) return;
+          this.setState({_reactorDidMount: true})
+      }, 0);
       trace(`${displayName}: ${name} <- didMount`);
     }
 
@@ -580,6 +591,10 @@ export const Actor = (componentClass) => {
       if (super.componentWillUnmount) super.componentWillUnmount();
 
       let name = this.name();
+      if (!this._listenerRef.current) {
+        console.warn(`Actor ${displayName} has no _listenerRef - forcibly unmounted?`)
+        return
+      }
       trace(`${displayName}: Actor unmounting:`, name);
       Reactor.trigger(this._listenerRef.current,
         Reactor.RemoveActor({name, single:true})
@@ -594,8 +609,6 @@ export const Actor = (componentClass) => {
 };
 Actor.onInit = []
 
-
-const reactorTag = Symbol("Reactor");
 const Reactor = (componentClass) => {
   if (componentClass[reactorTag]) return componentClass;
 
@@ -686,7 +699,10 @@ const Reactor = (componentClass) => {
       this.listen(Reactor.Events.removeSubscriber, this.removeSubscriberEvent, false, isInternal);
       trace(`${reactorName}: +mounting flag`);
 
-      setTimeout(() => ( this.setState({mounting: true}) ), 0);
+      setTimeout(() => {
+          if (this._unmounting) return;
+          this.setState({mounting: true})
+        }, 0);
       trace(`${reactorName}: <- didMount (self)`)
     }
     componentDidUpdate(...args) {
@@ -694,7 +710,10 @@ const Reactor = (componentClass) => {
       // autoFocus
       if (!mounted) {
         trace(`${reactorName}: +didMount flag`);
-        setTimeout(() => ( this.setState({_reactorDidMount: true}) ), 0);
+        setTimeout(() => {
+            if (this._unmounting) return;
+            this.setState({_reactorDidMount: true})
+        }, 0);
         return
       } else if (!this.mountConfirmed) {
         this.mountConfirmed = true;
@@ -917,7 +936,6 @@ const Reactor = (componentClass) => {
       } = event.detail;
       trace(`${reactorName}: -action ${name}`);
       if(debug) console.log(`${this.constructor.name}: removing action:`, event.detail);
-      // debugger
 
       const node = at || this.el
 
@@ -953,6 +971,7 @@ const Reactor = (componentClass) => {
             delete this.actions[name]
           }
         } else {
+          debugger
           this.unlisten(name, [node, handler])
         }
         event.stopPropagation();
@@ -1663,6 +1682,7 @@ export class Action extends React.Component {
       throw new Error(message);
     }
     name = name || foundName;
+    if (this._unmounting) return
 
     let registerEvent = Reactor.RegisterAction({
       single: true,
@@ -1704,6 +1724,7 @@ export class Action extends React.Component {
     const handler = this.handler
 
     client = client || (handler && handler.name || "‹no handler›");
+    this._unmounting = true
     const el = this._actionRef.current;
     if (!el) throw new Error("no el")
 
@@ -1735,6 +1756,7 @@ export class Action extends React.Component {
       logger(`<- Removing action '${this.fullName}'`);
       if (debug) console.log(`<- Removing action '${this.fullName}'`);
     // }, 2)
+
   }
 }
 Object.defineProperty(Action, "displayName", {value: "🏒Action"})
@@ -1770,6 +1792,11 @@ export class Publish extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     let {children, event:name, global, debug, ...handler} = this.props;
+    if (!this._pubRef.current) {
+      console.warn(`‹Publish ${name}› has no _pubRef - forcibly unmounted?`)
+      return
+    }
+
     Reactor.trigger(this._pubRef.current,
       Reactor.RemovePublishedEvent({single: true, name, global, debug})
     );
@@ -1783,8 +1810,8 @@ export class Subscribe extends React.Component {
     this._subRef = React.createRef();
   }
   componentDidMount() {
-    if (super.componentDidMount) super.componentDidMount();
-    let {skipLevel, optional = false} = this.props;
+      if (super.componentDidMount) super.componentDidMount();
+      let {skipLevel, optional = false} = this.props;
 
     let subscriberReq = Reactor.SubscribeToEvent({
         eventName: this.eventName,
@@ -1795,34 +1822,34 @@ export class Subscribe extends React.Component {
         debug: this.debug
     });
 
-    this.subscriptionPending = true;
+      this.subscriptionPending = true;
     // defer registering the subscriber for just 1ms, so that
     // any <Publish>ed events from Actors will have their chance
     // to be mounted and registered:
 
-    let skipped = false;
+          let skipped = false;
     this.reactor = Reactor.actionResult(this._subRef.current, "reactorProbe", {single:true,
-      onReactor(r) {
-        if (skipLevel && !skipped) { skipped = true; return false }
-        return r;
-      }
-    });
+            onReactor(r) {
+              if (skipLevel && !skipped) { skipped = true; return false }
+              return r;
+            }
+          });
 
     setTimeout(() => {
-      delete this.subscriptionPending;
+    delete this.subscriptionPending;
       if (!this.unmounting && this._subRef.current) {
-        Reactor.trigger(this.reactor.el, subscriberReq, {},
-          optional ? (unhandledEvent) => {
-              this.failedOptional = true;
-              console.warn(`unhandled subscribe to '${this.eventName}' was optional, so no error event.`)
-          } : undefined
-        );
-      } else {
-        console.log(
-          `Subscribe: event '${this.eventName}' didn't get a chance to register before being unmounted.  \n`+
-          `NOTE: In tests, you probably want to prevent this with "await delay(1);" after mounting.`
-        );
-      }
+      Reactor.trigger(this.reactor.el, subscriberReq, {},
+        optional ? (unhandledEvent) => {
+          this.failedOptional = true;
+          console.warn(`unhandled subscribe to '${this.eventName}' was optional, so no error event.`)
+        } : undefined
+      );
+    } else {
+      console.log(
+        `Subscribe: event '${this.eventName}' didn't get a chance to register before being unmounted.  \n`+
+        `NOTE: In tests, you probably want to prevent this with "await delay(1);" after mounting.`
+      );
+    }
     }, 1)
   }
 
@@ -1830,6 +1857,11 @@ export class Subscribe extends React.Component {
     if (super.componentWillUnmount) super.componentWillUnmount();
 
     if (this.failedOptional) return;
+    if (!this.reactor.el) {
+      console.warn(`‹Subscribe› forcibly unmounted; skipping removeSubscriber`)
+      return
+    }
+
     if (!this.subscriptionPending && !this.pubUnmounted) Reactor.trigger(this.reactor.el,
       Reactor.StopSubscribing({eventName: this.eventName, single: true, listener: this.listenerFunc})
     );
