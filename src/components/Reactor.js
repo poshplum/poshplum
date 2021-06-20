@@ -798,6 +798,8 @@ const Reactor = (componentClass) => {
           throw new Error(`${message} (see console error to trace)`)
         }
         if (!!foundReactor) foundReactor = this;
+      } else {
+        foundReactor = this;
       }
       if (result) {
         event.stopPropagation();
