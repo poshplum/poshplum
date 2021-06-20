@@ -160,6 +160,26 @@ p > .btn {
 :empty + .d-inline-block.空空兄珍, .d-inline-block.空空兄珍:first-child {
   display: inline-block;
 }
+.pop-title, .chip.pop-title {
+  color: inherit;
+  border-top: 0.5px solid #ccc;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  padding: 0.0em 0.35rem;
+  box-shadow: 1.5px -3px 1px -1.5px #6663, 8px -6px 1px -7px #6662;
+  background:
+          linear-gradient(113deg, #bbb, #fff0 0.5rem),
+          linear-gradient(242deg, #ccc, #fff0 0.4rem),
+          linear-gradient(to bottom, #fff, #fff 0.01rem, #fff0 0.25rem );
+
+  &.active {
+    border-top: 0.5px solid #6060aa;
+  }
+}
+
+
 .card {
   --handleWidth: 4px;
   --handleWidthSelected: 7px;
@@ -220,7 +240,7 @@ p > .btn {
   }
   .card-title.pop-title {
     background: white;
-    border-top: 0.5px solid #ccc;
+    border-top: 0.5px solid #7d7d7d;
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     margin-left: -0.7rem;
@@ -233,8 +253,8 @@ p > .btn {
             linear-gradient(242deg, #ccc, #fff0 0.4rem),
             linear-gradient(to bottom, #fff, #fff 0.01rem, #fff0 0.25rem );
 
-    ~ .header-right {
-      margin-top: -0.8rem;
+      ~ .header-right {
+        margin-top: -0.8rem;
     }
   }
   &.active .card-title.pop-title {
