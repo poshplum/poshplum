@@ -1324,11 +1324,13 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
     if (error) {
       const msg = `caught error in action('${eventName}'‹returnsResult›):`;
       error.stack = `${msg}\n${error.stack}`;
+      console.error("error in actionResult:", error);
       Reactor.trigger(target, "error", {error:`${msg} ${error.message}`}); // this helps when a synchronous action is called from an async function
       throw error;
     } else {
       const msg = `actionResult('${eventName}'): Error: no responders (check the event name carefully)!`;
       error = new Error(msg);
+      debugger
       console.error("unhandled actionResult event:", unhandledEvent, "\n", error);
       throw error;
     }
@@ -1336,9 +1338,6 @@ Reactor.actionResult = function getEventResult(target, eventName, detail={}, onU
 
   Reactor.dispatchTo(target, event, detail, onUnhandled);
   if (Reactor.pendingResult === event.detail.result) {
-    if (onUnhandled) {
-      return result
-    }
     throw new Error(`actionResult('${eventName}') did not provide event.detail.result`)
   }
 
