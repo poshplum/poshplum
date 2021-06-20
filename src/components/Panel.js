@@ -40,12 +40,15 @@ export default class Panel extends Layout {
 
   static slots = {Title, Icon, HeaderRight, FixedHeader, Body, Footer};
 
+  componentWillUnmount() {
+    this._unmounting = true;
+  }
   componentDidMount() {
     let input = this.node.current.querySelector('input[type="text"]:not([readonly])');
     if (input) input.focus();
 
     setTimeout(() => {
-      this.setState({announceTitle: true})
+      if (!this._unmounting) this.setState({announceTitle: true})
     }, 1)
 
   }
