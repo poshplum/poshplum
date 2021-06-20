@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 
-import map from 'lodash-es/map';
-import keys from 'lodash-es/keys';
+import map from 'lodash/map';
+import keys from 'lodash/keys';
 import {Link} from 'react-router-dom';
 
 // import {Route, withRouter, Link} from 'react-router-dom';

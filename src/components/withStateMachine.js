@@ -1,8 +1,8 @@
 import PropTypes from "prop-types";
 import React from 'react';
-import map from 'lodash-es/map';
-import keys from 'lodash-es/keys';
-import find from 'lodash-es/find';
+import map from 'lodash/map';
+import keys from 'lodash/keys';
+import find from 'lodash/find';
 
 import {inheritName} from "../helpers/ClassNames";
 import Reactor, {Action} from "./Reactor";

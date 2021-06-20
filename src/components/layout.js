@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
-import groupBy from 'lodash-es/groupBy';
-import mapValues from 'lodash-es/mapValues';
-import map from 'lodash-es/map';
-import find from 'lodash-es/find';
+import groupBy from 'lodash/groupBy';
+import mapValues from 'lodash/mapValues';
+import map from 'lodash/map';
+import find from 'lodash/find';
 
-import flatten from "lodash-es/flatten";
+import flatten from "lodash/flatten";
 
 export default class Layout extends Component {
   static defaultSlot(name) {
