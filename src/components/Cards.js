@@ -43,7 +43,7 @@ let Body = Layout.defaultSlot("Body").withMarkup(({className="", children, ...pr
 });
 
 let Footer = Layout.namedSlot("Footer").withMarkup(({className="", ...props}) => {
-  return <div className={`card-footer footnote ${className}`} {...props}>
+  return <div className={`card-footer footnote ml-2 ${className}`} {...props}>
     {props.children}
   </div>
 });
