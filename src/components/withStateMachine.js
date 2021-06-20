@@ -52,9 +52,9 @@ export const withStateMachine = (baseClass) => {
     constructor(props) {
       super(props);
       this._stateRef = React.createRef();
+      this.state = {currentState: "default", ...(this.state || {})};
     }
     static State = State;
-    state = {currentState: "default"};
 
     setFsmLogger() {
       let component = this.wrappedName || baseName;
