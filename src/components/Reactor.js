@@ -169,6 +169,7 @@ const Listener = (componentClass) => {
       return bound;
 
       function internalHandler (observer, returnsResult, rawHandler, event) {
+        if (event.detail.debug ) debugger
         if (!event.detail.single) return rawHandler(event);
 
         const result = rawHandler(event);
@@ -773,8 +774,10 @@ const Reactor = (componentClass) => {
     }
 
     reactorProbe(event) {
-      let {onReactor, result} = event.detail;
+      let {onReactor, result, debug} = event.detail;
       trace(`${reactorName}: responding to reactorProbe`);
+
+      if (debug) debugger;
 
       if (!(result || onReactor)) {
         this.trigger(Reactor.ErrorEvent({
