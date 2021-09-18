@@ -30,8 +30,7 @@ const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(({
     children,
     ...moreProps
   }) => {
-    const defaultFloatClass = className.match(/\bfloat-/) ? "": "float-right ";
-    return <div className={`header-right ${defaultFloatClass}${className}`} {...moreProps}>{children}</div>
+    return <div className={`header-right ${className} float-right`} {...moreProps}>{children}</div>
   }
 );
 
@@ -54,7 +53,7 @@ let Label = Layout.namedSlot("Label").withMarkup(({
     style,
     children
 }) => {
-  return <As className={`zero-height card-label ${className}`}
+  return <As className={`card-label ${className}`}
     {...{style}}>
       {children}
   </As>;
@@ -95,12 +94,15 @@ export class Card extends Layout {
 
     // let clickFn = (e) => { if (cardItemClicked) cardItemClicked(item) };
     const showScreaderLink = link && <Link to={link} ref={this._link} className="screader">{Title || "open card"}</Link>;
-    let card = <div {...otherProps} tabIndex={tabIndex} onClick={onClick} className={`card ${className} ${active ? "active" : ""}`}>
-      { (Icon || Title || Label ) && <div key="header" className="card-header">
-        {Icon}
+    let rightArea = (HeaderRight || Label) ? <div className="zero-height float-right">
         {Label}
-        {Title}
         {HeaderRight}
+      </div> : null
+    let card = <div {...otherProps} tabIndex={tabIndex} onClick={onClick} className={`card ${className} ${active ? "active" : ""}`}>
+      { (Icon || Title || Label  || HeaderRight) && <div key="header" className="card-header">
+        {Icon}
+        {Title}
+        {rightArea}
         {link && Title && showScreaderLink}
       </div> || null}
       {Body}

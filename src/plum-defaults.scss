@@ -339,6 +339,11 @@ p > .btn {
         top: -0.25em;
       }
 
+      ~ .header-right {
+        top: -0.7rem;
+        position: relative
+      }
+
     }
   }
 }
@@ -354,8 +359,32 @@ nav {
   --zIndexBase:20
 }
 .panel {
-  &.fixed-bottom-right {
+  &.floating {
+    background: #f7f7f7;
+    z-index: 11;
+
+    border-left: 4px solid $primary-color-light;
+    border-right: 1px solid #ccc;
+
+    margin: 0 1.5rem 1.5rem 0;
+    border-radius: 7px;
+    box-shadow:
+            -2px -2px rgba(204,204,204,0.6),
+            -4px -4px rgba(204,204,204,0.3),
+            2px 3px rgba(204,204,204,0.9),
+            4px 5px rgba(204,204,204,0.4);
+  }
+  &.fixed {
     position: fixed;
+  }
+  &.top-right {
+    top: 2vh;
+    z-index: 99;
+    right: 0.25em;
+    min-width: 25vw;
+    min-height: 20vh;
+  }
+  &.bottom-right {
     top: 20vh;
     right: 0.25em;
     min-height: 66vh;
