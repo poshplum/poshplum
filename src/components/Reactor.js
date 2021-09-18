@@ -285,7 +285,7 @@ const Listener = (componentClass) => {
       }, this.unlistenDelay);
     }
 
-    unlisten(type, listener) {
+    unlisten(type, listener, capture) {
       let [node,handler] = listener;
       let listenersOfThisType = this.listening.get(type);
 
@@ -315,7 +315,7 @@ const Listener = (componentClass) => {
       }
       if (!node) throw new Error(`no el to unlisten for ${type}` );
 
-      node.removeEventListener(type, handler);
+      node.removeEventListener(type, handler, capture);
       listenersOfThisType.delete(foundListening)
     }
 
@@ -919,7 +919,7 @@ const Reactor = (componentClass) => {
             console.log(`reordering listeners to enable observer of existing action ${name}`);
             const node = existingAction.at || this.el;
             const replacingHandler = existingAction.handler
-            this.unlisten(name, [node, replacingHandler]);
+            this.unlisten(name, [node, replacingHandler], capture);
             this.listen(name, null, existingAction.capture, {...existingAction, existing: replacingHandler})
 
             multiHandlers.set(existingAction.instance, existingAction);
@@ -938,6 +938,7 @@ const Reactor = (componentClass) => {
         instance,
         at,
         handler,
+        capture,
         observer="",
         bare,
         ...moreDetails
@@ -961,7 +962,7 @@ const Reactor = (componentClass) => {
             debugger
             throw new Error(`ruh roh.  these should match, shaggy.`);
           }
-          this.unlisten(name, [node, handler]);
+          this.unlisten(name, [node, handler], capture);
           delete this.actions[name];
         } else if (foundAction && foundAction.get && foundAction.get('_isMulti')) {
           if (!instance) throw new Error(`removeAction event missing required detail.instance, which must point to the specific action instance being removed`);
@@ -970,7 +971,7 @@ const Reactor = (componentClass) => {
           if (!matchedAction) throw new Error(`removeAction event's detail.instance does not match`);
           const {handler, at: node=this.el} = matchedAction;
 
-          this.unlisten(name, [node, handler]);
+          this.unlisten(name, [node, handler], capture);
 
           const remainingCount = multiAction.size - 2; // _isMulti key plus the matched action are removed from this count
           if (remainingCount) {
@@ -980,7 +981,7 @@ const Reactor = (componentClass) => {
           }
         } else {
           debugger
-          this.unlisten(name, [node, handler])
+          this.unlisten(name, [node, handler], capture)
         }
         event.stopPropagation();
         event.handledBy = handledInternally;
@@ -1764,6 +1765,7 @@ export class Action extends React.Component {
             instance: this,
             debug,
             at,
+            capture,
             observer,
             bare,
             name: this.fullName,
