@@ -94,7 +94,6 @@ export default class Layout extends Component {
 
       if(this.debug)
           console.log("child:", child, child.type, child.type && child.type.displayName);
-      if (child.props && child.props.debug) debugger
 
       let foundName = slotToSlotNames.get(child.type) || find(Object.keys(slots),(key) => {
         // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
@@ -105,6 +104,7 @@ export default class Layout extends Component {
           debugger
           throw new Error(`‹impossible?› iterated slot doesn't have a name`)
         }
+        if (child.props && child.props.debug) debugger
         if (slotType.debug) debugger
         if (module.hot) {
           let childName = child.type && child.type.displayName || child.type;
@@ -120,6 +120,7 @@ export default class Layout extends Component {
       });
       let foundSlot = foundName && slots[foundName]
       let foundDisplayName = foundSlot && slotToSlotNames.get(foundSlot)
+
       if (!foundSlot) {
         // console.log("slot: default", foundSlot, child)
         foundName = "default";
@@ -149,7 +150,7 @@ export default class Layout extends Component {
 
       let foundSlot = slots[key];
       if (foundSlot && foundSlot.isMultiple) {
-        // console.log("returning multiple for slot", key, foundContents);
+        // console.log("returning multiple items in slot", key, foundContents);
         // debugger
         return foundContents;
       }
@@ -161,9 +162,13 @@ export default class Layout extends Component {
 
       // debugger
       if (foundContents.length > 1) {
-        // coalesces slots having multiple instances to be a single instance with multiple children
+        let hasFallback, foundOverride;
         let matchingChildren = map(foundContents, (item) => {
-          if (item.type === foundSlot ) return item.props.children;
+          const {children, fallback} = item.props;
+          if (fallback) { hasFallback=item } else foundOverride=item;
+
+          // coalesces slots having multiple instances to be a single instance with multiple children
+          if (item.type === foundSlot ) return children;
 
           if (module.hot) {
             let childName = item.type && item.type.displayName || item.type;
@@ -173,6 +178,25 @@ export default class Layout extends Component {
           }
           return item;
         });
+        if (hasFallback && foundOverride) {
+          //! it ignores fallback slot content when an overriding slot was provided
+          if (hasFallback && hasFallback.props && hasFallback.props.debug) debugger
+          if (foundOverride && foundOverride.props && foundOverride.props.debug) debugger
+
+          matchingChildren = foundOverride
+          if (foundSlot.tagName) return matchingChildren;
+          matchingChildren = foundOverride.props.children
+          //! XXX if an overriding slot was provided as empty, it behaves as if neither the override, nor the fallback content, was provided at all.
+          //! if an overriding slot was provided as `override omit`, it behaves as if neither the override, nor the fallback content, was provided at all.
+          if (foundOverride.props.omit) return null;
+          if (foundOverride.props.override) return foundOverride;
+          if (!matchingChildren || (matchingChildren && 0 === matchingChildren.length)) {
+            const t = this;
+            console.warn(t, `overridden slot ${foundSlot.displayName || "‹unknown name›"} with no child elements should use boolean 'override' or 'omit' property (see debugger)`);
+            debugger
+          }
+        }
+        if (foundOverride.type == foundSlot) return foundOverride;
         if (foundSlot.tagName) return matchingChildren;
         return React.createElement(foundSlot, {children: matchingChildren});
       }
