@@ -2,7 +2,7 @@
 .tooltip {
   position: relative;
   &::after {
-    background: rgba($dark-color, .95);
+    background: color('dark', 500, .95);
     border-radius: $border-radius;
     bottom: 100%;
     color: $light-color;

@@ -1,6 +1,6 @@
 // Toasts
 .toast {
-  @include toast-variant($dark-color);
+  @include toast-variant('dark');
   border: $border-width solid $dark-color;
   border-radius: $border-radius;
   color: $light-color;
@@ -9,25 +9,25 @@
   width: 100%;
 
   &.toast-primary {
-    @include toast-variant($primary-color);
+    @include toast-variant('primary');
   }
 
   &.toast-success {
-    @include toast-variant($success-color);
+    @include toast-variant('success');
   }
 
   &.toast-warning {
-    @include toast-variant($warning-color);
+    @include toast-variant('warning');
   }
 
   &.toast-error {
-    @include toast-variant($error-color);
+    @include toast-variant('danger');
   }
 
   a {
     color: $light-color;
     text-decoration: underline;
-    
+
     &:focus,
     &:hover,
     &:active,

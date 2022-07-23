@@ -51,8 +51,8 @@ $carousel-number: 8;
 
     .item-prev,
     .item-next {
-      background: rgba($gray-color-light, .25);
-      border-color: rgba($gray-color-light, .5);
+      background: color("gray", 300, .25);
+      border-color: color("gray", 300, .5);
       color: $gray-color-light;
       opacity: 0;
       position: absolute;
@@ -94,7 +94,7 @@ $carousel-number: 8;
     z-index: $zindex-1;
 
     .nav-item {
-      color: rgba($gray-color-light, .5);
+      color: color("gray", 300, .5);
       display: block;
       flex: 1 0 auto;
       height: $unit-8;

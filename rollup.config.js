@@ -6,7 +6,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 const fg = require("fast-glob");
 import babel from "@rollup/plugin-babel";
-import scss from "rollup-plugin-scss";
+import postcss from 'rollup-plugin-postcss'
 import alias from "@rollup/plugin-alias";
 
 //detect if rollup is in dev env
@@ -39,7 +39,7 @@ function external(id) {
 
 module.exports = [
   {
-    input: [...components, ...helpers, "./src/plum-defaults.scss"],
+    input: [...components, ...helpers, "./src/scss/app.scss"],
     external,
     watch: true,
     output: {
@@ -75,9 +75,14 @@ function plugins() {
       exclude: "node_modules/**",
     }),
     commonjs(),
-    scss({
-      output: "dist/plum.css",
-      failOnError: true,
+    postcss({
+      preprocessor: (content, id) => new Promise((resolve, reject) => {
+        const result = sass.renderSync({ file: id })
+        resolve({ code: result.css.toString() })
+      }),
+      sourceMap: true,
+      extensions: ['.sass','.css'],
+      extract: "plum.css",
     }),
     // serve({
     //   open: true,

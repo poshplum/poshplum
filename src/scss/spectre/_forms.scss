@@ -35,7 +35,7 @@ legend {
 // Form element: Input
 .form-input {
   appearance: none;
-  background: $bg-color-light;
+  background: $bg-color;
   background-image: none;
   border: $border-width solid $border-color-dark;
   border-radius: $border-radius;
@@ -50,10 +50,12 @@ legend {
   position: relative;
   transition: background .2s, border .2s, box-shadow .2s, color .2s;
   width: 100%;
+
   &:focus {
     @include control-shadow();
     border-color: $primary-color;
   }
+
   &::placeholder {
     color: $gray-color;
   }
@@ -85,6 +87,7 @@ legend {
 
 // Form element: Textarea
 textarea.form-input {
+
   &,
   &.input-lg,
   &.input-sm {
@@ -99,12 +102,12 @@ textarea.form-input {
   margin-top: $unit-1;
 
   .has-success &,
-  .is-success + & {
+  .is-success+& {
     color: $success-color;
   }
 
   .has-error &,
-  .is-error + & {
+  .is-error+& {
     color: $error-color;
   }
 }
@@ -122,11 +125,13 @@ textarea.form-input {
   padding: $control-padding-y $control-padding-x;
   vertical-align: middle;
   width: 100%;
-  background: $bg-color-light; 
+  background: $bg-color-light;
+
   &:focus {
     @include control-shadow();
     border-color: $primary-color;
   }
+
   &::-ms-expand {
     display: none;
   }
@@ -135,13 +140,15 @@ textarea.form-input {
   &.select-sm {
     font-size: $font-size-sm;
     height: $control-size-sm;
-    padding: $control-padding-y-sm ($control-icon-size + $control-padding-x-sm) $control-padding-y-sm $control-padding-x-sm;
+    padding: $control-padding-y-sm (
+      $control-icon-size + $control-padding-x-sm) $control-padding-y-sm $control-padding-x-sm;
   }
 
   &.select-lg {
     font-size: $font-size-lg;
     height: $control-size-lg;
-    padding: $control-padding-y-lg ($control-icon-size + $control-padding-x-lg) $control-padding-y-lg $control-padding-x-lg;
+    padding: $control-padding-y-lg (
+      $control-icon-size + $control-padding-x-lg) $control-padding-y-lg $control-padding-x-lg;
   }
 
   // Multiple select
@@ -154,6 +161,7 @@ textarea.form-input {
       padding: $unit-h $unit-1;
     }
   }
+
   &:not([multiple]):not([size]) {
     background: $bg-color-light url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%204%205'%3E%3Cpath%20fill='%23667189'%20d='M2%200L0%202h4zm0%205L0%203h4z'/%3E%3C/svg%3E") no-repeat right .35rem center / .4rem .5rem;
     padding-right: $control-icon-size + $control-padding-x;
@@ -170,10 +178,11 @@ textarea.form-input {
     margin: 0 $control-padding-y;
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
-    width: $control-icon-size;
-    z-index: $zindex-0 + 1;
-  }
+    transform: translateY(-50%
+    );
+  width: $control-icon-size;
+  z-index: $zindex-0 + 1;
+}
 }
 
 .has-icon-left {
@@ -202,46 +211,50 @@ textarea.form-input {
 .form-switch {
   display: block;
   line-height: $line-height;
-  margin: ($control-size - $control-size-sm) / 2 0;
+  margin: calc(($control-size - $control-size-sm) / 2) 0;
   min-height: $control-size-sm;
-  padding: (($control-size-sm - $line-height) / 2) $control-padding-x (($control-size-sm - $line-height) / 2) ($control-icon-size + $control-padding-x);
-  position: relative;
+  padding: (calc(($control-size-sm - $line-height) / 2)) $control-padding-x (
+    calc(($control-size-sm - $line-height) / 2)) ($control-icon-size + $control-padding-x
+  );
+position: relative;
 
-  input {
-    clip: rect(0, 0, 0, 0);
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    position: absolute;
-    width: 1px;
-    &:focus + .form-icon {
-      @include control-shadow();
-      border-color: $primary-color;
-    }
-    &:checked + .form-icon {
-      background: $primary-color;
-      border-color: $primary-color;
-    }
+input {
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+
+  &:focus+.form-icon {
+    @include control-shadow();
+    border-color: $primary-color;
   }
 
-  .form-icon {
-    border: $border-width solid $border-color-dark;
-    cursor: pointer;
-    display: inline-block;
-    position: absolute;
-    transition: background .2s, border .2s, box-shadow .2s, color .2s;
+  &:checked+.form-icon {
+    background: $primary-color;
+    border-color: $primary-color;
   }
+}
 
-  // Input checkbox, radio and switch sizes
-  &.input-sm {
-    font-size: $font-size-sm;
-    margin: 0;
-  }
+.form-icon {
+  border: $border-width solid $border-color-dark;
+  cursor: pointer;
+  display: inline-block;
+  position: absolute;
+  transition: background .2s, border .2s, box-shadow .2s, color .2s;
+}
 
-  &.input-lg {
-    font-size: $font-size-lg;
-    margin: ($control-size-lg - $control-size-sm) / 2 0;
-  }
+// Input checkbox, radio and switch sizes
+&.input-sm {
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+&.input-lg {
+  font-size: $font-size-lg;
+  margin: calc(($control-size-lg - $control-size-sm) / 2) 0;
+}
 }
 
 .form-checkbox,
@@ -250,23 +263,24 @@ textarea.form-input {
     background: $bg-color-light;
     height: $control-icon-size;
     left: 0;
-    top: ($control-size-sm - $control-icon-size) / 2;
+    top: calc(($control-size-sm - $control-icon-size) / 2);
     width: $control-icon-size;
   }
 
   input {
-    &:active + .form-icon {
+    &:active+.form-icon {
       background: $bg-color-dark;
     }
   }
 }
+
 .form-checkbox {
   .form-icon {
     border-radius: $border-radius;
   }
 
   input {
-    &:checked + .form-icon {
+    &:checked+.form-icon {
       &::before {
         background-clip: padding-box;
         border: $border-width-lg solid $light-color;
@@ -283,9 +297,11 @@ textarea.form-input {
         width: 6px;
       }
     }
-    &:indeterminate + .form-icon {
+
+    &:indeterminate+.form-icon {
       background: $primary-color;
       border-color: $primary-color;
+
       &::before {
         background: $bg-color-light;
         content: "";
@@ -300,13 +316,14 @@ textarea.form-input {
     }
   }
 }
+
 .form-radio {
   .form-icon {
     border-radius: 50%;
   }
 
   input {
-    &:checked + .form-icon {
+    &:checked+.form-icon {
       &::before {
         background: $bg-color-light;
         border-radius: 50%;
@@ -332,8 +349,9 @@ textarea.form-input {
     border-radius: $unit-2 + $border-width;
     height: $unit-4 + $border-width * 2;
     left: 0;
-    top: ($control-size-sm - $unit-4) / 2 - $border-width;
+    top: calc(($control-size-sm - $unit-4) / 2) - $border-width;
     width: $unit-8;
+
     &::before {
       background: $bg-color-light;
       border-radius: 50%;
@@ -349,12 +367,13 @@ textarea.form-input {
   }
 
   input {
-    &:checked + .form-icon {
+    &:checked+.form-icon {
       &::before {
         left: 14px;
       }
     }
-    &:active + .form-icon {
+
+    &:active+.form-icon {
       &::before {
         background: $bg-color;
       }
@@ -403,15 +422,18 @@ textarea.form-input {
       border-bottom-right-radius: 0;
       border-top-right-radius: 0;
     }
+
     &:not(:first-child):not(:last-child) {
       border-radius: 0;
       margin-left: -$border-width;
     }
+
     &:last-child:not(:first-child) {
       border-bottom-left-radius: 0;
       border-top-left-radius: 0;
       margin-left: -$border-width;
     }
+
     &:focus {
       z-index: $zindex-0 + 1;
     }
@@ -429,21 +451,24 @@ textarea.form-input {
 // Form validation states
 .form-input,
 .form-select {
+
   .has-success &,
   &.is-success {
-    background: lighten($success-color, 53%);
-    border-color: $success-color;
+    background: color('success', 300);
+    border-color: color('success');
+
     &:focus {
-      @include control-shadow($success-color);
+      @include control-shadow('success');
     }
   }
 
   .has-error &,
   &.is-error {
-    background: lighten($error-color, 53%);
-    border-color: $error-color;
+    background: color('danger', 300);
+    border-color: color('danger');
+
     &:focus {
-      @include control-shadow($error-color);
+      @include control-shadow('danger');
     }
   }
 }
@@ -451,6 +476,7 @@ textarea.form-input {
 .form-checkbox,
 .form-radio,
 .form-switch {
+
   .has-error &,
   &.is-error {
     .form-icon {
@@ -458,13 +484,13 @@ textarea.form-input {
     }
 
     input {
-      &:checked + .form-icon {
+      &:checked+.form-icon {
         background: $error-color;
         border-color: $error-color;
       }
 
-      &:focus + .form-icon {
-        @include control-shadow($error-color);
+      &:focus+.form-icon {
+        @include control-shadow('danger');
         border-color: $error-color;
       }
     }
@@ -472,10 +498,11 @@ textarea.form-input {
 }
 
 .form-checkbox {
+
   .has-error &,
   &.is-error {
     input {
-      &:indeterminate + .form-icon {
+      &:indeterminate+.form-icon {
         background: $error-color;
         border-color: $error-color;
       }
@@ -488,12 +515,13 @@ textarea.form-input {
   &:not(:placeholder-shown) {
     &:invalid {
       border-color: $error-color;
+
       &:focus {
-        @include control-shadow($error-color);
-        background: lighten($error-color, 53%);
+        @include control-shadow('danger');
+        background: color('danger', 300);
       }
 
-      & + .form-input-hint {
+      &+.form-input-hint {
         color: $error-color;
       }
     }
@@ -503,6 +531,7 @@ textarea.form-input {
 // Form disabled and readonly
 .form-input,
 .form-select {
+
   &:disabled,
   &.disabled {
     background-color: $bg-color-dark;
@@ -518,9 +547,10 @@ textarea.form-input {
 }
 
 input {
+
   &:disabled,
   &.disabled {
-    & + .form-icon {
+    &+.form-icon {
       background: $bg-color-dark;
       cursor: not-allowed;
       opacity: .5;
@@ -530,9 +560,10 @@ input {
 
 .form-switch {
   input {
+
     &:disabled,
     &.disabled {
-      & + .form-icon::before {
+      &+.form-icon::before {
         background: $bg-color-light;
       }
     }

@@ -7,18 +7,21 @@
 
   .nav-item {
     a {
-      color: $gray-color-dark;
+      color: color('black', 400);
       padding: $unit-1 $unit-2;
       text-decoration: none;
+
       &:focus,
       &:hover {
         color: $primary-color;
       }
     }
+
     &.active {
-      & > a {
-        color: darken($gray-color-dark, 10%);
+      &>a {
+        color: color('black', 300);
         font-weight: bold;
+
         &:focus,
         &:hover {
           color: $primary-color;

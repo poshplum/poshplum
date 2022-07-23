@@ -7,7 +7,7 @@ import {Card} from "./components/Cards";
 
 // makes CSS available.
 // users can import "poshplum/plum.css"
-import './plum-defaults.scss';
+import './scss/app.scss';
 
 import { BrowserRouter } from 'react-router-dom'
 import entries from './helpers/Object.entries.polyfill';

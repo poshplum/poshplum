@@ -1,0 +1,27 @@
+$color-light: hsl(var(--color-light-h) var(--color-light-s) var(--color-light-l)) !default;
+$color-accent: hsl(var(--color-accent-h) var(--color-accent-s) var(--color-accent-l)) !default;
+$color-secondary: hsl(var(--color-secondary-h) var(--color-secondary-s) var(--color-secondary-l)) !default;
+$color-primary: hsl(var(--color-primary-h) var(--color-primary-s) var(--color-primary-l)) !default;
+$color-black: hsl(var(--color-black-h) var(--color-black-s) var(--color-black-l)) !default;
+$color-white: hsl(var(--color-white-h) var(--color-white-s) var(--color-white-l)) !default;
+$color-gray: hsl(var(--color-gray-h) var(--color-gray-s) var(--color-gray-l)) !default;
+$color-dark: hsl(var(--color-dark-h) var(--color-dark-s) var(--color-dark-l)) !default;
+$color-success: hsl(var(--color-success-h) var(--color-success-s) var(--color-success-l)) !default;
+$color-danger: hsl(var(--color-danger-h) var(--color-danger-s) var(--color-danger-l)) !default;
+$color-warning: hsl(var(--color-warning-h) var(--color-warning-s) var(--color-warning-l)) !default;
+
+
+$tokens: (
+    'color': ('light': $color-light,
+        'accent': $color-accent,
+        'secondary': $color-secondary,
+        'primary': $color-primary,
+        'black': $color-black,
+        'white': $color-white,
+        'gray': $color-gray,
+        'dark': $color-dark,
+        'success': $color-success,
+        'danger': $color-danger,
+        'warning': $color-warning,
+        'error': $color-danger )
+);

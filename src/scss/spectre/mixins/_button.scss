@@ -1,23 +1,27 @@
 // Button variant mixin
-@mixin button-variant($color: $primary-color) {
-  background: $color;
-  border-color: darken($color, 3%);
+@mixin button-variant($color: 'primary') {
+  background: color($color);
+  border-color: color($color, 530);
   color: $light-color;
+
   &:focus {
     @include control-shadow($color);
   }
+
   &:focus,
   &:hover {
-    background: darken($color, 2%);
-    border-color: darken($color, 5%);
+    background: color($color, 530);
+    border-color: color($color, 550);
     color: $light-color;
   }
+
   &:active,
   &.active {
-    background: darken($color, 7%);
-    border-color: darken($color, 10%);
+    background: color($color, 570);
+    border-color: color($color, 600);
     color: $light-color;
   }
+
   &.loading {
     &::after {
       border-bottom-color: $light-color;
@@ -28,27 +32,31 @@
 
 @mixin button-outline-variant($color: $primary-color) {
   background: $light-color;
-  border-color: $color;
-  color: $color;
+  border-color: color($color);
+  color: color($color);
+
   &:focus {
     @include control-shadow($color);
   }
+
   &:focus,
   &:hover {
-    background: lighten($color, 50%);
-    border-color: darken($color, 2%);
-    color: $color;
+    background: color($color, 200);
+    border-color: color($color, 520);
+    color: color($color);
   }
+
   &:active,
   &.active {
-    background: $color;
-    border-color: darken($color, 5%);
+    background: color($color);
+    border-color: color($color, 550);
     color: $light-color;
   }
+
   &.loading {
     &::after {
-      border-bottom-color: $color;
-      border-left-color: $color;
+      border-bottom-color: color($color);
+      border-left-color: color($color);
     }
   }
 }
