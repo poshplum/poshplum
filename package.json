@@ -32,7 +32,9 @@
     "sass": "^1.52.3",
     "sass-loader": "^7.1.0",
     "source-map-support": "^0.5.9",
-    "spectre.css": "^0.5.9"
+    "spectre.css": "^0.5.9",
+    "style-dictionary": "^3.7.1",
+    "tinycolor": "^0.0.1"
   },
   "dependencies": {
     "debug": "^4.1.1",
@@ -46,6 +48,7 @@
     "util": "^0.11.1"
   },
   "scripts": {
+    "tokens": "node tokens.build.js",
     "test": "jest",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "testing": "jest --watch",
