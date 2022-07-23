@@ -35,6 +35,8 @@ const load = () => render(
 );
 
 // This is needed for Hot Module Replacement
+//@TODO legacy code from neurino setup relying HMR not present in rollup.
+// Need to try rollup HMR workaround or switch to webpack for dev view.
 if (module.hot) {
   module.hot.accept('./docs/index', load);
 }

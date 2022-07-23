@@ -1,10 +1,16 @@
 const multiEntry = require("rollup-plugin-multi-entry");
+//@TODO enable preview or disable server
+// import serve from "rollup-plugin-serve";
+import livereload from "rollup-plugin-livereload";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 const fg = require("fast-glob");
 import babel from "@rollup/plugin-babel";
 import scss from "rollup-plugin-scss";
 import alias from "@rollup/plugin-alias";
+
+//detect if rollup is in dev env
+const devEnv = process.env.ROLLUP_WATCH;
 
 const components = fg.sync(["./src/components/**/*.js"]);
 const helpers = fg.sync(["./src/helpers/**/*.js"]);
@@ -73,5 +79,13 @@ function plugins() {
       output: "dist/plum.css",
       failOnError: true,
     }),
+    // serve({
+    //   open: true,
+    //   verbose: true,
+    //   contentBase: ["", "public"],
+    //   host: "localhost",
+    //   port: 3000,
+    // }),
+    devEnv && livereload({ watch: "dist" }),
   ];
 }
