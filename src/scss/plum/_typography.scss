@@ -1,0 +1,21 @@
+.sans {
+    font-family: $base-font-family
+  }
+  
+  .footnote {
+    font-family: $base-font-family;
+    line-height: inherit;
+    font-size: 92%;
+    color: color('gray',600);
+    font-style:italic;
+  }
+
+
+  .screader {
+    position: absolute;
+    width:1px;
+    height: 1px;
+    display:block;
+    overflow:hidden;
+    left: -5000px;
+  }

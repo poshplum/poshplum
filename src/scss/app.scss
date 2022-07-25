@@ -1,11 +1,15 @@
 //$primary-color: #2e5bec;
 //$dark-color: #3e396b;
-$bg-color-brown: #974b00;
-$bg-color-yellow: #f8f28e;
+// $bg-color-brown: #974b00;
+// $bg-color-yellow: #f8f28e;
 
 @import "./config_global";
+@import "./mixins";
+@import "./utilities";
 @import "./spectre/spectre";
-@import "./config_plum";
+@import "./reboot";
+@import "./plum/plum";
+@import "./fonts"; //@TODO make font import optional config
 
 
 

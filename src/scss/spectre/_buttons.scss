@@ -7,7 +7,7 @@
   color: $primary-color;
   cursor: pointer;
   display: inline-block;
-  font-size: $font-size;
+  font-size: fontSize($font-size);
   height: $control-size;
   line-height: $line-height;
   outline: none;
@@ -106,13 +106,13 @@
 
   // Button Sizes
   &.btn-sm {
-    font-size: $font-size-sm;
+    font-size: fontSize($font-size-sm);
     height: $control-size-sm;
     padding: $control-padding-y-sm $control-padding-x-sm;
   }
 
   &.btn-lg {
-    font-size: $font-size-lg;
+    font-size: fontSize($font-size-lg);;
     height: $control-size-lg;
     padding: $control-padding-y-lg $control-padding-x-lg;
   }

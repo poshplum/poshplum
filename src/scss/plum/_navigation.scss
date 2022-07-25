@@ -1,0 +1,11 @@
+.navbar {
+    background: $bg-color-dark;
+    padding: $unit-1;
+    a {
+      margin: 0 $unit-o;
+    }
+  }
+  
+  nav {
+    border-bottom: 1px solid $border-color-light;
+  }

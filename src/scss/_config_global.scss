@@ -15,18 +15,6 @@ $hue-offset-modifier: var(--hue-modifier); // offset hue relative to shade for s
 $font-size-modifier: 1;
 $height-size-modifier: 1;
 $unit-size-modifier: 1.1; // custom color mixin to generate shades
+$enable-smooth-scroll: true;
+$enable-button-pointers: true;
 
-
-// custom mixin to assemble colors from diffrent token shades 
-@function color($color: primary, $shade: false, $alpha: 1) {
-    @if(map-has-key($tokens, 'color', $color)==false) {
-        @warn "Missing color for #{$color}"
-    }
-
-    @if($shade) {
-        $lighten: calc(calc(500 - $shade) * 0.1);
-        $hue-offset: calc(abs($lighten) * $hue-offset-modifier);
-        @return hsla(calc(var(--color-#{$color}-h) + $hue-offset), var(--color-#{$color}-s), calc(var(--color-#{$color}-l) + $lighten * 1%), $alpha)
-    }
-    @return var(--color-#{$color});
-}

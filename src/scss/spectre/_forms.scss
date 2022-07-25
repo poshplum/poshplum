@@ -35,9 +35,9 @@ legend {
 // Form element: Input
 .form-input {
   appearance: none;
-  background: $bg-color;
+  background: $body-bg;
   background-image: none;
-  border: $border-width solid $border-color-dark;
+  border: $border-width solid $border-color-light;
   border-radius: $border-radius;
   color: $body-font-color;
   display: block;
@@ -57,7 +57,7 @@ legend {
   }
 
   &::placeholder {
-    color: $gray-color;
+    color: color('gray', 600);
   }
 
   // Input sizes
@@ -115,7 +115,7 @@ textarea.form-input {
 // Form element: Select
 .form-select {
   appearance: none;
-  border: $border-width solid $border-color-dark;
+  border: $border-width solid $border-color-light;
   border-radius: $border-radius;
   color: inherit;
   font-size: $font-size;
@@ -125,7 +125,7 @@ textarea.form-input {
   padding: $control-padding-y $control-padding-x;
   vertical-align: middle;
   width: 100%;
-  background: $bg-color-light;
+  background: $body-bg;
 
   &:focus {
     @include control-shadow();
@@ -163,7 +163,7 @@ textarea.form-input {
   }
 
   &:not([multiple]):not([size]) {
-    background: $bg-color-light url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%204%205'%3E%3Cpath%20fill='%23667189'%20d='M2%200L0%202h4zm0%205L0%203h4z'/%3E%3C/svg%3E") no-repeat right .35rem center / .4rem .5rem;
+    background: $body-bg url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%204%205'%3E%3Cpath%20fill='%23667189'%20d='M2%200L0%202h4zm0%205L0%203h4z'/%3E%3C/svg%3E") no-repeat right .35rem center / .4rem .5rem;
     padding-right: $control-icon-size + $control-padding-x;
   }
 }
@@ -238,7 +238,7 @@ input {
 }
 
 .form-icon {
-  border: $border-width solid $border-color-dark;
+  border: $border-width solid $border-color-light;
   cursor: pointer;
   display: inline-block;
   position: absolute;
@@ -260,7 +260,7 @@ input {
 .form-checkbox,
 .form-radio {
   .form-icon {
-    background: $bg-color-light;
+    background: $body-bg;
     height: $control-icon-size;
     left: 0;
     top: calc(($control-size-sm - $control-icon-size) / 2);
@@ -353,7 +353,7 @@ input {
     width: $unit-8;
 
     &::before {
-      background: $bg-color-light;
+      background: $body-bg;
       border-radius: 50%;
       content: "";
       display: block;
@@ -387,7 +387,7 @@ input {
 
   .input-group-addon {
     background: $bg-color;
-    border: $border-width solid $border-color-dark;
+    border: $border-width solid $border-color-light;
     border-radius: $border-radius;
     line-height: $line-height;
     padding: $control-padding-y $control-padding-x;
@@ -534,7 +534,9 @@ input {
 
   &:disabled,
   &.disabled {
-    background-color: $bg-color-dark;
+    color: color('gray',600);
+    border-color:color('gray',600);
+    background-color: color('white',500);
     cursor: not-allowed;
     opacity: .5;
   }
@@ -542,7 +544,9 @@ input {
 
 .form-input {
   &[readonly] {
-    background-color: $bg-color;
+    background-color: color('white',500);
+    border-color:color('gray',600);
+    color: color('gray',600);
   }
 }
 
@@ -551,7 +555,9 @@ input {
   &:disabled,
   &.disabled {
     &+.form-icon {
-      background: $bg-color-dark;
+      color: color('gray',600);
+      border-color:color('gray',600);
+      background-color: color('white',500);
       cursor: not-allowed;
       opacity: .5;
     }

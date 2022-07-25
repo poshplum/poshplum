@@ -20,8 +20,8 @@ $gray-color-dark: color('gray', 600) !default;
 $gray-color-light: color('gray', 400) !default;
 
 $border-color: color('black', 400) !default;
-$border-color-dark: color('black', 600) !default;
-$border-color-light: color('black', 300) !default;
+$border-color-dark: color('black', 500) !default;
+$border-color-light: color('black', 400, 0.5) !default;
 $bg-color: color('light', 500) !default;
 $bg-color-dark: color('light', 600) !default;
 $bg-color-light: color('light', 490) !default;
@@ -38,9 +38,9 @@ $body-bg: $color-white  !default;
 $body-font-color: $color-black  !default;
 $link-color: color('primary') !default;
 $link-color-dark: color('primary', 600) !default;
-$link-color-light: color('primary', 400) !default;
-@import url('https://fonts.googleapis.com/css2?family=Asul&family=Merriweather+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500;1,600&display=swap');
+$link-color-light: color('primary', 500) !default;
 
+$heading-font-family: "Merriweather Sans";
 $base-font-family: 'Poppins', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto !default;
 $mono-font-family: "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Courier, monospace !default;
 $fallback-font-family: "Helvetica Neue", sans-serif !default;
@@ -67,12 +67,40 @@ $unit-12: calc(2.4rem * $unit-size-modifier) !default;
 $unit-16: calc(3.2rem * $unit-size-modifier) !default;
 
 // Font sizes
-$html-font-size: 20px !default;
+$html-font-size: 18px !default;
 $html-line-height: 1.5 !default;
 $font-size: calc(.8rem * $font-size-modifier) !default;
 $font-size-sm: calc(.7rem * $font-size-modifier) !default;
 $font-size-lg: calc(.9rem * $font-size-modifier) !default;
 $line-height: calc(1.2rem * $font-size-modifier) !default;
+$base-font-weight: 400 !default;
+
+$heading-size: (
+    1: (
+        base: calc(2.3rem * $font-size-modifier), 
+        sm: calc(1.8rem * $font-size-modifier)
+        ),
+    2:  (
+        base: calc(2rem * $font-size-modifier), 
+        sm: calc(1.5rem * $font-size-modifier)
+        ),
+    3:  (
+        base: calc(1.85rem * $font-size-modifier), 
+        sm: calc(1.2rem * $font-size-modifier)
+        ),
+    4:  (
+        base: calc(1.5rem * $font-size-modifier), 
+        sm: calc(1.125rem * $font-size-modifier)
+        ),
+    5:  (
+        base: calc(1.25rem * $font-size-modifier), 
+        sm: calc(1rem * $font-size-modifier)
+        ),
+    6:  (
+        base: calc(1rem * $font-size-modifier), 
+        sm: calc(0.8rem * $font-size-modifier)
+        ),
+);
 
 // Sizes
 $layout-spacing: $unit-2  !default;

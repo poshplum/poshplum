@@ -16,7 +16,7 @@ body {
   background: $body-bg;
   color: $body-font-color;
   font-family: $body-font-family;
-  font-size: $font-size;
+  @include fontSize($font-size);
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
 }
