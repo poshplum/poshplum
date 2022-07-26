@@ -1,0 +1,116 @@
+// Core variables
+$version: "0.5.9";
+
+// Core features
+$rtl: false !default;
+
+// Core colors
+$primary-color: $color-primary  !default;
+$primary-color-dark: color('primary', 600) !default;
+$primary-color-light: color('primary', 400) !default;
+$secondary-color: color('primary', 200) !default;
+$secondary-color-dark: color('primary', 400) !default;
+$secondary-color-light: color('primary', 300) !default;
+
+// Gray colors
+$dark-color: $color-dark  !default;
+$light-color: $color-white  !default;
+$gray-color: $color-gray  !default;
+$gray-color-dark: color('gray', 600) !default;
+$gray-color-light: color('gray', 400) !default;
+
+$border-color: color('black', 400) !default;
+$border-color-dark: color('black', 600) !default;
+$border-color-light: color('black', 300) !default;
+$bg-color: color('light', 500) !default;
+$bg-color-dark: color('light', 600) !default;
+$bg-color-light: color('light', 490) !default;
+
+// Control colors
+$success-color: 'success' !default;
+$warning-color: 'warning' !default;
+$error-color: 'danger' !default;
+
+// Other colors
+$code-color: 'danger' !default;
+$highlight-color: 'accent' !default;
+$body-bg: $color-white  !default;
+$body-font-color: $color-black  !default;
+$link-color: color('primary') !default;
+$link-color-dark: color('primary', 600) !default;
+$link-color-light: color('primary', 400) !default;
+@import url('https://fonts.googleapis.com/css2?family=Asul&family=Merriweather+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500;1,600&display=swap');
+
+$base-font-family: 'Poppins', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto !default;
+$mono-font-family: "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Courier, monospace !default;
+$fallback-font-family: "Helvetica Neue", sans-serif !default;
+$cjk-zh-hans-font-family: $base-font-family, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", $fallback-font-family  !default;
+$cjk-zh-hant-font-family: $base-font-family, "PingFang TC", "Hiragino Sans CNS", "Microsoft JhengHei", $fallback-font-family  !default;
+$cjk-jp-font-family: $base-font-family, "Hiragino Sans", "Hiragino Kaku Gothic Pro", "Yu Gothic", YuGothic, Meiryo, $fallback-font-family  !default;
+$cjk-ko-font-family: $base-font-family, "Malgun Gothic", $fallback-font-family  !default;
+$body-font-family: $base-font-family, $fallback-font-family  !default;
+
+// Unit sizes
+$unit-o: calc(.05rem * $unit-size-modifier) !default;
+$unit-h: calc(.1rem * $height-size-modifier) !default;
+$unit-1: calc(.2rem * $unit-size-modifier) !default;
+$unit-2: calc(.4rem * $unit-size-modifier) !default;
+$unit-3: calc(.6rem * $unit-size-modifier) !default;
+$unit-4: calc(.8rem * $unit-size-modifier) !default;
+$unit-5: calc(1rem * $unit-size-modifier) !default;
+$unit-6: calc(1.2rem * $unit-size-modifier) !default;
+$unit-7: calc(1.4rem * $unit-size-modifier) !default;
+$unit-8: calc(1.6rem * $unit-size-modifier) !default;
+$unit-9: calc(1.8rem * $unit-size-modifier) !default;
+$unit-10: calc(2rem * $unit-size-modifier) !default;
+$unit-12: calc(2.4rem * $unit-size-modifier) !default;
+$unit-16: calc(3.2rem * $unit-size-modifier) !default;
+
+// Font sizes
+$html-font-size: 20px !default;
+$html-line-height: 1.5 !default;
+$font-size: calc(.8rem * $font-size-modifier) !default;
+$font-size-sm: calc(.7rem * $font-size-modifier) !default;
+$font-size-lg: calc(.9rem * $font-size-modifier) !default;
+$line-height: calc(1.2rem * $font-size-modifier) !default;
+
+// Sizes
+$layout-spacing: $unit-2  !default;
+$layout-spacing-sm: $unit-1  !default;
+$layout-spacing-lg: $unit-4  !default;
+$border-radius: $unit-h  !default;
+$border-width: $unit-o  !default;
+$border-width-lg: $unit-h  !default;
+$control-size: $unit-9  !default;
+$control-size-sm: $unit-7  !default;
+$control-size-lg: $unit-10  !default;
+$control-padding-x: $unit-2  !default;
+$control-padding-x-sm: $unit-2 * .75 !default;
+$control-padding-x-lg: $unit-2 * 1.5 !default;
+$control-padding-y: calc(($control-size - $line-height) / 2) - $border-width  !default;
+$control-padding-y-sm: calc(($control-size-sm - $line-height) / 2) - $border-width  !default;
+$control-padding-y-lg: calc(($control-size-lg - $line-height) / 2) - $border-width  !default;
+$control-icon-size: .8rem !default;
+
+$control-width-xs: 180px !default;
+$control-width-sm: 320px !default;
+$control-width-md: 640px !default;
+$control-width-lg: 960px !default;
+$control-width-xl: 1280px !default;
+
+// Responsive breakpoints
+$size-xs: 480px !default;
+$size-sm: 600px !default;
+$size-md: 840px !default;
+$size-lg: 960px !default;
+$size-xl: 1280px !default;
+$size-2x: 1440px !default;
+
+$responsive-breakpoint: $size-xs  !default;
+
+// Z-index
+$zindex-0: 1 !default;
+$zindex-1: 100 !default;
+$zindex-2: 200 !default;
+$zindex-3: 300 !default;
+$zindex-4: 400 !default;

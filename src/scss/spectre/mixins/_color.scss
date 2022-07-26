@@ -1,0 +1,37 @@
+// Background color utility mixin
+@mixin bg-color-variant($color_map) {
+
+  @each $color,
+  $color_set in $color_map {
+    .bg-#{$color} {
+      background-color: color($color);
+      // @if (lightness($color) < 60) { @TODO rewrite to work with Dark mode
+      //   color: $light-color;
+      // }
+    }
+  }
+}
+
+// Text color utility mixin
+@mixin text-color-variant($color_map) {
+
+  @each $color,
+  $color_set in $color_map {
+    .text-#{$color} {
+      color: color($color);
+
+    }
+
+    a.text-#{$color} {
+
+      &:focus,
+      &:hover {
+        color: color($color, 400);
+      }
+
+      &:visited {
+        color: color($color, 600);
+      }
+    }
+  }
+}

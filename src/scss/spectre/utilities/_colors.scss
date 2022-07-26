@@ -1,0 +1,5 @@
+// Text colors
+@include text-color-variant(map-get($tokens, 'color'));
+
+// Background colors
+@include bg-color-variant(map-get($tokens, 'color'))

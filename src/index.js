@@ -7,7 +7,7 @@ import {Card} from "./components/Cards";
 
 // makes CSS available.
 // users can import "poshplum/plum.css"
-import './plum-defaults.scss';
+import './scss/app.scss';
 
 import { BrowserRouter } from 'react-router-dom'
 import entries from './helpers/Object.entries.polyfill';
@@ -35,6 +35,8 @@ const load = () => render(
 );
 
 // This is needed for Hot Module Replacement
+//@TODO legacy code from neurino setup relying HMR not present in rollup.
+// Need to try rollup HMR workaround or switch to webpack for dev view.
 if (module.hot) {
   module.hot.accept('./docs/index', load);
 }

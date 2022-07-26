@@ -1,0 +1,62 @@
+// Button variant mixin
+@mixin button-variant($color: 'primary') {
+  background: color($color);
+  border-color: color($color, 530);
+  color: $light-color;
+
+  &:focus {
+    @include control-shadow($color);
+  }
+
+  &:focus,
+  &:hover {
+    background: color($color, 530);
+    border-color: color($color, 550);
+    color: $light-color;
+  }
+
+  &:active,
+  &.active {
+    background: color($color, 570);
+    border-color: color($color, 600);
+    color: $light-color;
+  }
+
+  &.loading {
+    &::after {
+      border-bottom-color: $light-color;
+      border-left-color: $light-color;
+    }
+  }
+}
+
+@mixin button-outline-variant($color: $primary-color) {
+  background: $light-color;
+  border-color: color($color);
+  color: color($color);
+
+  &:focus {
+    @include control-shadow($color);
+  }
+
+  &:focus,
+  &:hover {
+    background: color($color, 200);
+    border-color: color($color, 520);
+    color: color($color);
+  }
+
+  &:active,
+  &.active {
+    background: color($color);
+    border-color: color($color, 550);
+    color: $light-color;
+  }
+
+  &.loading {
+    &::after {
+      border-bottom-color: color($color);
+      border-left-color: color($color);
+    }
+  }
+}
