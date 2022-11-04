@@ -13,10 +13,14 @@ const Icon = Layout.namedSlot("Icon").withMarkup(
   }
 );
 const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(
-  ({className="", children, ...moreProps }) =>
-    <div className={`float-right ${className}`} {...moreProps}>{children}</div>
-);
-
+    ({className="", children, ...moreProps }) =>
+      <div className={`float-right ${className}`} {...moreProps}>{children}</div>
+  );
+  const HeaderMiddle = Layout.namedSlot("HeaderMiddle").withMarkup(
+    ({className="", children, ...moreProps }) =>
+      <div className={`float-right ${className}`} {...moreProps}>{children}</div>
+  );
+    
     const Body = Layout.defaultSlot("Body")
 const Footer = Layout.namedSlot("Footer").withMarkup(({className="", children, ...props}) => {
   return <div className={`panel-footer ${className}`} {...props}>{children}</div>
@@ -34,11 +38,12 @@ export default class Panel extends Layout {
   static Title = Title;
   static Icon = Icon;
   static HeaderRight = HeaderRight;
+  static HeaderMiddle = HeaderMiddle;
   static Body = Body;
   static FixedHeader = FixedHeader;
   static Footer = Footer;
 
-  static slots = {Title, Icon, HeaderRight, FixedHeader, Body, Footer};
+  static slots = {Title, Icon, HeaderMiddle, HeaderRight, FixedHeader, Body, Footer};
 
   componentWillUnmount() {
     this._unmounting = true;
@@ -54,7 +59,7 @@ export default class Panel extends Layout {
   }
   render() {
     let {className="", withRef, ...otherProps} = this.props;
-    let {Title, Icon, HeaderRight, Body, Footer, FixedHeader} = this.slots;
+      let { Title, Icon, HeaderMiddle, HeaderRight, Body, Footer, FixedHeader } = this.slots;
     let {announceTitle} = this.state || {}
     if (!this.node) this.node = withRef || React.createRef();
     if (withRef && this.node !== withRef) throw new Error(`Panel: assertion failure: withRef= isn't expected to be changing`);
@@ -62,9 +67,10 @@ export default class Panel extends Layout {
     // if (bareClass) throw new Error("use className=, not class=, for Panel class")
 
     return <div ref={this.node} role="main" className={`屋根裏 境界窓 panel is-page-overlay ${className}`} {...otherProps}>
-      {(FixedHeader || Icon || Title || HeaderRight) && <div className="頭 panel-header">
+      {(FixedHeader || Icon || Title || HeaderRight || HeaderMiddle) && <div className="頭 panel-header">
         <div className="敬語 panel-title">{Icon}
-          {HeaderRight}
+        {HeaderRight}
+        {HeaderMiddle}
           <h2 aria-live="assertive" aria-atomic="true">
             <span className="screader">Overlay Panel: Escape to close</span>
             {announceTitle && <span>&nbsp;</span>}
