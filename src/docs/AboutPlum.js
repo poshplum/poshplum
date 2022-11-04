@@ -2,12 +2,15 @@ import {Component} from "react";
 import {render} from "react-dom";
 import React from "react";
 import CodeExample from "../components/CodeExample";
+import DocsLayout from "./DocsLayout";
+import TopMenuLayout, {Title} from "../components/layouts/topmenu";
 
 export default class AboutPlum extends Component {
   render() {
-    return <React.Fragment><h4>About A Posh Plum</h4>
+      return <DocsLayout>
+                <Title>About Posh Plum</Title>
 
-      <p>A Posh Plum is a small library for React application development. Feel free to use more
+      <p>Posh Plum is a small library for React application development. Feel free to use more
         of it, or feel free to use less. Plum provides low-syntax, high-leverage semantic
         components that are <i><b>easy to understand, easy to reuse, and easy to maintain</b></i>.
       </p>
@@ -29,7 +32,7 @@ import Panel from 'plum/ui/panel';
 import Card from 'plum/ui/card';`}
       </CodeExample>
 
-      <p>A Posh Plum seeks to be principle-based, but dogma-free 🚫🐕‍🤰. We believe in quality by
+      <p>Posh Plum seeks to be principle-based, but dogma-free 🚫🐕‍🤰. We believe in quality by
         design, in unit-testing and real-world results, and we reject cargo-cult rules.  As
         Larry says: there's more than one way to do it.  We use existing platform-, language- and library-level
         features where they're useful, and you can too.
@@ -42,7 +45,7 @@ import Card from 'plum/ui/card';`}
         welcome).
       </p>
 
-    </React.Fragment>;
+    </DocsLayout>
   }
 }
 

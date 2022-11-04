@@ -9,13 +9,13 @@ export default class AboutLayouts extends React.Component {
   render() {
 
     return <DocsLayout>
-      <Title>A Posh Plum - Layouts</Title>
+      <Title>Layouts</Title>
 
       <div className="columns">
       <div className="column col-4 col-xl-6 col-md-12 p-3">
 
-        <p>A Posh Plum provides a <code>Layout</code> primitive that packages the
-          "render props" or "named slots" pattern with a slightly <strike>different</strike> nicer style,
+        <p>Posh Plum provides a <code>Layout</code> primitive that packages the
+          "render props" or "named slots" pattern in a <strike>different</strike> nicer style,
           making UI code easier to read, write and maintain. It works with React and React-Native.
         </p>
 
@@ -23,8 +23,8 @@ export default class AboutLayouts extends React.Component {
           <li>Less need for props tunneling</li>
           <li>Reduce inter-component chatter and call stacks as compared to "render props" pattern</li>
           <li>Help keep component props tiny and minimize syntactical nesting</li>
-        </ul>
-
+        </ul>                
+                
         <p>Plum includes some page-level semantic layouts and UI-widgets such as Cards that
           also use layouts. Plum also makes it easy for you to create your own layout components
           and improve your application's maintainability.

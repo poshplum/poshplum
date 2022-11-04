@@ -11,6 +11,7 @@ export default class DocsLayout extends Component {
       <Menu>
         <Link to="/"><img src="/aPoshPlum.svg" style={{height: "2em"}} /></Link>
         <Link to="/layouts">Layouts</Link>
+        <Link to="/about" className="ml-4">About Posh Plum</Link>
       </Menu>
 
       {children}

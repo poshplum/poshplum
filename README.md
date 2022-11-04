@@ -1,4 +1,4 @@
-# A Posh Plum
+# Posh Plum
 
 A lightweight application shell giving clean, consistent UI to React apps.
 
@@ -12,7 +12,7 @@ React lets you control the fine details of a web page.
 You're in control, but you're left having to make all the choices 
 (and components) yourself.
 
-A Posh Plum makes it all easier.  Its components provide a responsive web app
+Posh Plum's components provide a responsive web app
 that "just works" on mobile or desktop browsers, with menu and page-layout
 components and stylesheets based on Spectre.css.  
 
@@ -383,7 +383,7 @@ class Page2 extends Component {
 
 ## Application Plumbing
 
-A Posh Plum also provides two optional components to use as the plumbing for
+Posh Plum also provides two optional components to use as the plumbing for
 high-reliability application software.  With Reactor and State Machine, it's
 possible to create any application from simple to sophisticated without any
 other libraries.
