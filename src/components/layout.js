@@ -106,7 +106,7 @@ export default class Layout extends Component {
         }
         if (child.props && child.props.debug) debugger
         if (slotType.debug) debugger
-        if (module.hot) {
+        if (import.meta.hot) {
           let childName = child.type && child.type.displayName || child.type;
 
           //  ✓ works with react webpack hot loader

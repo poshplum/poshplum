@@ -7,7 +7,7 @@
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/plugin-proposal-decorators": "^7.4.0",
     "@babel/preset-env": "^7.4.3",
-    "@babel/preset-react": "^7.0.0",
+    "@preact/preset-vite": "^2.4.0",
     "@rollup/plugin-alias": "^3.1.1",
     "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-commonjs": "^22.0.1",
@@ -23,10 +23,6 @@
     "jest-mock-console": "^0.4.2",
     "postcss": "^8.4.14",
     "postcss-loader": "^3.0.0",
-    "react-mock-router": "^1.0.15",
-    "react-test-renderer": "^16.6.0",
-    "rollup": "^2.77.0",
-    "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-multi-entry": "^2.1.0",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-serve": "^2.0.0",
@@ -34,17 +30,18 @@
     "sass-loader": "^7.1.0",
     "source-map-support": "^0.5.9",
     "style-dictionary": "^3.7.1",
-    "tinycolor": "^0.0.1"
+    "tinycolor": "^0.0.1",
+    "typescript": "^4.6.4",
+    "vite": "^3.2.0"
   },
   "dependencies": {
     "debug": "^4.1.1",
     "fast-levenshtein": "^2.0.6",
     "lodash": "^4.17.21",
-    "preact": "^10.5.13",
+    "preact": "^10.11.2",
     "prop-types": "^15.7.2",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-router-dom": "^4.3.1",
+    "react-router-dom": "5",
+    "rollup": "^3.2.5",
     "util": "^0.11.1"
   },
   "scripts": {
@@ -55,6 +52,10 @@
     "testing:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand --color",
     "coverage": "neutrino test --coverage",
     "build": "rm dist/* ; rollup -c ; cp ./package.json dist/ ; ls -la dist/",
-    "build:watch": "rm dist/* ; cp ./package.json dist/ ; rollup -c -w "
+    "build:watch": "rm dist/* ; cp ./package.json dist/ ; rollup -c -w ",
+    "start": "vite",
+    "dev": "vite",
+    "docs:build": "tsc && vite build",
+    "docs:preview": "vite preview"
   }
 }

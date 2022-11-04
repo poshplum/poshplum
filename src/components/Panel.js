@@ -66,24 +66,34 @@ export default class Panel extends Layout {
 
     // if (bareClass) throw new Error("use className=, not class=, for Panel class")
 
-    return <div ref={this.node} role="main" className={`屋根裏 境界窓 panel is-page-overlay ${className}`} {...otherProps}>
-      {(FixedHeader || Icon || Title || HeaderRight || HeaderMiddle) && <div className="頭 panel-header">
-        <div className="敬語 panel-title">{Icon}
-        {HeaderRight}
-        {HeaderMiddle}
-          <h2 aria-live="assertive" aria-atomic="true">
-            <span className="screader">Overlay Panel: Escape to close</span>
-            {announceTitle && <span>&nbsp;</span>}
-            {Title || "No Panel.Title"}
-          </h2>
-        </div>
-        {FixedHeader}
-      </div>}
-      <div className="panel-body">
-        {Body}
-      </div>
+    return (
+        <div
+            ref={this.node}
+            role="main"
+            className={`屋根裏 境界窓 panel is-page-overlay ${className}`}
+            {...otherProps}
+        >
+            {(FixedHeader || Icon || Title || HeaderRight || HeaderMiddle) && (
+                <div className="頭 panel-header">
+                    <div className="敬語 panel-title">
+                        {Icon}
+                        {HeaderRight}
+                        {HeaderMiddle}
+                        <h2 aria-live="assertive" aria-atomic="true">
+                            <span className="screader">
+                                Overlay Panel: Escape to close
+                            </span>
+                            {announceTitle && <span>&nbsp;</span>}
+                            {Title || "No Panel.Title"}
+                        </h2>
+                    </div>
+                    {FixedHeader}
+                </div>
+            )}
+            <div className="panel-body">{Body}</div>
 
-      {Footer}
-    </div>
+            {Footer}
+        </div>
+    );
   }
 }
