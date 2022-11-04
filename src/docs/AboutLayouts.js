@@ -4,6 +4,7 @@ import AboutPlum from "./AboutPlum";
 import {Card} from "../components/Cards";
 import TopMenuLayout, {Title} from "../components/layouts/topmenu";
 import DocsLayout from "./DocsLayout";
+import {Link} from "react-router-dom";
 
 export default class AboutLayouts extends React.Component {
   render() {
@@ -50,8 +51,7 @@ export default class AboutLayouts extends React.Component {
 </Card>`}
         </CodeExample>
 
-        <AboutPlum/>
-
+        <Link class="button btn btn-primary" to="/about">About Posh Plum</Link>
       </div>
 
       <div className="column col-4 col-xl-6 col-md-12 p-3">

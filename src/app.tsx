@@ -14,9 +14,10 @@ export function App() {
                 <Panel.Icon>
                     {" "}
                     <img
+                        // src={plumLogo}
                         src={preactLogo}
-                        class="logo preact"
-                        alt="Preact logo"
+                        class="plum logo"
+                        alt="Posh Plum logo"
                     />
                 </Panel.Icon>
                 <Panel.Title>Vite + Preact</Panel.Title>
