@@ -197,7 +197,7 @@ const Listener = (componentClass) => {
       // console.warn("_listen: ", eventName, handler);
       const note = isInternal ? "" : "(NOTE: listener applied additional wrapper)";
 
-      const listeningNode = at || this._listenerRef.current;
+      let listeningNode = at || this._listenerRef.current;
       const handler = existing || (isInternal ?
         this.mkInternalHandler(rawHandler, observer, returnsResult)
       : this._wrapHandler(rawHandler, {
@@ -207,6 +207,11 @@ const Listener = (componentClass) => {
         observer,
         returnsResult
       }));
+        if (!(listeningNode instanceof HTMLElement)) {
+            if (listeningNode.isReactComponent) {
+                listeningNode = React.findDOMNode(listeningNode);
+            }
+        }
       listeningNode.addEventListener(eventName, handler, {capture});
       trace("listening", {eventName}, "with handler:", handler, note);
 
