@@ -41,8 +41,8 @@ let Body = Layout.defaultSlot("Body").withMarkup(({className="", children, ...pr
     </div>
 });
 
-let Footer = Layout.namedSlot("Footer").withMarkup(({className="", ...props}) => {
-  return <div className={`card-footer footnote ml-2 ${className}`} {...props}>
+let Footer = Layout.namedSlot("Footer").withMarkup(({overrideClassName="card-footer footnote ml-2", className="", ...props}) => {
+  return <div className={`${overrideClassName} ${className}`} {...props}>
     {props.children}
   </div>
 });
