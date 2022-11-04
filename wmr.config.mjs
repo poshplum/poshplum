@@ -9,15 +9,15 @@ export default defineConfig({
         'react-dom': 'preact/compat',
         'src/*': 'src'
     },
-    plugins: [, 
-        postcss({
-            preprocessor: (content, id) => new Promise((resolve, reject) => {
-              const result = sass.renderSync({ file: id })
-              resolve({ code: result.css.toString() })
-            }),
-            sourceMap: true,
-            extensions: ['.sass','.css'],
-            extract: "plum.css",
-          }),
-    ]
+    // plugins: [, 
+    //     postcss({
+    //         preprocessor: (content, id) => new Promise((resolve, reject) => {
+    //           const result = sass.renderSync({ file: id })
+    //           resolve({ code: result.css.toString() })
+    //         }),
+    //         sourceMap: true,
+    //         extensions: ['.sass','.css'],
+    //         extract: "plum.css",
+    //       }),
+    // ]
 });

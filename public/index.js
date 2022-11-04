@@ -10,7 +10,6 @@ import {
 import Home from "./pages/home/index.js";
 import NotFound from "./pages/_404.js";
 import Header from "./header.js";
-import style from "../src/scss/app.scss";
 
 const About = lazy(() => import("./pages/about/index.js"));
 
