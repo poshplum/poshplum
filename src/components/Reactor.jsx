@@ -1,4 +1,4 @@
-var levenshtein = require('fast-levenshtein');
+import levenshtein from 'fast-levenshtein';
 
 const EVENT_IS_LOOPING_MAYBE = 20;
 export let reactorTag = Symbol("Reactor");

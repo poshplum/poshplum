@@ -2,12 +2,12 @@ import {Component} from "react";
 import {render} from "react-dom";
 import React from "react";
 import CodeExample from "../components/CodeExample";
-import DocsLayout from "./DocsLayout";
-import TopMenuLayout, {Title} from "../components/layouts/topmenu";
+import { DocsLayout } from "./DocsLayout";
 
 export default class AboutPlum extends Component {
   render() {
-      return <DocsLayout>
+    const { Title } = DocsLayout;
+    return <DocsLayout>
                 <Title>About Posh Plum</Title>
 
       <p>Posh Plum is a small library for React application development. Feel free to use more

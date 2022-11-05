@@ -2,12 +2,12 @@ import React from "react";
 import CodeExample from "../components/CodeExample";
 import AboutPlum from "./AboutPlum";
 import {Card} from "../components/Cards";
-import TopMenuLayout, {Title} from "../components/layouts/topmenu";
-import DocsLayout from "./DocsLayout";
+import { DocsLayout } from "./DocsLayout";
 import {Link} from "react-router-dom";
 
 export default class AboutLayouts extends React.Component {
   render() {
+      const { Title } = DocsLayout;
 
     return <DocsLayout>
       <Title>Layouts</Title>
