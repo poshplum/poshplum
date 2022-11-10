@@ -3,13 +3,24 @@
 // $bg-color-brown: #974b00;
 // $bg-color-yellow: #f8f28e;
 
-@import "./config_global";
-@import "./mixins";
-@import "./utilities";
-@import "./spectre/spectre";
-@import "./reboot";
+// @import "./config_global";
+// @import "./mixins";
+// @import "./utilities";
+// @import "./spectre/spectre";
+// @import "./reboot";
+
+@import "../../node_modules/bootstrap/scss/functions";
+
+@import "custom.scss";
+
+@import "../../node_modules/bootstrap/scss/maps";
+@import "../../node_modules/bootstrap/scss/mixins";
+@import "../../node_modules/bootstrap/scss/utilities";
+
+
+@import "bootstrap.scss";
 @import "./plum/plum";
-@import "./fonts"; //@TODO make font import optional config
+//@import "./fonts"; //@TODO make font import optional config
 
 
 
