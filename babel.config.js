@@ -8,7 +8,7 @@ module.exports = {
         },
       },
     ],
-    "@babel/preset-react"
+    "preact"
   ],
   plugins: [
     ["module-resolver", {
@@ -24,4 +24,3 @@ module.exports = {
     ["@babel/plugin-proposal-class-properties", { "loose" : true }]
   ]
 };
-

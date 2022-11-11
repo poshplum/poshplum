@@ -13,9 +13,10 @@ export class DocsApp extends React.Component {
             <BrowserRouter>
                 <Switch>
                     <Route exact path="/about" component={AboutPlum} />
-                    {/* <Route path="/" component={AboutLayouts} /> */}
                     <Route path="/layouts" component={AboutLayouts} />
                     <Route exact path="/reactor" component={ReactorExample} />
+
+                    <Route /* fallback */ path="/" component={AboutPlum} />
                 </Switch>
             </BrowserRouter>
         );

@@ -87,6 +87,7 @@ export default class Layout extends Component {
     let defaultSlot = find(slots,slotType => slotType.isDefault);
     let defaultSlotName = defaultSlot && (defaultSlot.displayName || defaultSlot.name);
 
+      const hot = ("undefined" !== typeof module ? module.hot : import.meta?.hot)
 
     // locate the instances of children provided
     let content = groupBy(children, (child) => {
@@ -106,7 +107,7 @@ export default class Layout extends Component {
         }
         if (child.props && child.props.debug) debugger
         if (slotType.debug) debugger
-        if (import.meta.hot) {
+        if (hot) {
           let childName = child.type && child.type.displayName || child.type;
 
           //  ✓ works with react webpack hot loader

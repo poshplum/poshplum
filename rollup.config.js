@@ -1,10 +1,10 @@
-const multiEntry = require("rollup-plugin-multi-entry");
+import * as multiEntry from "rollup-plugin-multi-entry";
 //@TODO enable preview or disable server
 // import serve from "rollup-plugin-serve";
 import livereload from "rollup-plugin-livereload";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-const fg = require("fast-glob");
+import * as fg from "fast-glob";
 import babel from "@rollup/plugin-babel";
 import postcss from 'rollup-plugin-postcss'
 import alias from "@rollup/plugin-alias";
@@ -12,8 +12,14 @@ import alias from "@rollup/plugin-alias";
 //detect if rollup is in dev env
 const devEnv = process.env.ROLLUP_WATCH;
 
-const components = fg.sync(["./src/components/**/*.js"]);
-const helpers = fg.sync(["./src/helpers/**/*.js"]);
+const components = fg.sync([
+    "./src/components/**/*.js",
+    "./src/components/**/*.jsx"
+]);
+const helpers = fg.sync([
+    "./src/helpers/**/*.js",
+    "./src/helpers/**/*.jsx"
+]);
 
 const externals = [
   "preact",
@@ -46,7 +52,8 @@ module.exports = [
       dir: "dist/",
       entryFileNames: "[name].js",
       format: "esm",
-    },
+        },
+    // presets: [ "preact" ],
     plugins: plugins(),
     // },
     // {
@@ -70,12 +77,14 @@ function plugins() {
         { find: "react-dom", replacement: "preact/compat" },
       ],
     }),
-    resolve(),
+      resolve({
+        extensions: ['.js', '.jsx']
+      }),
     babel({
       exclude: "node_modules/**",
     }),
-    commonjs(),
-    postcss({
+      commonjs({ include: /node_modules/ }),
+      postcss({
       preprocessor: (content, id) => new Promise((resolve, reject) => {
         const result = sass.renderSync({ file: id })
         resolve({ code: result.css.toString() })
