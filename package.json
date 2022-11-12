@@ -56,8 +56,9 @@
     "coverage": "neutrino test --coverage",
     "build": "rm dist/* ; rollup -c ; cp ./package.json dist/ ; ls -la dist/",
     "build:watch": "rm dist/* ; cp ./package.json dist/ ; rollup -c -w ",
-    "start": "vite --host",
+    "start": "vite",
     "dev": "vite",
+    "serve": "vite --host",
     "docs:build": "tsc && vite build",
     "docs:preview": "vite preview"
   }
