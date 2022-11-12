@@ -44,6 +44,7 @@
     "preact": "^10.11.2",
     "prop-types": "^15.7.2",
     "react-router-dom": "5",
+    "rollup-plugin-modify": "^3.0.0",
     "util": "^0.11.1"
   },
   "scripts": {

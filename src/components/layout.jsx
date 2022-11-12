@@ -6,6 +6,7 @@ import find from 'lodash/find';
 
 import flatten from "lodash/flatten";
 
+const hot = module.hot;
 export default class Layout extends Component {
   static defaultSlot(name) {
     let slot = this.namedSlot(name);
@@ -87,7 +88,6 @@ export default class Layout extends Component {
     let defaultSlot = find(slots,slotType => slotType.isDefault);
     let defaultSlotName = defaultSlot && (defaultSlot.displayName || defaultSlot.name);
 
-      const hot = ("undefined" !== typeof module ? module.hot : import.meta?.hot)
 
     // locate the instances of children provided
     let content = groupBy(children, (child) => {
