@@ -3,212 +3,334 @@ import groupBy from 'lodash/groupBy';
 import mapValues from 'lodash/mapValues';
 import map from 'lodash/map';
 import find from 'lodash/find';
-
+import Reactor, { autobind, Actor, Action } from "./Reactor";
 import flatten from "lodash/flatten";
+import { delay } from "lodash";
+import { IS_PORTAL_SLOT } from "./ContentPortalSlot";
 
 const hot = module.hot;
 export default class Layout extends Component {
-  static defaultSlot(name) {
-    let slot = this.namedSlot(name);
+    static defaultSlot(name) {
+        let slot = this.namedSlot(name);
     slot.withTagName = (name) => {slot.tagName = name ; return slot};
     slot.multiple = () => { slot.isMultiple = true; return slot };
 
-    slot.isDefault = true;
-    return slot;
-  }
-  static withMarkup(basedOnSlot, RenderComponent) {
-    let componentWithMarkup;
+        slot.isDefault = true;
+        return slot;
+    }
+    static withMarkup(basedOnSlot, RenderComponent) {
+        let componentWithMarkup;
     let slot = componentWithMarkup = ({children, ...props}) => <RenderComponent {...props}>{children}</RenderComponent>
-    slot.raw = RenderComponent;
-    slot.displayName = basedOnSlot.displayName;
+        slot.raw = RenderComponent;
+        slot.displayName = basedOnSlot.displayName;
 
-    // if (basedOnSlot.tagName) throw new Error(`slot: withTagName("${basedOnSlot.tagName}"): .withMarkup(...) conflicts with bare tag name.`)
-    if (basedOnSlot.isMultiple) slot.isMultiple = basedOnSlot.isMultiple;
-    if (basedOnSlot.isDefault) slot.isDefault = basedOnSlot.isDefault;
+        // if (basedOnSlot.tagName) throw new Error(`slot: withTagName("${basedOnSlot.tagName}"): .withMarkup(...) conflicts with bare tag name.`)
+        if (basedOnSlot.isMultiple) slot.isMultiple = basedOnSlot.isMultiple;
+        if (basedOnSlot.isDefault) slot.isDefault = basedOnSlot.isDefault;
     if (!RenderComponent.displayName) RenderComponent.displayName = `slot‹${basedOnSlot.displayName}›`;
-    if (slot.tagName) componentWithMarkup.tagName = slot.tagName;
+        if (slot.tagName) componentWithMarkup.tagName = slot.tagName;
 
     slot.withTagName = (tn) => { throw new Error(
-      `slot: withMarkup(...): withTagName("${tn}") primitive conflicts with markup-based slot - try withTagName().withMarkup() instead?`
+                `slot: withMarkup(...): withTagName("${tn}") primitive conflicts with markup-based slot - try withTagName().withMarkup() instead?`
     ) };
 
     slot.multiple = () => { slot.isMultiple = true; return  slot };
-    return slot;
-  }
-  static namedSlot(name) {
-    let slot = ({children}) => [children];
+        return slot;
+    }
+    static namedSlot(name) {
+        let slot = ({ children }) => [children];
     slot.withTagName = (name) => {slot.tagName = name ; return slot};
     slot.multiple = () => { slot.isMultiple = true; return slot };
 
-    slot.displayName = name;
-    slot.isPlain = true;
+        slot.displayName = name;
+        slot.isPlain = true;
 
     slot.withMarkup = (RenderComponent) => this.withMarkup(slot, RenderComponent);
-    slot.withMarkup.displayName = name;
+        slot.withMarkup.displayName = name;
 
-    return slot;
-  }
+        return slot;
+    }
 
-  // returns the list of slots configured for the layout.
-  static getSlots() {
+    // returns the list of slots configured for the layout.
+    static getSlots() {
     if (!this.slots) throw new Error(`Layout ${this.constructor.name}: static slots not defined`);
     return this.slots
-  }
+    }
 
-  get debug() {
+    get debug() {
     return this.props.debug
-  }
+    }
 
-  // used for extracting children matching the slots defined in the layout.
-  // returns a ready-to-use map of slot-names to rendered content.
-  get slots() {
-    let slots = this.constructor.getSlots();
-    let slotToSlotNames;
-    if (this.constructor.hasOwnProperty("_slotsVerified")) {
-      slotToSlotNames = this.constructor._slotsVerified;
-    } else {
-      slotToSlotNames = new Map();
-      map(slots, (slot,k) => {
+    // used for extracting children matching the slots defined in the layout.
+    // returns a ready-to-use map of slot-names to rendered content.
+    get slots() {
+        let slots = this.constructor.getSlots();
+        let slotToSlotNames;
+        if (this.constructor.hasOwnProperty("_slotsVerified")) {
+            slotToSlotNames = this.constructor._slotsVerified;
+        } else {
+            slotToSlotNames = new Map();
+            map(slots, (slot, k) => {
         let slotName = slot.displayName || slot.constructor.displayName || slot.name || slot.constructor.name;
-        // console.log("slot: ", k, slotName, slot );
-        let foundSlot = this.constructor[slotName];
+                // console.log("slot: ", k, slotName, slot );
+                let foundSlot = this.constructor[slotName];
         if ((!foundSlot) || foundSlot !== slot) {
           console.warn(`Layout: ${this.constructor.name}: slot '${slotName}' is not declared as a static member.  Add it to the class definition to get better autocomplete.  \n  ^ This can also result in inscrutable "React.createElement: type is invalid" errors.`)
-        }
-        slotToSlotNames.set(slot, slotName);
+                }
+                slotToSlotNames.set(slot, slotName);
       })
       this.constructor._slotsVerified = slotToSlotNames
-    }
-    let {children=[]} = this.props;
-    if (!Array.isArray(children)) {
-      children = [children];
-    }
+        }
+        let { children = [] } = this.props;
+        if (!Array.isArray(children)) {
+            children = [children];
+        }
     children = flatten(children)
 
     let defaultSlot = find(slots,slotType => slotType.isDefault);
     let defaultSlotName = defaultSlot && (defaultSlot.displayName || defaultSlot.name);
 
 
-    // locate the instances of children provided
-    let content = groupBy(children, (child) => {
-      if (!child) return undefined;
+        // locate the instances of children provided
+        let content = groupBy(children, (child) => {
+            if (!child) return undefined;
 
-      if(this.debug)
+            if (this.debug)
           console.log("child:", child, child.type, child.type && child.type.displayName);
 
       let foundName = slotToSlotNames.get(child.type) || find(Object.keys(slots),(key) => {
-        // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
+                    // console.log(child, child.type, " <-> ", slotType.displayName, slotType.isDefault, slotType );
 
-        const slotType = slots[key];
-        const slotName = slotToSlotNames.get(slotType);
-        if (!slotName) {
+                    const slotType = slots[key];
+                    const slotName = slotToSlotNames.get(slotType);
+                    if (!slotName) {
           debugger
           throw new Error(`‹impossible?› iterated slot doesn't have a name`)
-        }
+                    }
         if (child.props && child.props.debug) debugger
         if (slotType.debug) debugger
-        if (hot) {
+                    if (hot) {
           let childName = child.type && child.type.displayName || child.type;
 
-          //  ✓ works with react webpack hot loader
-          if (slotName === childName) return true;
-        }
+                        //  ✓ works with react webpack hot loader
+                        if (slotName === childName) return true;
+                    }
         if (slotType.tagName && (slotType.tagName === child.type)) {
-          return true;
-        }
-        if (slotType.isPrototypeOf(child.type)) return true;
+                        return true;
+                    }
+                    if (slotType.isPrototypeOf(child.type)) return true;
         return (slotType === child.type)
-      });
+                });
       let foundSlot = foundName && slots[foundName]
       let foundDisplayName = foundSlot && slotToSlotNames.get(foundSlot)
 
-      if (!foundSlot) {
-        // console.log("slot: default", foundSlot, child)
-        foundName = "default";
+            if (!foundSlot) {
+                // console.log("slot: default", foundSlot, child)
+                foundName = "default";
         if (this.debug > 1) debugger
-      } else {
-        if (foundDisplayName !== foundName) {
+            } else {
+                if (foundDisplayName !== foundName) {
           console.warn(`slot '${foundName}' has component with displayName/name = ${foundDisplayName}`)
-        }
-      }
+                }
+            }
 
       if (!foundName) throw new Error("every layout slot needs a 'displayName' or 'name'");
-      return foundName;
-    });
-    if (content.default) {
-      // console.warn(`Some children didn't match any slots... -> default`, content.default);
-      if (!defaultSlot) {
+            return foundName;
+        });
+        if (content.default) {
+            // console.warn(`Some children didn't match any slots... -> default`, content.default);
+            if (!defaultSlot) {
         console.error("default content without default slot", content.default)
         throw new Error(`${this.constructor.displayName}: default content was found, with no defaultSlot to hold it.`)
-      }
+            }
 
       content[defaultSlotName] = React.createElement(defaultSlot, {children: content.default});
-      delete content.default;
-    }
-    if (this.debug) console.log({children, content});
-    content = mapValues(content, (foundContents,key) => {
-      if ("undefined" === key) return null;
+            delete content.default;
+        }
+        if (this.debug) console.log({ children, content });
+        content = mapValues(content, (foundContents, key) => {
+            if ("undefined" === key) return null;
 
-      let foundSlot = slots[key];
-      if (foundSlot && foundSlot.isMultiple) {
-        // console.log("returning multiple items in slot", key, foundContents);
-        // debugger
-        return foundContents;
-      }
+            let foundSlot = slots[key];
+            if (foundSlot && foundSlot.isMultiple) {
+                // console.log("returning multiple items in slot", key, foundContents);
+                // debugger
+                return foundContents;
+            }
 
-      if (!foundSlot) {
+            if (!foundSlot) {
         console.warn("no slot type found:", {key, foundSlot, foundContents});
         return null
-      }
+            }
 
-      // debugger
-      if (foundContents.length > 1) {
-        let hasFallback, foundOverride;
-        let matchingChildren = map(foundContents, (item) => {
-          const {children, fallback} = item.props;
+            // debugger
+            if (foundContents.length > 1) {
+                let hasFallback, foundOverride;
+                let matchingChildren = map(foundContents, (item) => {
+                    const { children, fallback } = item.props;
           if (fallback) { hasFallback=item } else foundOverride=item;
 
-          // coalesces slots having multiple instances to be a single instance with multiple children
-          if (item.type === foundSlot ) return children;
+                    // coalesces slots having multiple instances to be a single instance with multiple children
+                    if (item.type === foundSlot) return children;
 
-          if (module.hot) {
+                    if (module.hot) {
             let childName = item.type && item.type.displayName || item.type;
             if (foundSlot.displayName === childName) {  //  ✓ works with react webpack hot loader
               return item.props.children
-            }
-          }
-          return item;
-        });
-        if (hasFallback && foundOverride) {
-          //! it ignores fallback slot content when an overriding slot was provided
+                        }
+                    }
+                    return item;
+                });
+                if (hasFallback && foundOverride) {
+                    //! it ignores fallback slot content when an overriding slot was provided
           if (hasFallback && hasFallback.props && hasFallback.props.debug) debugger
           if (foundOverride && foundOverride.props && foundOverride.props.debug) debugger
 
           matchingChildren = foundOverride
-          if (foundSlot.tagName) return matchingChildren;
+                    if (foundSlot.tagName) return matchingChildren;
           matchingChildren = foundOverride.props.children
-          //! XXX if an overriding slot was provided as empty, it behaves as if neither the override, nor the fallback content, was provided at all.
-          //! if an overriding slot was provided as `override omit`, it behaves as if neither the override, nor the fallback content, was provided at all.
-          if (foundOverride.props.omit) return null;
-          if (foundOverride.props.override) return foundOverride;
+                    //! XXX if an overriding slot was provided as empty, it behaves as if neither the override, nor the fallback content, was provided at all.
+                    //! if an overriding slot was provided as `override omit`, it behaves as if neither the override, nor the fallback content, was provided at all.
+                    if (foundOverride.props.omit) return null;
+                    if (foundOverride.props.override) return foundOverride;
           if (!matchingChildren || (matchingChildren && 0 === matchingChildren.length)) {
-            const t = this;
+                        const t = this;
             console.warn(t, `overridden slot ${foundSlot.displayName || "‹unknown name›"} with no child elements should use boolean 'override' or 'omit' property (see debugger)`);
             debugger
-          }
-        }
-        if (foundOverride.type == foundSlot) return foundOverride;
-        if (foundSlot.tagName) return matchingChildren;
+                    }
+                }
+                if (foundOverride.type == foundSlot) return foundOverride;
+                if (foundSlot.tagName) return matchingChildren;
         return React.createElement(foundSlot, {children: matchingChildren});
-      }
-      if (foundContents.length == 1) return foundContents[0];
-      return foundContents;
-    });
+            }
+            if (foundContents.length == 1) return foundContents[0];
+            return foundContents;
+        });
 
-    if (this.debug) console.log("after value-mapping:", content);
-    return content;
-  }
+        if (this.debug) console.log("after value-mapping:", content);
+        return content;
+    }
 }
-Layout.withMarkup = Layout.withMarkup.bind(Layout)
+Layout.withMarkup = Layout.withMarkup.bind(Layout);
+Layout.withPortalSlots = (actorName) => (DecoratedClass) => {
+    class LayoutActorWithPortalSlots extends React.Component {
+        static displayName = `Actor‹withPortalSlots›‹${DecoratedClass.displayName}›`;
 
+        static get slots() {
+            return DecoratedClass;
+        }
+        name() {
+            return actorName;
+        }
+
+        portalAction() {
+            this._didRenderPortalAction = true;
+            return <Action returnsResult portals={this.portalClients} />;
+        }
+
+        render() {
+            const { props } = this;
+            this._didRenderPortalAction = false;
+            // if (!this._didRenderPortalAction)
+            //     throw new Error(
+            //         `Layout.withPortalSlots: must render this.portalAction()`
+            //     );
+
+            return (
+                <>
+                    <DecoratedClass {...props} />;{this.portalAction()}
+                </>
+            );
+        }
+
+        //! it provides a proxy object for named portal-slots, returning those slots' clientComponents
+        @autobind
+        portalClients() {
+            if (this._portalClients) return this._portalClients;
+
+            const allPortals = this.getPortals();
+
+            const comp = this;
+            const proxy = new Proxy(allPortals, {
+                get(target, slotName, receiver) {
+                    //! it doesn't present itself as a promise.
+                    if ("then" === slotName) return undefined;
+
+                    const found = allPortals[slotName];
+
+                    return (
+                        found?.clientComponent ||
+                        comp.mkUnmatchedPortal(slotName)
+                    );
+                },
+            });
+            this._portalClients = proxy;
+            return proxy;
+        }
+
+        getPortals() {
+            if (this._portalDetails) return this._portalDetails;
+            const allSlots = DecoratedClass.getSlots();
+            const mySlots = this.slots;
+            const allPortals = {};
+
+            //! it iterates the slots, finding portals, and fills allPortals with them
+            for (const slotName of Object.keys(allSlots)) {
+                if (!allSlots[slotName][IS_PORTAL_SLOT]) continue;
+
+                const slotDef = allSlots[slotName];
+
+                allPortals[slotName] = {
+                    contentComponent: slotDef.contentComponent,
+                    clientComponent: slotDef.clientComponent,
+                    // _ref: mySlots[slotName]._ref,
+                    // _def: slotDef,
+                };
+            }
+            return (this._portalDetails = allPortals);
+            //! it caches the portal details
+        }
+
+        mkUnmatchedPortal(slotName) {
+            const unmatchedPortal = function ({ children, ...props }) {
+                return (
+                    <div>
+                        Placeholder for unmatched portal {slotName} (TODO: some
+                        more specific treatment for this sort of case)
+                        {children}
+                    </div>
+                );
+            };
+            unmatchedPortal.displayName = name;
+            return unmatchedPortal;
+        }
+    }
+    const decorated = Actor(LayoutActorWithPortalSlots);
+    return decorated;
+};
+
+Layout.portalClient = (layoutName) => (decoratedClass) => {
+    class portalClient extends decoratedClass {
+        static displayName = `portalClient‹${decoratedClass.displayName}›`;
+        state = {};
+        async componentDidMount() {
+            await new Promise((res) => setTimeout(res, 16));
+
+            const portals = Reactor.actionResult(this, `${layoutName}:portals`);
+            this.setState({ portals });
+        }
+        get portals() {
+            return this.state.portals || {};
+        }
+
+        render() {
+            const { props } = this;
+            const { portals } = this.state;
+            if (portals) return super.render(props);
+
+            return <div className="tempDiv" />;
+        }
+    }
+    return portalClient;
+};
 

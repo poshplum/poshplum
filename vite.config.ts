@@ -2,12 +2,13 @@ import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import * as path from "path";
 import modify from "rollup-plugin-modify";
+
 /** @type {import('vite').UserConfig} */
 // https://vitejs.dev/config/
 
 setTimeout(() => {
     console.log(
-    `\n^^^ NOTE: If you\'re getting an unknown "@" error, it is probably spurious.  Go ahead to the offered browser url.`
+    `\n^^^ NOTE: If you\'re getting an unknown "@" error, it is probably spurious.  Go ahead to the offered browser url.\n`
     );
 }, 3000);
 

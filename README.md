@@ -40,7 +40,7 @@ import "poshplum/plum.css"
 
 // in component files:
 import {Card} from 'poshplum/cards';
-import {TopMenuLayout} from 'poshplum/layouts';
+import {TopMenuLayout} from 'poshplum/layouts/TopMenuLayout';
 
 class Home extends Component {
   render() {

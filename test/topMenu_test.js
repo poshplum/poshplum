@@ -1,5 +1,5 @@
 import Layout from '../src/components/layout';
-import TopMenu from '../src/components/layouts/topmenu';
+import { TopMenuLayout } from '../src/components/layouts/TopMenuLayout';
 
 import React from 'react';
 import renderer from 'react-test-renderer';

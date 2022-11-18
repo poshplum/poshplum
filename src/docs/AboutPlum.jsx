@@ -3,10 +3,11 @@ import {render} from "react-dom";
 import React from "react";
 import CodeExample from "../components/CodeExample";
 import { DocsLayout } from "./DocsLayout";
+import { TopMenuLayout } from "../components/layouts/TopMenuLayout";
 
 export default class AboutPlum extends Component {
   render() {
-    const { Title } = DocsLayout;
+    const { Title } = TopMenuLayout;
     return <DocsLayout>
                 <Title>About Posh Plum</Title>
 
@@ -26,8 +27,7 @@ export default class AboutPlum extends Component {
       <p>Import just the files you need; your code bundler will work things out from there.</p>
       <CodeExample language="es6">
         {`import Layout from 'plum/layout';
-import TopMenu from 'plum/layouts/topmenu';
-import LeftMenu from 'plum/layouts/leftmenu';
+import TopMenu from 'plum/layouts/TopMenuLayout';
 import Panel from 'plum/ui/panel';
 import Card from 'plum/ui/card';`}
       </CodeExample>

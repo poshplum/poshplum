@@ -5,14 +5,21 @@ import { DocsLayout } from "src/docs/DocsLayout";
 import { Card } from "../../components/Cards";
 import Reactor, { Actor, Action, autobind } from "../../components/Reactor";
 import { State, withStateMachine } from "src/components/withStateMachine";
+import Layout from "../../components/layout";
 
+@Layout.portalClient("app")
 export default class ReactorExample extends Component {
     cardRef = React.createRef();
     render() {
-        const { Title } = DocsLayout;
+        const { Title, Breadcrumbs } = this.portals;
+        // const { Title, Nav, Breadcrumbs } = TopMenuLayout.portals;
+        // const Breadcrumb = Breadcrumbs.item;
         return (
-            <DocsLayout>
+            <div>
                 <Title>About Reactors</Title>
+                <Breadcrumbs>‹breadcrumb›</Breadcrumbs>
+                <Breadcrumbs>‹breadcrumb 2›</Breadcrumbs>
+
                 <p>
                     Reactors are React components that provide event-oriented
                     services for use by other components. The Reactor itself is
@@ -143,7 +150,7 @@ class BookFetcher extends React.Component {
                                 ).dispatchEvent(new Event("open"));
                             }}
                         >
-                            <code>elem.dispatchEvent(new Event("open")</code>
+                            <code>elem.dispatchEvent(new Event("open"))</code>
                         </button>
                         &nbsp;
                         <button
@@ -197,7 +204,7 @@ class BookFetcher extends React.Component {
                         that they are removed after some modest delay.
                     </p>
                 </ErrorExample>
-            </DocsLayout>
+            </div>
         );
     }
 }

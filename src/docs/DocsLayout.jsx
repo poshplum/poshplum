@@ -1,36 +1,45 @@
-import TopMenuLayout, {Menu, Title} from "../components/layouts/topmenu";
+import { TopMenuLayout, MenuItem } from "../components/layouts/TopMenuLayout";
 import AboutLayouts from "./AboutLayouts";
-import React, {Component} from "react";
+import React, { Component } from "react";
 import plumLogo from "../aPoshPlum.svg";
 import Layout from "../components/layout";
-import {Link} from "react-router-dom";
-
+import { Link } from "react-router-dom";
 export class DocsLayout extends Component {
-    static Menu = Menu;
-    static Title = Title;
-    
-  render() {
-    let {children} = this.props;
-    return <TopMenuLayout>
-        <Menu>
-            <Link to="/">
-            <img
-                        src={plumLogo}
-                        class="plum logo"
-                    alt="Posh Plum logo"
-                    width="40" height="40"
-                />
-            </Link>
-            <Link to="/layouts">Layouts</Link>
-            <Link to="/reactor">Reactor</Link>
-        <Link to="/about" className="ml-4">About Posh Plum</Link>
-      </Menu>
+    render() {
+        let { children } = this.props;
+        const { Menu, Title, Breadcrumbs } = TopMenuLayout.slots;
 
-      {children}
-    </TopMenuLayout>
+        return (
+            <TopMenuLayout>
+                <Menu>
+                    <MenuItem>
+                        <Link to="/">
+                            <img
+                                src={plumLogo}
+                                class="plum logo"
+                                alt="Posh Plum logo"
+                                width="40"
+                                height="40"
+                            />
+                        </Link>
+                    </MenuItem>
+                    <MenuItem>
+                        <Link to="/layouts">Layouts</Link>
+                    </MenuItem>
+                    <MenuItem>
+                        <Link to="/reactor">Reactor</Link>
+                    </MenuItem>
+                    <MenuItem>
+                        <Link to="/about" className="ml-4">
+                            About Posh Plum
+                        </Link>
+                    </MenuItem>
+                </Menu>
+                <Breadcrumbs />
+                <Title />
 
-  }
+                {children}
+            </TopMenuLayout>
+        );
+    }
 }
-
-
-

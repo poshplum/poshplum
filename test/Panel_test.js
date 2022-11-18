@@ -1,5 +1,5 @@
 import Panel from '../src/components/Panel';
-import TopMenu from "../src/components/layouts/topmenu";
+import { TopMenuLayout } from "../src/components/layouts/TopMenuLayout";
 import {mount} from "enzyme/build";
 import React from "react";
 
