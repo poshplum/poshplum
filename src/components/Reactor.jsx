@@ -112,7 +112,8 @@ const Listener = (componentClass) => {
       isInternal,
       bare,
       observer,
-      returnsResult
+        returnsResult,
+      isAsync,
     }) {
       logger(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
       console.warn(`${this.constructor.name}: each Listener-ish should explicitly define listen(eventName, handler), with a call to _listen(eventName, handler) in addition to any additional responsibilities it may take on for event-listening`);
@@ -121,7 +122,8 @@ const Listener = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+        returnsResult,
+        isAsync,
       });
     }
     notify(event, detail={}) {
@@ -190,6 +192,7 @@ const Listener = (componentClass) => {
         bare,
         observer,
         returnsResult,
+        isAsync,
         existing=false,
       }={}
     ) {
@@ -205,7 +208,8 @@ const Listener = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+        returnsResult,
+        isAsync,
       }));
         if (!(listeningNode instanceof HTMLElement)) {
             if (listeningNode.isReactComponent) {
@@ -343,7 +347,8 @@ const Listener = (componentClass) => {
           isInternal,
           bare,
           observer,
-          returnsResult
+          returnsResult,
+          isAsync,
         }=details;
 
         if (returnsResult && !event.detail.result) {
@@ -393,9 +398,9 @@ const Listener = (componentClass) => {
               console.warn(msg, {handler});
               throw new Error(msg)
             }
-            if (result && result.then) {
-              const msg = `event('${type}'‹returnsResult›) handler returned a promise.  That might be an unplanned use of an async function, or it might be just what you wanted.  Your call.`;
-              console.warn(msg, {handler});
+            if (result && result.then && !isAsync) {
+                const msg = `event('${type}'‹returnsResult›) handler returned a promise.  Add isAsync to indicate this is what you planned.`;
+                console.warn(msg, {handler});
             }
             if (event.error) {
               debugger
@@ -523,7 +528,8 @@ export const Actor = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+        returnsResult,
+        isAsync
       }={}
     ) {
       let {debug} = this.props;
@@ -537,7 +543,8 @@ export const Actor = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult
+          returnsResult,
+        isAsync
       });
     }
 
@@ -755,6 +762,7 @@ const Reactor = (componentClass) => {
         bare,
         observer,
         returnsResult,
+        isAsync,
         existing,
       }={}
     ) { // satisfy listener
@@ -764,7 +772,8 @@ const Reactor = (componentClass) => {
         isInternal,
         bare,
         observer,
-        returnsResult,
+          returnsResult,
+        isAsync,
         existing
       });
       trace(`${reactorName}: +listen ${eventName}`);
@@ -834,6 +843,7 @@ const Reactor = (componentClass) => {
         shortName = name,
         action: actionInstance,
         returnsResult,
+        isAsync,
         isInternal,
         handler,
         capture="",
@@ -893,7 +903,8 @@ const Reactor = (componentClass) => {
         isInternal,
         observer,
         bare,
-        returnsResult,
+          returnsResult,
+        isAsync
       });
 
       // ensure the event gets the full event name, even if an Actor
@@ -907,7 +918,8 @@ const Reactor = (componentClass) => {
         shortName,
         bare,
         observer,
-        returnsResult,
+          returnsResult,
+        isAsync,
         actorName,
         isInternal,
         capture,
@@ -1659,7 +1671,8 @@ export class Action extends React.Component {
       id,
       name,
       at,
-      returnsResult,
+        returnsResult,
+      isAsync,
       observer="",
       bare,
       capture="",
@@ -1682,7 +1695,8 @@ export class Action extends React.Component {
       id,
       name,
       at,
-      returnsResult,
+        returnsResult,
+      isAsync,
       observer="",
       bare,
       capture,
@@ -1737,7 +1751,8 @@ export class Action extends React.Component {
       id,
       name,
       at,
-      returnsResult,
+        returnsResult,
+      isAsync,
       observer="",
       bare,
       capture,
