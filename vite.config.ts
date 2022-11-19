@@ -8,7 +8,7 @@ import modify from "rollup-plugin-modify";
 
 setTimeout(() => {
     console.log(
-    `\n^^^ NOTE: If you\'re getting an unknown "@" error, it is probably spurious.  Go ahead to the offered browser url.\n`
+        `\n^^^ NOTE: If you\'re getting an unknown "@" error, it is likely spurious.  Go ahead to the offered browser url.\n`
     );
 }, 3000);
 

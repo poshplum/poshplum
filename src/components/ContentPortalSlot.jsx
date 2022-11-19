@@ -10,11 +10,8 @@ export function ContentPortalSlot({
     defaultClassName: predefinedClassName,
     ...predefinedProps
 }) {
-    //! it uses any defined as= tag name as the wrapper element, but requires that it be a string / valid element name
-    if ("string" !== typeof As)
-        throw new Error(
-            `{as} must be a string valid as an html dom element name (default is 'div')`
-        );
+    //! it uses any defined as= tag name or component as the wrapper element
+    //! it EXPECTS the as= element to include any provided children= prop.
 
     //! it normally uses the predefined defaultClassName but allows usages to override defaultClassName= (e.g. to empty "") or other replacement className
     //! it passes all other predefined  props through to the wrapper component
@@ -22,11 +19,12 @@ export function ContentPortalSlot({
     //! it provides a clientComponent to be used by pages providing content for the portal
 
     const content = contentComponent;
+    const contentName = content.slotName || content.displayName || content.name;
     const clientComponent =
         // Actor(
         class portalSupplicant extends React.Component {
             static contentComponent = content;
-            static displayName = `portalClientFacade‹${content.displayName}›`;
+            static displayName = `portalClientFacade‹${contentName}›`;
 
             name() {
                 return `clientComponent:${name}`;
@@ -39,12 +37,11 @@ export function ContentPortalSlot({
             }
             componentDidMount() {
                 const domNode = Reactor.actionResult(this, `portal:${name}`);
-                debugger;
                 this.setState({ domNode });
             }
 
             render() {
-                const { raw, children } = this.props;
+                const { raw, children, ...props } = this.props;
                 const { domNode: portalTarget } = this.state;
                 //! it renders by default with the contentComponent defined for the ContentPortalSlot
 
@@ -52,12 +49,14 @@ export function ContentPortalSlot({
                 //    the children are rendered as-is instead.
                 //! it renders as raw by default, if no contentComponent is provided.
                 const Content = (!raw && contentComponent) || React.Fragment;
-                debugger;
+                const t1 = portalTarget;
+                const t2 = portalTarget?.current;
+
                 return (
-                    <div className={`portal-to-${name}`}>
+                    <div className={`portal-to-${name} d-none`}>
                         {portalTarget &&
                             React.createPortal(
-                                <Content>{children}</Content>,
+                                <Content {...props}>{children}</Content>,
                                 portalTarget.current
                             )}
                     </div>
@@ -69,6 +68,9 @@ export function ContentPortalSlot({
     //! it returns a slot to be used within the layout
     const slot = class namedPortalSlot extends React.Component {
         static [IS_PORTAL_SLOT] = true;
+        static slotName = name;
+        static displayName = `portalSlot‹${name}›`;
+
         name() {
             return name;
         }
@@ -87,6 +89,12 @@ export function ContentPortalSlot({
             } = this.props;
             // if (!_ref) throw new Error(`missing required _ref prop for content-portal slot`)
 
+            //! if as= is passed as a component, that component is EXPECTED to render a
+            //   dom element with ref={props._ref}
+            const refProp =
+                "string" == typeof As
+                    ? { ref: this._ref }
+                    : { _ref: this._ref };
             //! it adds any className= prop to the defined/overridden defaultClassName
             //! it passes runtime props (e.g. from React.createElement(‹portal-slot-name›, ...props)) through to the wrapper compoennt
             const finalProps = { ...predefinedProps, ...props };
@@ -100,7 +108,7 @@ export function ContentPortalSlot({
                         }}
                     />
                     <As
-                        ref={this._ref}
+                        {...refProp}
                         className={`${defaultClassName} ${className}`}
                         {...finalProps}
                     >
@@ -110,7 +118,6 @@ export function ContentPortalSlot({
             );
         }
     };
-    slot.displayName = name;
     //! it exposes the predefined contentComponent setting for generic use by content-portal supplicants
     slot.contentComponent = contentComponent;
     slot.clientComponent = clientComponent;

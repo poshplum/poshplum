@@ -1,42 +1,61 @@
 import { TopMenuLayout, MenuItem } from "../components/layouts/TopMenuLayout";
 import AboutLayouts from "./AboutLayouts";
+import { Route } from "react-router-dom";
 import React, { Component } from "react";
 import plumLogo from "../aPoshPlum.svg";
 import Layout from "../components/layout";
 import { Link } from "react-router-dom";
 export class DocsLayout extends Component {
+    static slots = TopMenuLayout.slots;
+    static portals = TopMenuLayout.portals;
     render() {
         let { children } = this.props;
-        const { Menu, Title, Breadcrumbs } = TopMenuLayout.slots;
+        const { Logo, Title, Menu, Breadcrumbs, PageTitle } =
+            TopMenuLayout.slots;
+
+        const { Breadcrumbs: Breadcrumb } = this.constructor.portals;
 
         return (
             <TopMenuLayout>
+                <Logo>
+                    {" "}
+                    <Link to="/">
+                        <img
+                            src={plumLogo}
+                            class="plum logo"
+                            alt="Posh Plum logo"
+                            width="40"
+                            height="40"
+                        />
+                    </Link>
+                </Logo>
+                <Title>Posh Plum: Docs</Title>
+                <PageTitle />
+                <Route path="/examples">
+                    <Breadcrumb>Examples</Breadcrumb>
+                </Route>
+
                 <Menu>
-                    <MenuItem>
-                        <Link to="/">
-                            <img
-                                src={plumLogo}
-                                class="plum logo"
-                                alt="Posh Plum logo"
-                                width="40"
-                                height="40"
-                            />
-                        </Link>
+                    <MenuItem as="h6" className="mb-0">
+                        About
                     </MenuItem>
-                    <MenuItem>
-                        <Link to="/layouts">Layouts</Link>
+                    <MenuItem Link to="/about" className="ml-4">
+                        Posh Plum
                     </MenuItem>
-                    <MenuItem>
-                        <Link to="/reactor">Reactor</Link>
+
+                    <MenuItem as="h6" className="mb-0">
+                        Examples
                     </MenuItem>
-                    <MenuItem>
-                        <Link to="/about" className="ml-4">
-                            About Posh Plum
-                        </Link>
+
+                    <MenuItem Link to="/examples/layouts">
+                        Layouts
+                    </MenuItem>
+                    <MenuItem Link to="/examples/reactor">
+                        Reactor
                     </MenuItem>
                 </Menu>
+
                 <Breadcrumbs />
-                <Title />
 
                 {children}
             </TopMenuLayout>

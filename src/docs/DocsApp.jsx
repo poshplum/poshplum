@@ -16,10 +16,13 @@ export class DocsApp extends React.Component {
                 <DocsLayout>
                     <Switch>
                         <Route exact path="/about" component={AboutPlum} />
-                        <Route path="/layouts" component={AboutLayouts} />
+
                         <Route
-                            exact
-                            path="/reactor"
+                            path="/examples/layouts"
+                            component={AboutLayouts}
+                        />
+                        <Route
+                            path="/examples/reactor"
                             component={ReactorExample}
                         />
 

@@ -1,25 +1,24 @@
 import React, { Component } from "react";
+import Layout from "../../components/layout";
+
 import CodeExample from "src/components/CodeExample";
-import { Link } from "react-router-dom";
-import { DocsLayout } from "src/docs/DocsLayout";
+// import { Link } from "react-router-dom";
 import { Card } from "../../components/Cards";
 import Reactor, { Actor, Action, autobind } from "../../components/Reactor";
 import { State, withStateMachine } from "src/components/withStateMachine";
-import Layout from "../../components/layout";
 
 @Layout.portalClient("app")
 export default class ReactorExample extends Component {
     cardRef = React.createRef();
     render() {
-        const { Title, Breadcrumbs } = this.portals;
-        // const { Title, Nav, Breadcrumbs } = TopMenuLayout.portals;
-        // const Breadcrumb = Breadcrumbs.item;
+        const { PageTitle, Menu, Breadcrumbs } = this.portals;
         return (
             <div>
-                <Title>About Reactors</Title>
-                <Breadcrumbs>‹breadcrumb›</Breadcrumbs>
-                <Breadcrumbs>‹breadcrumb 2›</Breadcrumbs>
-
+                <PageTitle>About Reactors</PageTitle>
+                <Breadcrumbs>Reactor</Breadcrumbs>
+                <Menu Link to="/foo">
+                    Foot
+                </Menu>
                 <p>
                     Reactors are React components that provide event-oriented
                     services for use by other components. The Reactor itself is
@@ -48,8 +47,9 @@ export default class ReactorExample extends Component {
                         Reactor provides an event hub, so that components can
                         reliably use actions or subscribe to trigger events
                         declared in actors defined in completely different DOM
-                        subtrees. Plum's Reactors are entirely component-based,
-                        so they're easily mounted and unmounted.
+                        subtrees (they need only share a Reactor ancestor).
+                        Plum's Reactors are entirely component-based, so they're
+                        easily mounted and unmounted.
                     </i>
                 </p>
                 <h5>Publish and Subscribe</h5>
@@ -66,8 +66,9 @@ export default class ReactorExample extends Component {
                     asynchronous events. This data-loading example triggers the
                     books:dataUpdated event when books:load has completed:
                 </p>
-                <div className="text-small columns">
-                    <div className="column col-4">
+
+                <div className="text-small container">
+                    <div className="col-4">
                         Starting with a defined Actor:
                         <CodeExample>
                             {`@Actor
@@ -96,7 +97,7 @@ class BookFetcher extends React.Component {
                             event.
                         </p>
                     </div>
-                    <div className="column col-8">
+                    <div className="col-8">
                         ...the actor can be used within some other component,
                         with a subscription for updates:
                         <CodeExample>
@@ -129,8 +130,8 @@ class BookFetcher extends React.Component {
                     </div>
                 </div>
                 <h5>Example: State Machine internals</h5>
-                <div className="columns">
-                    <div className="column col-8">
+                <div className="container">
+                    <div className="col-8">
                         <p>
                             Posh Plum's State Machine is an example of a
                             Reactor. It uses Actions to expose triggers for
@@ -172,7 +173,7 @@ class BookFetcher extends React.Component {
                             <code>cardRef.current.trigger("open")</code>{" "}
                         </button>
                     </div>
-                    <div className="column col-4">
+                    <div className="col-4">
                         <p className="text-small">
                             Real-world state-machines are good at handling more
                             complicated cases but consider a simple example
@@ -257,21 +258,21 @@ class ErrorExample extends React.Component {
     render() {
         const { children } = this.props;
         return (
-            <div id="me" className="columns">
+            <div id="me" className="container">
                 <Action bare error={this.addError} />
-                <div className="column col-12">
+                <div className="col-12">
                     {this.state.errors.map((e) => (
                         <div className="toast toast-error">{e}</div>
                     ))}
                 </div>
-                <div className="column col-4">
+                <div className="col-4">
                     {children}
 
                     <button onClick={() => this.trigger("error")}>
                         trigger an error
                     </button>
                 </div>
-                <div className="column col-8 text-small">
+                <div className="col-8 text-small">
                     <CodeExample>
                         {`@Reactor
 class ErrorExample extends React.Component {

@@ -1,28 +1,59 @@
 import React, { Component } from "react";
 import { ContentPortalSlot } from "../ContentPortalSlot";
 import Layout from "../layout";
+import { Link } from "react-router-dom";
+
 import { Actor, Action, autobind } from "../Reactor";
 
 //!!! todo add Title style so that non-last-child children are display:none
 export const Title = ContentPortalSlot({
     name: "Title",
+    as: "span",
     defaultClassName: "title-area",
+    contentComponent: "h1",
+});
+export const PageTitle = ContentPortalSlot({
+    name: "PageTitle",
+    as: "span",
+    // defaultClassName: "title-area",
     contentComponent: "h2",
 });
 
 export const Menu = ContentPortalSlot({
     name: "Menu",
-    as: "div",
-    defaultClassName: "menu-area float-left",
+    as: ({ children, _ref, ...props }) => {
+        return (
+            <nav id="sidebarMenu" {...props}>
+                <div className="position-sticky pt-3 sidebar-sticky">
+                    <ul className="nav flex-column" ref={_ref}>
+                        {children}
+                    </ul>
+                </div>
+            </nav>
+        );
+    },
+    defaultClassName:
+        "menu-area col-md-3 col-lg-2 d-md-block bg-light sidebar collapse",
     contentComponent: MenuItem,
 });
+
 export function MenuItem({
-    as: As = "div",
-    defaultClassName = "menu-item otherCustomStuff",
-    className,
+    as: As = "li",
+    defaultClassName = "nav-item",
+    className = "",
+    Link: isLink = false,
+    to: linkTo,
     children,
     ...props
 }) {
+    const item = isLink ? (
+        <Link className={`nav-link`} aria-current="page" to={linkTo}>
+            {children}
+        </Link>
+    ) : (
+        children
+    );
+
     return (
         <As
             className={`${defaultClassName} ${className}`}
@@ -33,7 +64,7 @@ export function MenuItem({
                 }
             }
         >
-            {children}
+            {item}
         </As>
     );
 }
@@ -41,11 +72,10 @@ export const Breadcrumbs = ContentPortalSlot({
     name: "Breadcrumbs",
     defaultClassName: "breadcrumb",
     contentComponent: Breadcrumb,
-    as: "nav",
-    "aria-label": "breadcrumbs",
+    as: "ol",
 });
 export function Breadcrumb({
-    as: As = "span",
+    as: As = "li",
     defaultClassName = "breadcrumb-item",
     className,
     children,
@@ -66,39 +96,69 @@ export function Breadcrumb({
     );
 }
 export const Body = Layout.defaultSlot("Body");
+export const Logo = Layout.namedSlot("Logo");
 
 export class TopMenuLayoutInner extends Layout {
+    static displayName = "TopMenuLayoutInner";
     static Menu = Menu;
     static Title = Title;
+    static PageTitle = PageTitle;
+    static Logo = Logo;
     static Body = Body;
     static Breadcrumbs = Breadcrumbs;
     static Breadcrumb = Breadcrumb;
     static MenuItem = MenuItem;
-    static slots = { Title, Breadcrumbs, Menu, Body };
+    static slots = { Logo, Title, PageTitle, Breadcrumbs, Menu, Body };
 
     render() {
         let slots = this.slots;
-        // let { portalAction } = this.props
+
         return (
             <div className="page">
-                {/* {portalAction} */}
-
-                <nav
-                    id="#app-header"
-                    className={`px-2 panel-header navbar noPrint`}
-                >
-                    {slots.Breadcrumbs}
-                </nav>
-
-                {slots.Menu}
-
-                <main>
-                    {slots.Title || "untitled page"}
-
-                    <div className="page-body">
-                        {slots.Body || "empty body area"}
+                <header class="navbar navbar-dark sticky-top bg-dark text-light flex-md-nowrap p-0 shadow">
+                    <div className="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 flex-md-nowrap">
+                        {slots.Logo}
+                        {slots.Title || "untitled site"}
                     </div>
-                </main>
+
+                    <nav aria-label="breadcrumb">{slots.Breadcrumbs}</nav>
+                    <div className="navbar-nav">
+                        <span className="nav-item">
+                            {slots.PageTitle || "untitled page"}
+                        </span>
+                    </div>
+                    <button
+                        class="navbar-toggler position-absolute d-md-none collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#sidebarMenu"
+                        aria-controls="sidebarMenu"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="navbar-nav">
+                        <div class="nav-item text-nowrap">
+                            <a class="nav-link px-3" href="#">
+                                Sign out
+                            </a>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="container-fluid">
+                    <div class="row">
+                        {slots.Menu}
+
+                        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                                {slots.Body || "empty body area"}
+                            </div>
+                        </main>
+                    </div>
+                </div>
             </div>
         );
     }
