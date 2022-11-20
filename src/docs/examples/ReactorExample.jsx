@@ -20,27 +20,113 @@ export default class ReactorExample extends Component {
                     Foot
                 </Menu>
                 <p>
-                    Reactors are React components that provide event-oriented
-                    services for use by other components. The Reactor itself is
-                    a container that recognizes <code>{`<Action/>`}</code>s and{" "}
-                    <code>{`<Actor/>`}</code>s within its subtree, and
-                    facilitates other components to have access to those
-                    actions. Reactors facilitate application-level services
-                    using events.
+                    A <b>Reactor</b> is a component that provides a "front-end
+                    microservices" pattern, as an event hub for rich application
+                    capabilities segmented into any number of small, focused
+                    parts.{" "}
                 </p>
+
+                <p>
+                    Each Reactor is a container that recognizes{" "}
+                    <code>{`<Actor/>`}</code>s and <code>{`<Action/>`}</code>s
+                    within its subtree, and allows other components access to
+                    those <b>actions</b>.
+                </p>
+
+                <p>
+                    With Actors and Reactors, you can create high-level{" "}
+                    <b>application services</b> defined in their own simple
+                    modules. Your UI code can then trigger and interact with
+                    those services with minimal coupling.
+                </p>
+
+                <p>
+                    These services can provide a broad range of functional
+                    and/or display capabilities. Good examples of actors with
+                    separate responsibilities would include:
+                </p>
+
+                <ul>
+                    <li>installing keyboard shortcuts</li>
+                    <li>showing and hiding help content</li>
+                    <li>displaying error messages</li>
+                    <li>
+                        fetching data updates from a server and issuing
+                        notifications for those updates
+                    </li>
+                </ul>
+                <p>
+                    These capabilities can be exposed to an application through
+                    one or more Reactors. In fact, an application can have
+                    dozens of Reactors, each of them serving their own subtree
+                    of the application. An app typically has a root-level
+                    Reactor to serve general functionality for the app.
+                </p>
+
+                <h4>Interacting with Actors and Actions</h4>
+                <p>There are four main patterns of interactions for Actors:</p>
+                <ul>
+                    <li>
+                        <b>Triggering an Action</b> - A "fire and forget" signal
+                        to an Actor to do an activity. <br />
+                        Use{" "}
+                        <code>
+                            Reactor.trigger(this, "actionName", {options})
+                        </code>{" "}
+                        <br />
+                        Or, inside an Actor or Reactor:{" "}
+                        <code>this.trigger("actionName", {options})</code>
+                        <br />
+                        <br />
+                    </li>
+                    <li>
+                        <b>Triggering an Action that returns a result</b> - An
+                        actor exposing an action with a `returnsResult` option
+                        can additionally return a result, acting like a remote
+                        function-call.
+                        <br />
+                        <br />
+                        If the {component("Action returnsResult  ....")} also
+                        has the `async` prop, that result can be returned
+                        through a promise.
+                        <br />
+                        Use <code>Reactor.actionResult()</code> and{" "}
+                        <code>this.actionResult()</code> in the same way as for{" "}
+                        <code>trigger()</code>.
+                        <br />
+                        <br />
+                    </li>
+                    <li>
+                        <b>Subscribing to notifications</b> - a component can
+                        connect loosely to an actor using{" "}
+                        {component(`Subscribe ‹eventName›={myHandlerFunction}`)}
+                        , and be notified when it publishes notifications of
+                        that event. Any number of components can subscribe to
+                        such a notification.
+                        <br />
+                        <br />
+                    </li>
+
+                    <li>
+                        <b>Notifying Subscribers</b> - An actor wishing to
+                        notify subscribers of an event can declare a{" "}
+                        {component(`Publish ‹eventName›`)} and call{" "}
+                        <code>
+                            this.notify(eventName, {curly("...details")})
+                        </code>{" "}
+                        to push notifications to subscribers.
+                        <br />
+                        <br />
+                    </li>
+                </ul>
+
+                <h4>Reactors, Actors and Events</h4>
                 <p>
                     Reactor events leverage the browser's CustomEvent and other
                     event infrastructure, so they flow through the DOM tree the
                     same way as browser-native events. Reactor additionally
                     includes a built-in event registry, so that unknown event
                     names are easy to spot.
-                </p>
-                <p>
-                    With Actors and Reactors, you can create high-level
-                    application services defined in their own easily-tested
-                    modules, without extra boilerplate. Your UI code can create
-                    one-off service instances or trigger application-level
-                    services with minimal coupling.
                 </p>
                 <p>
                     <i>
@@ -262,7 +348,7 @@ class ErrorExample extends React.Component {
                 <Action bare error={this.addError} />
                 <div className="col-12">
                     {this.state.errors.map((e) => (
-                        <div className="toast toast-error">{e}</div>
+                        <div className="alert alert-warning">{e}</div>
                     ))}
                 </div>
                 <div className="col-4">
