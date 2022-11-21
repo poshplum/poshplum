@@ -4,19 +4,21 @@ import Layout from "../layout";
 import { Link } from "react-router-dom";
 
 import { Actor, Action, autobind } from "../Reactor";
+import { PortalProvider } from "../PortalProvider";
 
 //!!! todo add Title style so that non-last-child children are display:none
-export const Title = ContentPortalSlot({
+export const Title = PortalProvider({
     name: "Title",
     as: "span",
     defaultClassName: "title-area",
-    contentComponent: "h1",
+    component: "h1",
 });
-export const PageTitle = ContentPortalSlot({
+export const PageTitle = PortalProvider({
     name: "PageTitle",
     as: "span",
-    // defaultClassName: "title-area",
-    contentComponent: "h2",
+    components: {
+        default: "h2",
+    },
 });
 
 export const Menu = ContentPortalSlot({
@@ -68,16 +70,20 @@ export function MenuItem({
         </As>
     );
 }
-export const Breadcrumbs = ContentPortalSlot({
+export const Breadcrumbs = PortalProvider({
     name: "Breadcrumbs",
-    defaultClassName: "breadcrumb",
-    contentComponent: Breadcrumb,
     as: "ol",
+    defaultClassName: "breadcrumb",
+    components: {
+        default: Breadcrumb,
+        Breadcrumb,
+    },
 });
+
 export function Breadcrumb({
     as: As = "li",
     defaultClassName = "breadcrumb-item",
-    className,
+    className = "",
     children,
     ...props
 }) {

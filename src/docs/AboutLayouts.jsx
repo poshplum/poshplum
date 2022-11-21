@@ -4,11 +4,11 @@ import Layout from "src/components/layout";
 import CodeExample from "../components/CodeExample";
 import { Card } from "../components/Cards";
 import { Link } from "react-router-dom";
+import { Portal } from "../components/Portal";
 
-@Layout.portalClient("app")
 export default class AboutLayouts extends React.Component {
     render() {
-        const { PageTitle } = this.portals;
+        const { PageTitle } = Portal;
 
         return (
             <div>

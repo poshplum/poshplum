@@ -5,18 +5,22 @@ import React, { Component } from "react";
 import plumLogo from "../aPoshPlum.svg";
 import Layout from "../components/layout";
 import { Link } from "react-router-dom";
+import { Portal } from "../components/Portal";
+
 export class DocsLayout extends Component {
     static slots = TopMenuLayout.slots;
-    static portals = TopMenuLayout.portals;
     render() {
         let { children } = this.props;
         const { Logo, Title, Menu, Breadcrumbs, PageTitle } =
             TopMenuLayout.slots;
 
-        const { Breadcrumbs: Breadcrumb } = this.constructor.portals;
+        const { Breadcrumbs: Breadcrumb } = Portal;
 
         return (
             <TopMenuLayout>
+                <Title initialize className="d-inline-block">
+                    Posh Plum: docs
+                </Title>
                 <Logo>
                     {" "}
                     <Link to="/">
@@ -29,8 +33,10 @@ export class DocsLayout extends Component {
                         />
                     </Link>
                 </Logo>
-                <Title>Posh Plum: Docs</Title>
+
+                <Breadcrumbs />
                 <PageTitle />
+
                 <Route path="/examples">
                     <Breadcrumb>Examples</Breadcrumb>
                 </Route>
@@ -41,6 +47,9 @@ export class DocsLayout extends Component {
                     </MenuItem>
                     <MenuItem Link to="/about" className="ml-4">
                         Posh Plum
+                    </MenuItem>
+                    <MenuItem Link to="/layouts">
+                        Layouts
                     </MenuItem>
 
                     <MenuItem as="h6" className="mb-0">
@@ -54,9 +63,6 @@ export class DocsLayout extends Component {
                         Reactor
                     </MenuItem>
                 </Menu>
-
-                <Breadcrumbs />
-
                 {children}
             </TopMenuLayout>
         );

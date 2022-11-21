@@ -3,14 +3,14 @@
 import React, { Component } from "react";
 import Layout from "src/components/layout";
 import CodeExample from "src/components/CodeExample";
+import { Portal } from "src/components/Portal";
 // import { Card } from "../../components/Cards";
 // import Reactor, { Actor, Action, autobind } from "../../components/Reactor";
 // import { State, withStateMachine } from "src/components/withStateMachine";
 
-@Layout.portalClient("app")
 export default class AboutPlum extends Component {
     render() {
-        const { PageTitle } = this.portals;
+        const { PageTitle } = Portal;
         return (
             <div>
                 <PageTitle>About Posh Plum</PageTitle>
@@ -66,7 +66,7 @@ import Card from 'plum/ui/card';`}
                     find a case that's not easily resolved by responding to
                     those console messages, or a use case that seems harder than
                     necessary, please submit your minimal test case to
-                    demonstrate it (actual fixes are also welcome).
+                    demonstrate it (PR's are also welcome).
                 </p>
             </div>
         );

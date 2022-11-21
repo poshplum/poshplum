@@ -2,20 +2,38 @@ import React, { Component } from "react";
 import Layout from "../../components/layout";
 
 import CodeExample from "src/components/CodeExample";
-// import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card } from "../../components/Cards";
 import Reactor, { Actor, Action, autobind } from "../../components/Reactor";
 import { State, withStateMachine } from "src/components/withStateMachine";
+import { Portal } from "../../components/Portal";
 
-@Layout.portalClient("app")
+// @Layout.portalClient("app")
 export default class ReactorExample extends Component {
     cardRef = React.createRef();
     render() {
-        const { PageTitle, Menu, Breadcrumbs } = this.portals;
+        // const { Menu } = this.portals;
+        const {
+            PageTitle,
+            components: {
+                Menu: { Menu, SubMenu },
+                Breadcrumbs: { Breadcrumb },
+            },
+        } = Portal;
+        // function SubMenu() {}
+        // function Menu() {}
+        const options = "[{ ...options }]";
+        function curly(string) {
+            return `{${string}}`;
+        }
+        function component(string) {
+            return <code>{`<${string} />`}</code>;
+        }
         return (
             <div>
                 <PageTitle>About Reactors</PageTitle>
-                <Breadcrumbs>Reactor</Breadcrumbs>
+                <Breadcrumb>Reactor</Breadcrumb>
+                <SubMenu>Hi</SubMenu>
                 <Menu Link to="/foo">
                     Foot
                 </Menu>
