@@ -567,9 +567,13 @@ export const Actor = (componentClass) => {
     componentDidMount() {
       let {debug} = this.props;
       let name = this.name();
-      if (!name) {
-        return this.trigger('error', {error: `ignoring actor registration without a 'name'`, single: true})
-      }
+        if (!name) {
+            debugger;
+            return this.trigger("error", {
+                error: `actor can't be registered; its name() method must return a string.`,
+                single: true,
+            });
+        }
       trace(`${displayName}: ${name} -> didMount`);
 
       // if(foundKeys[0] == "action") debugger;
