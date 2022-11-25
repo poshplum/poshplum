@@ -21,24 +21,19 @@ export const PageTitle = PortalProvider({
     },
 });
 
-export const Menu = ContentPortalSlot({
+export const Menu = PortalProvider({
     name: "Menu",
-    as: ({ children, _ref, ...props }) => {
-        return (
-            <nav id="sidebarMenu" {...props}>
-                <div className="position-sticky pt-3 sidebar-sticky">
-                    <ul className="nav flex-column" ref={_ref}>
-                        {children}
-                    </ul>
-                </div>
-            </nav>
-        );
+    as: "ul",
+    defaultClassName: "nav flex-column",
+    components: {
+        default: MenuItem,
+        MenuItem,
+        SubMenu,
     },
-    defaultClassName:
-        "menu-area col-md-3 col-lg-2 d-md-block bg-light sidebar collapse",
-    contentComponent: MenuItem,
 });
-
+export function SubMenu({}) {
+    return <div>Submenu placeholder</div>;
+}
 export function MenuItem({
     as: As = "li",
     defaultClassName = "nav-item",
@@ -104,8 +99,8 @@ export function Breadcrumb({
 export const Body = Layout.defaultSlot("Body");
 export const Logo = Layout.namedSlot("Logo");
 
-export class TopMenuLayoutInner extends Layout {
-    static displayName = "TopMenuLayoutInner";
+export class TopMenuLayout extends Layout {
+    static displayName = "TopMenuLayout";
     static Menu = Menu;
     static Title = Title;
     static PageTitle = PageTitle;
@@ -156,8 +151,14 @@ export class TopMenuLayoutInner extends Layout {
 
                 <div class="container-fluid">
                     <div class="row">
-                        {slots.Menu}
-
+                        <nav
+                            id="sidebarMenu"
+                            className="menu-area col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
+                        >
+                            <div className="position-sticky pt-3 sidebar-sticky">
+                                {slots.Menu}
+                            </div>
+                        </nav>
                         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                                 {slots.Body || "empty body area"}
@@ -169,4 +170,3 @@ export class TopMenuLayoutInner extends Layout {
         );
     }
 }
-export const TopMenuLayout = Layout.withPortalSlots("app")(TopMenuLayoutInner);

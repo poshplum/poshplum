@@ -16,7 +16,7 @@ export default class ReactorExample extends Component {
         const {
             PageTitle,
             components: {
-                Menu: { Menu, SubMenu },
+                Menu: { MenuItem, SubMenu },
                 Breadcrumbs: { Breadcrumb },
             },
         } = Portal;
@@ -34,9 +34,9 @@ export default class ReactorExample extends Component {
                 <PageTitle>About Reactors</PageTitle>
                 <Breadcrumb>Reactor</Breadcrumb>
                 <SubMenu>Hi</SubMenu>
-                <Menu Link to="/foo">
+                <MenuItem Link to="/foo">
                     Foot
-                </Menu>
+                </MenuItem>
                 <p>
                     A <b>Reactor</b> is a component that provides a "front-end
                     microservices" pattern, as an event hub for rich application

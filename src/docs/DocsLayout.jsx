@@ -11,16 +11,19 @@ export class DocsLayout extends Component {
     static slots = TopMenuLayout.slots;
     render() {
         let { children } = this.props;
-        const { Logo, Title, Menu, Breadcrumbs, PageTitle } =
-            TopMenuLayout.slots;
+        const {
+            Logo,
+            Title: TitleSlot,
+            Menu,
+            Breadcrumbs,
+            PageTitle,
+        } = TopMenuLayout.slots;
 
-        const { Breadcrumbs: Breadcrumb } = Portal;
-
+        const { Title, Breadcrumbs: Breadcrumb, Menu: MenuItem } = Portal;
         return (
             <TopMenuLayout>
-                <Title initialize className="d-inline-block">
-                    Posh Plum: docs
-                </Title>
+                <TitleSlot />
+                <Title className="d-inline-block">Posh Plum: docs</Title>
                 <Logo>
                     {" "}
                     <Link to="/">
@@ -41,28 +44,29 @@ export class DocsLayout extends Component {
                     <Breadcrumb>Examples</Breadcrumb>
                 </Route>
 
-                <Menu>
-                    <MenuItem as="h6" className="mb-0">
-                        About
-                    </MenuItem>
-                    <MenuItem Link to="/about" className="ml-4">
-                        Posh Plum
-                    </MenuItem>
-                    <MenuItem Link to="/layouts">
-                        Layouts
-                    </MenuItem>
+                <Menu />
 
-                    <MenuItem as="h6" className="mb-0">
-                        Examples
-                    </MenuItem>
+                <MenuItem as="h6" className="mb-0">
+                    About
+                </MenuItem>
+                <MenuItem Link to="/about" className="ml-4">
+                    Posh Plum
+                </MenuItem>
+                <MenuItem Link to="/layouts">
+                    Layouts
+                </MenuItem>
 
-                    <MenuItem Link to="/examples/layouts">
-                        Layouts
-                    </MenuItem>
-                    <MenuItem Link to="/examples/reactor">
-                        Reactor
-                    </MenuItem>
-                </Menu>
+                <MenuItem as="h6" className="mb-0">
+                    Examples
+                </MenuItem>
+
+                <MenuItem Link to="/examples/layouts">
+                    Layouts
+                </MenuItem>
+                <MenuItem Link to="/examples/reactor">
+                    Reactor
+                </MenuItem>
+
                 {children}
             </TopMenuLayout>
         );
