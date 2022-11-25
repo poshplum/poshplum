@@ -27,14 +27,28 @@ export function PortalProvider({ ...options }) {
         portalTarget = React.createRef();
         state = {};
         componentDidMount() {
-            const registry = Reactor.actionResult(this, "portal:registry");
-            this._initializeFacades();
-            this.setState({ registry });
-            if (this.props.initialize) {
-                this._initial = React.createRef();
-                setTimeout(() => {
-                    this.setState({ ready: true });
-                }, 10);
+            this._connectToRegistry();
+        }
+
+        @autobind
+        _connectToRegistry() {
+            const registry = Reactor.actionResult(
+                this,
+                "portal:registry",
+                () => {
+                    //! it handles a race between mounting a portal provider and the registry
+                    if (this.state.attempts > 5) {
+                        throw new Error(`PortalProvider for ${portalName} unable to connect to portal registry after ${attempts} attempts`);
+                    }
+                    setTimeout(this._connectToRegistry, 1);
+                    this.setState(({ attempts = 0 }) => ({ attempts: 1 + attempts }));
+                }
+            );
+            if (registry) {
+                const { attempts = 0 } = this.state;
+                // console.log(`portal provider got registry after ${attempts} attempts`);
+                this.setState({ registry });
+                this._initializeFacades();
             }
         }
         render() {
@@ -88,21 +102,42 @@ export function PortalProvider({ ...options }) {
             const { default: DefaultComponent } = this._facades || {};
 
             // prettier-ignore
-            return <>
-                <As
-                    ref={this.portalTarget}
-                    className={`${defaultClassName} ${className}`}
-                >
-                    {registry && React.createPortal(<>
-                        <Action returnsResult {...{ [`target:${portalName}`]: this.getTarget }} />
-                        <Action returnsResult {...{ [`components:${portalName}`]: this.getComponentFacades }} />
-                        <Action returnsResult {...{ [`${portalName}`]: this.getDefaultComponentFacade }} />
-                    </>, registry)}
-                </As>
-                {initialize && ready && <DefaultComponent ref={this._initial}  {...props}>
-                    {children}
-                </DefaultComponent>}
-            </>;
+            return (
+                <>
+                    <As
+                        ref={this.portalTarget}
+                        className={`${defaultClassName} ${className}`}
+                    >
+                        {registry &&
+                            React.createPortal(
+                                <>
+                                    <Action
+                                        returnsResult
+                                        {...{
+                                            [`target:${portalName}`]:
+                                                this.getTarget,
+                                        }}
+                                    />
+                                    <Action
+                                        returnsResult
+                                        {...{
+                                            [`components:${portalName}`]:
+                                                this.getComponentFacades,
+                                        }}
+                                    />
+                                    <Action
+                                        returnsResult
+                                        {...{
+                                            [`${portalName}`]:
+                                                this.getDefaultComponentFacade,
+                                        }}
+                                    />
+                                </>,
+                                registry
+                            )}
+                    </As>
+                </>
+            );
         }
         @autobind getTarget() {
             return this.portalTarget.current;
@@ -143,7 +178,9 @@ export function PortalProvider({ ...options }) {
                     const { children, ...props } = this.props;
                     const { portalTarget: portal } = provider;
                     return (
-                        <div className={`portal-to-${portalName} d-none`}>
+                        <div
+                            className={`_comp-${contentName} _portal-to-${portalName} d-none`}
+                        >
                             {portal?.current &&
                                 React.createPortal(
                                     <Component {...props}>

@@ -104,14 +104,12 @@ function lateOrMissingPortal(portalName, componentName) {
                             console.warn(
                                 `late bound found ${portalName}: missing ${componentName}`
                             );
-                            debugger;
                             foundPortal.foundPortal = true;
                         }
                     } else {
                         console.warn(
                             `late bound found ${portalName} default component`
                         );
-                        debugger;
                     }
                     this.setState({ LateBound, ...foundPortal });
                 }
@@ -121,10 +119,10 @@ function lateOrMissingPortal(portalName, componentName) {
             const { LateBound, foundPortal } = this.state;
             if (LateBound) {
                 console.log(
-                    `rendering a late-bound component ${portalName}:` +
-                        `${componentName || "‹default›"}`
+                    `rendering a late-bound component ${portalName}:${
+                        componentName || "‹default›"
+                    }`
                 );
-                debugger;
                 return <LateBound {...this.props} />;
             }
 
