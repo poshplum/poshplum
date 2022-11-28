@@ -15,7 +15,7 @@ export class SidebarSection extends Layout {
         const { Title = title, Body } = this.slots;
         return (
             <ul className="nav flex-column">
-                <h6 className="px-3 mt-4 mb-1 text-muted">
+                <h6 className="px-1 mt-4 mb-1 text-muted">
                     <small className="text-uppercase text-small">{Title}</small>
                 </h6>
 

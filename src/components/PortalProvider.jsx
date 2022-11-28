@@ -61,7 +61,7 @@ export function PortalProvider({ ...options }) {
             const {
                 defaultClassName = predefinedClassName,
                 className = "",
-                portalName: specificPortalName = portalName,
+                id,
                 initialize,
                 children,
                 ...props
@@ -69,6 +69,7 @@ export function PortalProvider({ ...options }) {
             const { registry, ready } = this.state;
             const reserved = ["target", "registry", "components"];
 
+            const fullId = id ? `${portalName}:${id}` : portalName;
             //! it projects an Action into the portal registry to expose
             //  itself as a portal target, enabling this named portal to be
             //  discovered by portal clients.
@@ -101,9 +102,9 @@ export function PortalProvider({ ...options }) {
             //      portal:components:‹portalName› - returns a map of all the portal's exposed Components.
             //      portal:target:‹portalName› - returns the portal's destination DOM node
 
-            if (reserved.find((x) => x === specificPortalName)) {
+            if (reserved.find((x) => x === portalName)) {
                 throw new Error(
-                    `invalid use of reserved name "${specificPortalName}" for a PortalProvider`
+                    `invalid use of reserved name "${id}" for a PortalProvider`
                 );
             }
             const { default: DefaultComponent } = this._facades || {};
@@ -121,21 +122,21 @@ export function PortalProvider({ ...options }) {
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`target:${specificPortalName}`]:
+                                            [`target:${fullId}`]:
                                                 this.getTarget,
                                         }}
                                     />
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`components:${specificPortalName}`]:
+                                            [`components:${fullId}`]:
                                                 this.getComponentFacades,
                                         }}
                                     />
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`${specificPortalName}`]:
+                                            [`${fullId}`]:
                                                 this.getDefaultComponentFacade,
                                         }}
                                     />
@@ -169,7 +170,10 @@ export function PortalProvider({ ...options }) {
         }
 
         mkFacade(Component) {
-            const { portalName: specificPortalName = portalName } = this.props;
+            const { id } = this.props;
+
+            const fullId = id ? `${portalName}:${id}` : portalName;
+
             const contentName =
                 "string" === typeof Component
                     ? Component
@@ -186,7 +190,7 @@ export function PortalProvider({ ...options }) {
                     const { portalTarget: portal } = provider;
                     return (
                         <div
-                            className={`_comp-${contentName} _portal-to-${specificPortalName} d-none`}
+                            className={`_comp-${contentName} _portal-to-${fullId} d-none`}
                         >
                             {portal?.current &&
                                 React.createPortal(

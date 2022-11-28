@@ -15,6 +15,7 @@ export default class ReactorExample extends Component {
         // const { Menu } = this.portals;
         const {
             PageTitle,
+            ["Subnav:ex-reactor"]: SubNavItem,
             components: {
                 Sidebar: { NavItem },
                 Breadcrumbs: { Breadcrumb },
@@ -32,9 +33,7 @@ export default class ReactorExample extends Component {
             <div>
                 <PageTitle>About Reactors</PageTitle>
                 <Breadcrumb>Reactor</Breadcrumb>
-                <NavItem Link to="/foo">
-                    Foot
-                </NavItem>
+
                 <p>
                     A <b>Reactor</b> is a component that provides a "front-end
                     microservices" pattern, as an event hub for rich application
@@ -79,7 +78,10 @@ export default class ReactorExample extends Component {
                     Reactor to serve general functionality for the app.
                 </p>
 
+                <SubNavItem href="#interacting">Interacting</SubNavItem>
+                <a id="interacting"></a>
                 <h4>Interacting with Actors and Actions</h4>
+
                 <p>There are four main patterns of interactions for Actors:</p>
                 <ul>
                     <li>
@@ -136,7 +138,10 @@ export default class ReactorExample extends Component {
                     </li>
                 </ul>
 
+                <SubNavItem href="#how">How it works</SubNavItem>
+                <a id="how"></a>
                 <h4>Reactors, Actors and Events</h4>
+
                 <p>
                     Reactor events leverage the browser's CustomEvent and other
                     event infrastructure, so they flow through the DOM tree the
@@ -154,7 +159,11 @@ export default class ReactorExample extends Component {
                         easily mounted and unmounted.
                     </i>
                 </p>
+
+                <SubNavItem href="#pubsub">Publish & Subscribe</SubNavItem>
+                <a id="pubsub"></a>
                 <h5>Publish and Subscribe</h5>
+
                 <p>
                     Reactor's{" "}
                     <code>
@@ -286,6 +295,10 @@ class BookFetcher extends React.Component {
                     </div>
                 </div>
 
+                <SubNavItem href="#error-rendering">
+                    Rendering Errors
+                </SubNavItem>
+                <a id="error-rendering"></a>
                 <h5>Example: Error Rendering</h5>
 
                 <ErrorExample>

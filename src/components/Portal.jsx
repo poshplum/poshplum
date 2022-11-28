@@ -135,7 +135,7 @@ function lateOrMissingPortal(portalName, componentName) {
 
             if (foundPortal)
                 return (
-                    <div className="alert alert-error">
+                    <div className="alert alert-warning">
                         error: portal {portalName} found, but it doesn't have a
                         &lt;{componentName}&gt; component.
                     </div>
