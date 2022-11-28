@@ -1,4 +1,4 @@
-import { TopMenuLayout, MenuItem } from "../components/layouts/TopMenuLayout";
+import { TopMenuLayout } from "../components/layouts/TopMenuLayout";
 import AboutLayouts from "./AboutLayouts";
 import { Route } from "react-router-dom";
 import React, { Component } from "react";
@@ -6,6 +6,8 @@ import plumLogo from "../aPoshPlum.svg";
 import Layout from "../components/layout";
 import { Link } from "react-router-dom";
 import { Portal } from "../components/Portal";
+import { SidebarSection } from "../components/layouts/SidebarSection";
+import { NavItem } from "../components/layouts/NavItem";
 
 export class DocsLayout extends Component {
     static slots = TopMenuLayout.slots;
@@ -14,12 +16,11 @@ export class DocsLayout extends Component {
         const {
             Logo,
             Title: TitleSlot,
-            Menu,
+            Sidebar,
             Breadcrumbs,
             PageTitle,
         } = TopMenuLayout.slots;
-
-        const { Title, Breadcrumbs: Breadcrumb, Menu: MenuItem } = Portal;
+        const { Title, Breadcrumbs: Breadcrumb } = Portal;
         return (
             <TopMenuLayout>
                 <TitleSlot />
@@ -44,29 +45,26 @@ export class DocsLayout extends Component {
                     <Breadcrumb>Examples</Breadcrumb>
                 </Route>
 
-                <Menu />
+                <Sidebar>
+                    <SidebarSection title="About">
+                        <NavItem Link to="/about">
+                            Posh Plum
+                        </NavItem>
 
-                <MenuItem as="h6" className="mb-0">
-                    About
-                </MenuItem>
-                <MenuItem Link to="/about" className="ml-4">
-                    Posh Plum
-                </MenuItem>
-                <MenuItem Link to="/layouts">
-                    Layouts
-                </MenuItem>
+                        <NavItem Link to="/layouts">
+                            Layouts
+                        </NavItem>
+                    </SidebarSection>
 
-                <MenuItem as="h6" className="mb-0">
-                    Examples
-                </MenuItem>
-
-                <MenuItem Link to="/examples/layouts">
-                    Layouts
-                </MenuItem>
-                <MenuItem Link to="/examples/reactor">
-                    Reactor
-                </MenuItem>
-
+                    <SidebarSection title="Examples">
+                        <NavItem Link to="/examples/layouts">
+                            Layouts
+                        </NavItem>
+                        <NavItem id="ex-reactor" Link to="/examples/reactor">
+                            Reactor
+                        </NavItem>
+                    </SidebarSection>
+                </Sidebar>
                 {children}
             </TopMenuLayout>
         );

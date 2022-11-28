@@ -10,7 +10,6 @@ export class LayoutExample extends Component {
         const {
             PageTitle,
             components: {
-                Menu: { Menu, SubMenu },
                 Breadcrumbs: { Breadcrumb },
             },
         } = Portal;

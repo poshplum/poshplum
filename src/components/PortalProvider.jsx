@@ -38,10 +38,14 @@ export function PortalProvider({ ...options }) {
                 () => {
                     //! it handles a race between mounting a portal provider and the registry
                     if (this.state.attempts > 5) {
-                        throw new Error(`PortalProvider for ${portalName} unable to connect to portal registry after ${attempts} attempts`);
+                        throw new Error(
+                            `PortalProvider for ${portalName} unable to connect to portal registry after ${attempts} attempts`
+                        );
                     }
                     setTimeout(this._connectToRegistry, 1);
-                    this.setState(({ attempts = 0 }) => ({ attempts: 1 + attempts }));
+                    this.setState(({ attempts = 0 }) => ({
+                        attempts: 1 + attempts,
+                    }));
                 }
             );
             if (registry) {
@@ -52,9 +56,12 @@ export function PortalProvider({ ...options }) {
             }
         }
         render() {
+            //! it uses the configured portal name by default
+            //!  if an overridden portalName is provided in props, it uses that instead
             const {
                 defaultClassName = predefinedClassName,
                 className = "",
+                portalName: specificPortalName = portalName,
                 initialize,
                 children,
                 ...props
@@ -94,9 +101,9 @@ export function PortalProvider({ ...options }) {
             //      portal:components:‹portalName› - returns a map of all the portal's exposed Components.
             //      portal:target:‹portalName› - returns the portal's destination DOM node
 
-            if (reserved.find((x) => x === portalName)) {
+            if (reserved.find((x) => x === specificPortalName)) {
                 throw new Error(
-                    `invalid use of reserved name "${portalName}" for a PortalProvider`
+                    `invalid use of reserved name "${specificPortalName}" for a PortalProvider`
                 );
             }
             const { default: DefaultComponent } = this._facades || {};
@@ -114,21 +121,21 @@ export function PortalProvider({ ...options }) {
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`target:${portalName}`]:
+                                            [`target:${specificPortalName}`]:
                                                 this.getTarget,
                                         }}
                                     />
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`components:${portalName}`]:
+                                            [`components:${specificPortalName}`]:
                                                 this.getComponentFacades,
                                         }}
                                     />
                                     <Action
                                         returnsResult
                                         {...{
-                                            [`${portalName}`]:
+                                            [`${specificPortalName}`]:
                                                 this.getDefaultComponentFacade,
                                         }}
                                     />
@@ -162,7 +169,7 @@ export function PortalProvider({ ...options }) {
         }
 
         mkFacade(Component) {
-            const { name: portalName } = this.props;
+            const { portalName: specificPortalName = portalName } = this.props;
             const contentName =
                 "string" === typeof Component
                     ? Component
@@ -179,7 +186,7 @@ export function PortalProvider({ ...options }) {
                     const { portalTarget: portal } = provider;
                     return (
                         <div
-                            className={`_comp-${contentName} _portal-to-${portalName} d-none`}
+                            className={`_comp-${contentName} _portal-to-${specificPortalName} d-none`}
                         >
                             {portal?.current &&
                                 React.createPortal(

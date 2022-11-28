@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import { ContentPortalSlot } from "../ContentPortalSlot";
 import Layout from "../layout";
 import { Link } from "react-router-dom";
 
 import { Actor, Action, autobind } from "../Reactor";
 import { PortalProvider } from "../PortalProvider";
+import { Sidebar } from "./Sidebar";
 
 //!!! todo add Title style so that non-last-child children are display:none
 export const Title = PortalProvider({
@@ -21,50 +21,6 @@ export const PageTitle = PortalProvider({
     },
 });
 
-export const Menu = PortalProvider({
-    name: "Menu",
-    as: "ul",
-    defaultClassName: "nav flex-column",
-    components: {
-        default: MenuItem,
-        MenuItem,
-        SubMenu,
-    },
-});
-export function SubMenu({}) {
-    return <div>Submenu placeholder</div>;
-}
-export function MenuItem({
-    as: As = "li",
-    defaultClassName = "nav-item",
-    className = "",
-    Link: isLink = false,
-    to: linkTo,
-    children,
-    ...props
-}) {
-    const item = isLink ? (
-        <Link className={`nav-link`} aria-current="page" to={linkTo}>
-            {children}
-        </Link>
-    ) : (
-        children
-    );
-
-    return (
-        <As
-            className={`${defaultClassName} ${className}`}
-            {...props}
-            style={
-                {
-                    /* more custom stuff if you want */
-                }
-            }
-        >
-            {item}
-        </As>
-    );
-}
 export const Breadcrumbs = PortalProvider({
     name: "Breadcrumbs",
     as: "ol",
@@ -101,15 +57,14 @@ export const Logo = Layout.namedSlot("Logo");
 
 export class TopMenuLayout extends Layout {
     static displayName = "TopMenuLayout";
-    static Menu = Menu;
+    static Sidebar = Sidebar;
     static Title = Title;
     static PageTitle = PageTitle;
     static Logo = Logo;
     static Body = Body;
     static Breadcrumbs = Breadcrumbs;
     static Breadcrumb = Breadcrumb;
-    static MenuItem = MenuItem;
-    static slots = { Logo, Title, PageTitle, Breadcrumbs, Menu, Body };
+    static slots = { Logo, Title, PageTitle, Breadcrumbs, Sidebar, Body };
 
     render() {
         let slots = this.slots;
@@ -151,14 +106,7 @@ export class TopMenuLayout extends Layout {
 
                 <div class="container-fluid">
                     <div class="row">
-                        <nav
-                            id="sidebarMenu"
-                            className="menu-area col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
-                        >
-                            <div className="position-sticky pt-3 sidebar-sticky">
-                                {slots.Menu}
-                            </div>
-                        </nav>
+                        {slots.Sidebar}
                         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                                 {slots.Body || "empty body area"}

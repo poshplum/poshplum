@@ -16,12 +16,11 @@ export default class ReactorExample extends Component {
         const {
             PageTitle,
             components: {
-                Menu: { MenuItem, SubMenu },
+                Sidebar: { NavItem },
                 Breadcrumbs: { Breadcrumb },
             },
         } = Portal;
-        // function SubMenu() {}
-        // function Menu() {}
+
         const options = "[{ ...options }]";
         function curly(string) {
             return `{${string}}`;
@@ -33,10 +32,9 @@ export default class ReactorExample extends Component {
             <div>
                 <PageTitle>About Reactors</PageTitle>
                 <Breadcrumb>Reactor</Breadcrumb>
-                <SubMenu>Hi</SubMenu>
-                <MenuItem Link to="/foo">
+                <NavItem Link to="/foo">
                     Foot
-                </MenuItem>
+                </NavItem>
                 <p>
                     A <b>Reactor</b> is a component that provides a "front-end
                     microservices" pattern, as an event hub for rich application
