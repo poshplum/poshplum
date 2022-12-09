@@ -76,7 +76,7 @@ export class Card extends Layout {
     this._link = React.createRef()
   }
   render() {
-    let {active, compact, tabIndex="0", onClick, item, debug, match, children, className="", link="*", render, ...otherProps} = this.props;
+    let {active, compact, tabIndex="0", onClick, item, debug, match, children, className="", link, render, ...otherProps} = this.props;
     if (render) {
       if(!item) {
         throw new Error("Cards.Card requires an 'item' prop when using the 'render' prop.")
