@@ -500,8 +500,8 @@ $border-widths: (
 ) !default;
 
 $border-style:                solid !default;
-$border-color:                $gray-800 !default;
-$border-color-translucent:    rgba($black, .175) !default;
+$border-color:                $black !default;
+$border-color-translucent:    rgba($black, .075) !default;
 // scss-docs-end border-variables
 
 // scss-docs-start border-radius-variables
@@ -1255,7 +1255,7 @@ $card-box-shadow:                   null !default;
 $card-inner-border-radius:          subtract($card-border-radius, $card-border-width) !default;
 $card-cap-padding-y:                $card-spacer-y * .5 !default;
 $card-cap-padding-x:                $card-spacer-x !default;
-$card-cap-bg:                       rgba($black, .03) !default;
+$card-cap-bg:                       null !default;
 $card-cap-color:                    null !default;
 $card-height:                       null !default;
 $card-color:                        null !default;

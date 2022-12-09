@@ -10,7 +10,7 @@ import Layout from "./layout";
 import matchChildType from "../helpers/matchChildType";
 
 let Title = Layout.namedSlot("Title").withMarkup(({className="", children, ...props}) => {
-  return <div key="title" className={`mr--4 card-title ${className}`} {...props}>
+  return <div key="title" className={`card-title ${className}`} {...props}>
     <h6>
       {children}
     </h6>
@@ -30,7 +30,7 @@ const HeaderRight = Layout.namedSlot("HeaderRight").withMarkup(({
     children,
     ...moreProps
   }) => {
-    return <div className={`header-right ${className} float-right`} {...moreProps}>{children}</div>
+    return <div className={`header-right ${className} ms-auto`} {...moreProps}>{children}</div>
   }
 );
 
@@ -41,7 +41,7 @@ let Body = Layout.defaultSlot("Body").withMarkup(({className="", children, ...pr
     </div>
 });
 
-let Footer = Layout.namedSlot("Footer").withMarkup(({overrideClassName="card-footer footnote ml-2", className="", ...props}) => {
+let Footer = Layout.namedSlot("Footer").withMarkup(({overrideClassName="card-footer footnote", className="", ...props}) => {
   return <div className={`${overrideClassName} ${className}`} {...props}>
     {props.children}
   </div>
@@ -76,7 +76,7 @@ export class Card extends Layout {
     this._link = React.createRef()
   }
   render() {
-    let {active, compact, tabIndex="0", onClick, item, debug, match, children, className="", link, render, ...otherProps} = this.props;
+    let {active, compact, tabIndex="0", onClick, item, debug, match, children, className="", link="*", render, ...otherProps} = this.props;
     if (render) {
       if(!item) {
         throw new Error("Cards.Card requires an 'item' prop when using the 'render' prop.")
@@ -93,12 +93,12 @@ export class Card extends Layout {
     } };
 
     // let clickFn = (e) => { if (cardItemClicked) cardItemClicked(item) };
-    const showScreaderLink = link && <Link to={link} ref={this._link} className="screader">{Title || "open card"}</Link>;
-    let rightArea = (HeaderRight || Label) ? <div className="zero-height float-right">
+    const showScreaderLink = link && <Link to={link} ref={this._link} className="visually-hidden-focusable">{Title || "open card"}</Link>;
+    let rightArea = (HeaderRight || Label) ? <div className="zero-height ms-auto">
         {Label}
         {HeaderRight}
       </div> : null
-    let card = <div {...otherProps} tabIndex={tabIndex} onClick={onClick} className={`card ${className} ${active ? "active" : ""}`}>
+    let card = <div {...otherProps} tabIndex={tabIndex} onClick={onClick} className={`card card-main ${className} ${active ? "active" : ""}`}>
       { (Icon || Title || Label  || HeaderRight) && <div key="header" className="card-header">
         {Icon}
         {Title}
@@ -239,7 +239,7 @@ Cards.Card = Card;
 
 
 Cards.Title = function({className="", ...props}) {
-  return <div key="title" className={`mt--2 ml-2 mr--4 card-title $className`}>
+  return <div key="title" className={`card-title $className`}>
     <small><h4>
       {props.children}
     </h4></small>

@@ -9,18 +9,11 @@
 // @import "./spectre/spectre";
 // @import "./reboot";
 
-@import "../../node_modules/bootstrap/scss/functions";
-
-@import "custom.scss";
-
-@import "../../node_modules/bootstrap/scss/maps";
-@import "../../node_modules/bootstrap/scss/mixins";
-@import "../../node_modules/bootstrap/scss/utilities";
 
 
-@import "bootstrap.scss";
+@import "bootstrap/app.scss";
 @import "./plum/plum";
-//@import "./fonts"; //@TODO make font import optional config
+@import "./fonts"; //@TODO make font import optional config
 
 
 

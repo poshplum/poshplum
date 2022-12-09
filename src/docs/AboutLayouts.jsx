@@ -80,22 +80,23 @@ export default class AboutLayouts extends React.Component {
                             <span className="show-md">above</span> for sample
                             input.
                         </p>
+                        
+                        <div  className="d-grid gap-3">
 
-                        <Card className="active">
+                        <Card>
                             <Card.Icon>❤️</Card.Icon>
                             <Card.Title>An active card</Card.Title>
                             <Card.Label>Super</Card.Label>
 
-                            <p>
+                            <p className="card-text">
                                 Card body paragraph and a{" "}
-                                <button className="btn btn-primary">
-                                    Button
-                                </button>
                             </p>
 
-                            <Card.Footer>In the footer...</Card.Footer>
+                            <Card.Footer>    
+                                <a href="#" class="btn btn-sm btn-transparent stretched-link">Go somewhere</a>
+                            </Card.Footer>
                         </Card>
-                        <Card>
+                        <Card className="active">
                             <Card.Icon>🍭</Card.Icon>
                             <Card.Title>Simple cards</Card.Title>
                             <Card.Label className="chip pop-right bg-success">
@@ -108,6 +109,9 @@ export default class AboutLayouts extends React.Component {
                             <Card.Label>Pending</Card.Label>
                             <Card.Footer>
                                 3 approvals pending from management team
+                                <div class="progress h-2 mt-2">
+                                    <div class="progress-bar h-32" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                                </div>
                             </Card.Footer>
                         </Card>
                         <Card>
@@ -120,6 +124,8 @@ export default class AboutLayouts extends React.Component {
                                 An item needing prompt attention
                             </p>
                         </Card>
+
+                        </div>
                         <br />
 
                         <h4>How is a layout rendered?</h4>
