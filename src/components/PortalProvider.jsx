@@ -116,6 +116,7 @@ export function PortalProvider({ ...options }) {
                         ref={this.portalTarget}
                         className={`${defaultClassName} ${className}`}
                     >
+                        {children}
                         {registry &&
                             React.createPortal(
                                 <>

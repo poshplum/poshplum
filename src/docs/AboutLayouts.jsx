@@ -8,11 +8,22 @@ import { Portal } from "../components/Portal";
 
 export default class AboutLayouts extends React.Component {
     render() {
-        const { PageTitle } = Portal;
+        const {
+            PageTitle,
+            components: {
+                Sidebar: { SidebarSection },
+            },
+            [`SidebarSection:about-layout`]: SectionNavItem,
+        } = Portal;
 
         return (
             <div>
                 <PageTitle>Layouts</PageTitle>
+
+                <SidebarSection id="about-layout" title="Layout Sidebar">
+                    <SectionNavItem>NavItem 1</SectionNavItem>
+                    <SectionNavItem>NavItem 2</SectionNavItem>
+                </SidebarSection>
 
                 <div className="container row">
                     <div className="col-4 col-xl-6 col-md-12 p-3">

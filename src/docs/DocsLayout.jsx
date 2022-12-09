@@ -46,7 +46,7 @@ export class DocsLayout extends Component {
                 </Route>
 
                 <Sidebar>
-                    <SidebarSection title="About">
+                    <SidebarSection id="about" title="About">
                         <NavItem Link to="/about">
                             Posh Plum
                         </NavItem>
@@ -56,7 +56,7 @@ export class DocsLayout extends Component {
                         </NavItem>
                     </SidebarSection>
 
-                    <SidebarSection title="Examples">
+                    <SidebarSection id="examples" title="Examples">
                         <NavItem Link to="/examples/layouts">
                             Layouts
                         </NavItem>
