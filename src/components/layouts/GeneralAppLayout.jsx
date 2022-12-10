@@ -55,7 +55,7 @@ export function Breadcrumb({
 export const Body = Layout.defaultSlot("Body");
 export const Logo = Layout.namedSlot("Logo");
 
-export class TopMenuLayout extends Layout {
+export class GeneralAppLayout extends Layout {
     static displayName = "TopMenuLayout";
     static Sidebar = Sidebar;
     static Title = Title;

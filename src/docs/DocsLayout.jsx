@@ -1,4 +1,4 @@
-import { TopMenuLayout } from "../components/layouts/TopMenuLayout";
+import { GeneralAppLayout } from "../components/layouts/GeneralAppLayout";
 import AboutLayouts from "./AboutLayouts";
 import { Route } from "react-router-dom";
 import React, { Component } from "react";
@@ -10,7 +10,7 @@ import { SidebarSection } from "../components/layouts/SidebarSection";
 import { NavItem } from "../components/layouts/NavItem";
 
 export class DocsLayout extends Component {
-    static slots = TopMenuLayout.slots;
+    static slots = GeneralAppLayout.slots;
     render() {
         let { children } = this.props;
         const {
@@ -19,10 +19,10 @@ export class DocsLayout extends Component {
             Sidebar,
             Breadcrumbs,
             PageTitle,
-        } = TopMenuLayout.slots;
+        } = GeneralAppLayout.slots;
         const { Title, Breadcrumbs: Breadcrumb } = Portal;
         return (
-            <TopMenuLayout>
+            <GeneralAppLayout>
                 <TitleSlot />
                 <Title className="d-inline-block">Posh Plum: docs</Title>
                 <Logo>
@@ -66,7 +66,7 @@ export class DocsLayout extends Component {
                     </SidebarSection>
                 </Sidebar>
                 {children}
-            </TopMenuLayout>
+            </GeneralAppLayout>
         );
     }
 }
