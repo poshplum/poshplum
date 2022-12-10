@@ -3,13 +3,16 @@ import preactLogo from "./assets/preact.svg";
 import "./scss/app.scss";
 import Panel from "./components/Panel";
 import { DocsApp } from "./docs/DocsApp";
+import { DCApp } from "./DCApp";
+
 
 export function App() {
     const [count, setCount] = useState(0);
 
     return (
         <>
-            <DocsApp/>
+            {/* <DocsApp/> */}
+            <DCApp />
             {false && <Panel>
                 <Panel.Icon>
                     {" "}

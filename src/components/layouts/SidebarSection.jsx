@@ -12,9 +12,9 @@ const BodyPortal = PortalProvider({
 
 export class SidebarSection extends React.Component {
     render() {
-        const { title, id, children } = this.props;
+        const { title, defaultClassName="nav flex-column", className="", id, children } = this.props;
         return (
-            <ul className="nav flex-column">
+            <ul className={`${defaultClassName} ${className}`}>
                 <h6 className="px-1 mt-4 mb-1 text-muted">
                     <small className="text-uppercase text-small">{title}</small>
                 </h6>
