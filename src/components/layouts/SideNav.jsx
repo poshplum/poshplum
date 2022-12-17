@@ -4,7 +4,7 @@ import { NavItem } from "./NavItem";
 import { SidebarSection } from "./SidebarSection";
 
 export const SidebarPortal = PortalProvider({
-    name: "Sidebar",
+    name: "SideNav",
     as: "ul",
     defaultClassName: "nav flex-column",
     components: {
@@ -14,7 +14,7 @@ export const SidebarPortal = PortalProvider({
     },
 });
 
-export class Sidebar extends React.Component {
+export class SideNav extends React.Component {
     render() {
         const { children } = this.props;
         return (

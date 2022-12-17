@@ -14,7 +14,7 @@ export class DCAppLayout extends Component {
         const {
             Logo,
             Title: TitleSlot,
-            Sidebar,
+            SideNav,
             Breadcrumbs,
             PageTitle,
         } = GeneralAppLayout.slots;
@@ -27,8 +27,8 @@ export class DCAppLayout extends Component {
                 <Logo>
                     <Link to="/">
                         <img
-                            // src={plumLogo}
-                            class="plum logo"
+                            src={`/dcoll-logo-minimal.svg`}
+                            class="logo"
                             alt="Done Collectively logo"
                             width="40"
                             height="40"
@@ -43,7 +43,7 @@ export class DCAppLayout extends Component {
                     <Breadcrumb>Examples</Breadcrumb>
                 </Route>
 
-                <Sidebar>
+                <SideNav>
                     <SidebarSection id="mainMenu" title="">
                     <NavItem Link to="/myDashboard">
                             My Dashboard
@@ -56,8 +56,8 @@ export class DCAppLayout extends Component {
 
                     <SidebarSection id="myProjects" title="Projects" className="fs-6">
                         <small>
-                        <NavItem Link to="/org_abc/projects/prj-123">
-                            Dred - Realtime State Channel with Redis
+                        <NavItem Link to="/projectPage">
+                            Some Project Page
                         </NavItem>
                         <NavItem Link to="/org_abc/projects/prj-123">
                             Done Collectively - Smart Contracts
@@ -94,7 +94,7 @@ export class DCAppLayout extends Component {
                         </small></small>
                     </SidebarSection>
 
-                </Sidebar>
+                </SideNav>
                 {children}
             </GeneralAppLayout>
         );

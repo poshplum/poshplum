@@ -5,7 +5,7 @@ import { Route, Switch } from "react-router-dom";
 import Reactor from "./components/Reactor";
 import { DCAppLayout } from "src/components/layouts/DCAppLayout";
 import { Portal } from "./components/Portal";
-
+import {ProjectMock} from "src/components/layouts/ProjectMock";
 @Reactor
 export class DCApp extends React.Component {
     render() {
@@ -18,8 +18,8 @@ export class DCApp extends React.Component {
                         <Route exact path="/myStuff"
                                 // component={} />
                         >My Stuff - TODO</Route>
-                        {/* <Route path="/layouts" component={AboutLayouts} />
-                        <Route
+                        <Route path="/projectPage" component={ProjectMock} />
+                        {/* <Route
                             path="/examples/layouts"
                             component={LayoutExample}
                         />

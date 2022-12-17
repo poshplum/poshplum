@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 
 import { Actor, Action, autobind } from "../Reactor";
 import { PortalProvider } from "../PortalProvider";
-import { Sidebar } from "./Sidebar";
+import { SideNav } from "./SideNav";
+import { CoPanel } from "./CoPanel";
 
 //!!! todo add Title style so that non-last-child children are display:none
 export const Title = PortalProvider({
@@ -30,6 +31,16 @@ export const Breadcrumbs = PortalProvider({
         Breadcrumb,
     },
 });
+
+export const Panel = PortalProvider({
+    name: "Panel",
+    as: "div",
+    defaultClassName: "best-way-tbd-too",
+    components: {
+        default: CoPanel,
+    },
+});
+
 
 export function Breadcrumb({
     as: As = "li",
@@ -57,14 +68,15 @@ export const Logo = Layout.namedSlot("Logo");
 
 export class GeneralAppLayout extends Layout {
     static displayName = "TopMenuLayout";
-    static Sidebar = Sidebar;
+    static SideNav = SideNav;
     static Title = Title;
     static PageTitle = PageTitle;
     static Logo = Logo;
     static Body = Body;
+    static Panel = Panel;
     static Breadcrumbs = Breadcrumbs;
     static Breadcrumb = Breadcrumb;
-    static slots = { Logo, Title, PageTitle, Breadcrumbs, Sidebar, Body };
+    static slots = { Logo, Title, PageTitle, Breadcrumbs, SideNav, Body, Panel };
 
     render() {
         let slots = this.slots;
@@ -77,7 +89,6 @@ export class GeneralAppLayout extends Layout {
                         {slots.Title || "untitled site"}
                     </div>
 
-                    <nav aria-label="breadcrumb">{slots.Breadcrumbs}</nav>
                     <div className="navbar-nav">
                         <span className="nav-item">
                             {slots.PageTitle || "untitled page"}
@@ -106,12 +117,18 @@ export class GeneralAppLayout extends Layout {
 
                 <div class="container-fluid">
                     <div class="row">
-                        {slots.Sidebar}
+                        {slots.SideNav}
                         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                            <nav aria-label="breadcrumb">{slots.Breadcrumbs}</nav>
+
                             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                                 {slots.Body || "empty body area"}
-                            </div>
+                            </div>                          
                         </main>
+
+                        <div class="bg- best-way-tbd panel-container could-be-removed">
+                                {slots.Panel}
+                            </div>
                     </div>
                 </div>
             </div>

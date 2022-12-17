@@ -16,7 +16,7 @@ export class DocsLayout extends Component {
         const {
             Logo,
             Title: TitleSlot,
-            Sidebar,
+            SideNav,
             Breadcrumbs,
             PageTitle,
         } = GeneralAppLayout.slots;
@@ -45,7 +45,7 @@ export class DocsLayout extends Component {
                     <Breadcrumb>Examples</Breadcrumb>
                 </Route>
 
-                <Sidebar>
+                <SideNav>
                     <SidebarSection id="about" title="About">
                         <NavItem Link to="/about">
                             Posh Plum
@@ -64,7 +64,7 @@ export class DocsLayout extends Component {
                             Reactor
                         </NavItem>
                     </SidebarSection>
-                </Sidebar>
+                </SideNav>
                 {children}
             </GeneralAppLayout>
         );
