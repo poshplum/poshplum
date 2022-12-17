@@ -12,18 +12,17 @@ export class DCAppLayout extends Component {
     render() {
         let { children } = this.props;
         const {
-            Logo: LogoSlot,
+            Logo,
             Title: TitleSlot,
             Sidebar,
             Breadcrumbs,
             PageTitle,
         } = GeneralAppLayout.slots;
-        const { Logo, Title, Breadcrumbs: Breadcrumb } = Portal;
+        const { Title, Breadcrumbs: Breadcrumb } = Portal;
         return (
             <GeneralAppLayout>
                 <TitleSlot />
                 <Title className="d-inline-block">Done Collectively</Title>
-                <LogoSlot />
                 {/* TODO */}
                 <Logo>
                     <Link to="/">
