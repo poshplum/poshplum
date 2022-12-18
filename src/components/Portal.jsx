@@ -151,15 +151,76 @@ function lateOrMissingPortal(portalName, componentName) {
     };
 }
 
+const portalComponentsUsage = [
+    "const {components: {‹somePortalName›: { ‹somePortalComponentName› }} = Portals;\n",
+    "    Note the second layer of braces   ^^ \n\n",
+    "Did you intend to access the default portal component instead?\n",
+    "    const { ‹somePortalName› } = Portals;",
+];
+
 function lateOrMissingPortalComponents(badPortalName) {
-    return new Proxy(
-        {},
+    const p = new Proxy(
         {
-            get(x, componentName) {
+            info: `lateOrMissingPortalComponent‹${badPortalName}›`,
+            info2: `a facade for connecting portal-component requests connected to portals`,
+            info3: ` - particularly, for portals that may be registered soon *after* the attempt to get the named portal-component`,
+            usage: ` - const { somePortalName: { someComponentName } } = Portals;`,
+        },
+        {
+            get(x, componentName, y) {
+                const msg = [
+                    "returning component for late-or-missing portal component",
+                    badPortalName,
+                    " ->",
+                    componentName,
+                ];
+                if (componentName == Symbol.toPrimitive) {
+                    console.error(
+                        `Portal-component request for: `,
+                        badPortalName
+                    );
+                    throw new Error(
+                        `Incorrect use of Portal facade (see console log for portal name).  \n\n` +
+                            `Likely misuse of { components: { ‹portalName›: {‹portalComponentName›} } } = Portals; \n` +
+                            `   (you need to destructure the inner portalComponentName!)\n\n  ` +
+                            `Usage: `+ portalComponentsUsage.join("")
+                    );
+                }
+                if (componentName[0] == "_") {
+                    msg.push("Usage: ", ...portalComponentsUsage);
+                    console.error(...msg);
+                } else {
+                    console.warn(...msg);
+                }
                 return lateOrMissingPortal(badPortalName, componentName);
             },
         }
     );
+
+    //! it gives developers a clear signal when they use it wrong and their accessed value
+    //  is used as a react component
+    const DevErrorIncorrectUsage = function (props) {
+        console.warn(`Portal.components‹${badPortalName}› proxy: `, p);
+        return (
+            <div className="alert alert-danger">
+                <p>Developer error: bad use of Portal.components for portal '{badPortalName}' (see devtools console for more info) </p>
+                Usage:
+                <pre className="ms-3">
+                    <code>{portalComponentsUsage.join("")}</code>
+                </pre>
+            </div>
+        );
+    };
+    DevErrorIncorrectUsage.defaultProps = null;
+    DevErrorIncorrectUsage.propTypes = null;
+    DevErrorIncorrectUsage.displayName = "invalild‹Portal.components›";
+    DevErrorIncorrectUsage.contextType = null;
+    DevErrorIncorrectUsage.getDerivedStateFromProps = null;
+
+    //! it returns an object with proxying behavior for later access to the components defined by a portal
+    Object.setPrototypeOf(DevErrorIncorrectUsage, p);
+    return DevErrorIncorrectUsage; // does it work?
+    return p;
 }
 
 const defaultCompLookup = function () {};
