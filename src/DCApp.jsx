@@ -6,6 +6,8 @@ import Reactor from "./components/Reactor";
 import { DCAppLayout } from "src/components/layouts/DCAppLayout";
 import { Portal } from "./components/Portal";
 import {ProjectMock} from "src/components/layouts/ProjectMock";
+import { WorkingGroupMock } from "./components/layouts/WorkingGroupMock";
+
 @Reactor
 export class DCApp extends React.Component {
     render() {
@@ -19,6 +21,7 @@ export class DCApp extends React.Component {
                                 // component={} />
                         >My Stuff - TODO</Route>
                         <Route path="/projectPage" component={ProjectMock} />
+                        <Route path="/wgPage" component={WorkingGroupMock} />
                         {/* <Route
                             path="/examples/layouts"
                             component={LayoutExample}
