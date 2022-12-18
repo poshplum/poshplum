@@ -8,8 +8,10 @@ import {autobind} from "src/components/Reactor"
 
 export class ProjectMock extends Component {
     @autobind
-    addPanel() {
-        this.setState({panel:true});
+    togglePanel() {
+        this.setState(
+            ({panel=false}) => { return {panel:!panel} }
+        );
     }
     render() {
         const {
@@ -21,7 +23,6 @@ export class ProjectMock extends Component {
         } = Portal;
 
         const {panel} = this.state || {}
-
         return (
             <div>
                 <PageTitle>Some Project Page</PageTitle>
@@ -30,11 +31,12 @@ export class ProjectMock extends Component {
                 <h5>My Great Project</h5>
                 <p>We can keep working on how a project looks</p>
     
-                <button className="btn btn-dark" onClick={this.addPanel}>Open Panel</button>
+                <button className="btn btn-dark" onClick={this.togglePanel}>Toggle Panel</button>
 
-                <PanelPortal>
-                    Here's something in the Panel.
+                {panel && <PanelPortal>
+                    Panel content
                 </PanelPortal>
+                }
             </div>
         );
     }

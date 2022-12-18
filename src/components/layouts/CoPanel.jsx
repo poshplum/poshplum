@@ -7,10 +7,12 @@ import { Link } from "react-router-dom";
 
 export class CoPanel extends Component {
     render() {
+        const {children} = this.props
         return (
             <div className="sidepanel-end-wrapper toggle-open">
                     <div className="sidepanel-end">
-                    CoPanel Placeholder
+
+                    {children}
                     </div>
             </div>
         );
