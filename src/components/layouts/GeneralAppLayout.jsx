@@ -22,6 +22,16 @@ export const PageTitle = PortalProvider({
     },
 });
 
+export const Panel = PortalProvider({
+    name: "Panel",
+    as: "div",
+    defaultClassName: "best-way-tbd-too",
+    components: {
+        default: CoPanel,
+        Panel: CoPanel,
+    },
+});
+
 export const Breadcrumbs = PortalProvider({
     name: "Breadcrumbs",
     as: "ol",
@@ -31,16 +41,6 @@ export const Breadcrumbs = PortalProvider({
         Breadcrumb,
     },
 });
-
-export const Panel = PortalProvider({
-    name: "Panel",
-    as: "div",
-    defaultClassName: "best-way-tbd-too",
-    components: {
-        default: CoPanel,
-    },
-});
-
 
 export function Breadcrumb({
     as: As = "li",
@@ -124,11 +124,9 @@ export class GeneralAppLayout extends Layout {
                             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                                 {slots.Body || "empty body area"}
                             </div>                          
-                        </main>
+                        </main>                        
 
-                        <div class="bg- best-way-tbd panel-container could-be-removed">
-                                {slots.Panel}
-                            </div>
+                        {slots.Panel}
                     </div>
                 </div>
             </div>

@@ -14,9 +14,9 @@ export class ProjectMock extends Component {
     render() {
         const {
             PageTitle,
+            Panel: PanelPortal,
             components: {
                 Breadcrumbs: { Breadcrumb },
-                Panel: PanelPortal
             },
         } = Portal;
 
@@ -32,9 +32,9 @@ export class ProjectMock extends Component {
     
                 <button className="btn btn-dark" onClick={this.addPanel}>Open Panel</button>
 
-                {panel && <PanelPortal>
+                <PanelPortal>
                     Here's something in the Panel.
-                </PanelPortal>}
+                </PanelPortal>
             </div>
         );
     }

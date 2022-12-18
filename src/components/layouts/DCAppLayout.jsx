@@ -17,12 +17,14 @@ export class DCAppLayout extends Component {
             SideNav,
             Breadcrumbs,
             PageTitle,
+            Panel,
         } = GeneralAppLayout.slots;
         const { Title, Breadcrumbs: Breadcrumb } = Portal;
         return (
             <GeneralAppLayout>
                 <TitleSlot />
                 <Title className="d-inline-block">Done Collectively</Title>
+
                 {/* TODO */}
                 <Logo>
                     <Link to="/">
@@ -96,6 +98,7 @@ export class DCAppLayout extends Component {
 
                 </SideNav>
                 {children}
+                <Panel />
             </GeneralAppLayout>
         );
     }
