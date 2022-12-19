@@ -58,7 +58,9 @@
     "build:watch": "rm dist/* ; cp ./package.json dist/ ; rollup -c -w ",
     "start": "vite",
     "dev": "vite",
+    "dev:prototype": "vite --mode prototype",
     "serve": "vite --host",
+    "serve:prototype": "vite --host --mode prototype",
     "docs:build": "tsc && vite build",
     "docs:preview": "vite preview"
   }
