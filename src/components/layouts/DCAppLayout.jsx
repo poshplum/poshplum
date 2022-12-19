@@ -98,7 +98,13 @@ export class DCAppLayout extends Component {
 
                 </SideNav>
                 {children}
-                <Panel />
+                <div>
+                    <div id="coPanel" className="collapse bg-light collapse-horizontal" >
+                        <div class="d-flex flex-column vh-100 coPanel-inner">
+                            <Panel />
+                        </div>
+                    </div>
+                </div>
             </GeneralAppLayout>
         );
     }

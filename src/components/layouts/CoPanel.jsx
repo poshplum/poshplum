@@ -9,11 +9,8 @@ export class CoPanel extends Component {
     render() {
         const {children} = this.props
         return (
-            <div className="sidepanel-end-wrapper toggle-open">
-                    <div className="sidepanel-end">
-
-                    {children}
-                    </div>
+            <div class="d-flex flex-column vh-100" style="width: 280px;">
+                {children}
             </div>
         );
     }

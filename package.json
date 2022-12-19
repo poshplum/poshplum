@@ -38,11 +38,13 @@
     "vite": "^3.2.0"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.6",
     "debug": "^4.1.1",
     "fast-levenshtein": "^2.0.6",
     "lodash": "^4.17.21",
     "preact": "^10.11.2",
     "prop-types": "^15.7.2",
+    "react-bootstrap": "^2.7.0",
     "react-router-dom": "5",
     "rollup-plugin-modify": "^3.0.0",
     "util": "^0.11.1"
@@ -58,9 +60,7 @@
     "build:watch": "rm dist/* ; cp ./package.json dist/ ; rollup -c -w ",
     "start": "vite",
     "dev": "vite",
-    "dev:prototype": "vite --mode prototype",
     "serve": "vite --host",
-    "serve:prototype": "vite --host --mode prototype",
     "docs:build": "tsc && vite build",
     "docs:preview": "vite preview"
   }
