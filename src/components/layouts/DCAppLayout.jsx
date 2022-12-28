@@ -57,24 +57,18 @@ export class DCAppLayout extends Component {
                     </SidebarSection>
 
                     <SidebarSection id="myProjects" title="Projects" className="fs-6">
-                        <small>
                         <NavItem Link to="/projectPage">
                             Some Project Page
                         </NavItem>
                         <NavItem Link to="/org_abc/projects/prj-123">
                             Done Collectively - Smart Contracts
                         </NavItem>
-   
-                       <small>
                          <NavItem Link to="/org_abc/projects/prj-123">
                             Littlefish - Ikigai
                         </NavItem>
-                        </small>
-                        </small>
                     </SidebarSection>
 
                     <SidebarSection id="orgs" title="My Orgs">
-                        <small><small>
                     <NavItem Link to="/myDashboard">
                             Littlefish
                         </NavItem>
@@ -93,7 +87,6 @@ export class DCAppLayout extends Component {
                         <NavItem Link to="/myDashboard">
                             todo: align to bottom
                         </NavItem>
-                        </small></small>
                     </SidebarSection>
 
                 </SideNav>
