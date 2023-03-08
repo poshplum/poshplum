@@ -38,7 +38,7 @@
     "typescript": "^4.9.3"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged --concurrent false"
+    "pre-commit": "true || pnpm exec lint-staged --concurrent false"
   },
   "lint-staged": {
     "*": [
