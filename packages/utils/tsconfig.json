@@ -1,0 +1,16 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        // "emitDecoratorMetadata": true,
+        "lib": ["es2018", "dom"],
+        "target": "ES2016",
+        "baseUrl": ".",
+        "module": "es6",
+        "jsx": "react",
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "allowJs": true
+    },
+    "include": ["src/**/*.tsx", "src/**/*.jsx", "src/**/*.ts", "src/**/*.js"]
+}

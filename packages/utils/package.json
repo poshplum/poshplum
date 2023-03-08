@@ -1,0 +1,70 @@
+{
+    "name": "@poshplum/utils",
+    "version": "0.8.0",
+    "description": "Platform-agnostic utilities for poshplum and supporting modules",
+    "license": "private - not licensed for public use",
+    "private": true,
+    "exports": {
+        ".": {
+            "node": "./dist/utils.mjs",
+            "browser": "./dist/utils-browser.mjs",
+            "types": {
+                "browser": "./dist/utils-browser.js",
+                "default": "./dist/utils.js"
+            },
+            "default": "./dist/utils.js"
+        },
+        "./browser": {
+            "types": "./dist/utils-browser.js",
+            "browser": "./dist/utils-browser.mjs",
+            "import": "./dist/utils-browser.mjs",
+            "default": "./dist/utils-browser.js"
+        },
+        "./browser/browser": {
+            "types": "./dist/utils-browser.js",
+            "browser": "./dist/utils-browser.mjs",
+            "import": "./dist/utils-browser.mjs",
+            "default": "./dist/utils-browser.js"
+        }
+    },
+    "main": "dist/utils.js",
+    "module": "dist/utils.mjs",
+    "browser": "dist/utils-browser.mjs",
+    "typesXX": "dist/utils.d.ts",
+    "source": "src/index.ts",
+    "devDependencies": {
+        "@rollup/plugin-alias": "^3.1.1",
+        "@rollup/plugin-commonjs": "^24.0.0",
+        "@rollup/plugin-multi-entry": "^6",
+        "@rollup/plugin-node-resolve": "^15.0.1",
+        "@rollup/plugin-replace": "^5.0.2",
+        "@types/lodash": "^4.14.191",
+        "@types/node": "^18.11.17",
+        "concurrently": "^7.6.0",
+        "fast-glob": "^2.2.6",
+        "jest": "^24.7.1",
+        "rollup": "2",
+        "rollup-plugin-dts": "4",
+        "rollup-plugin-livereload": "^2.0.5",
+        "rollup-plugin-modify": "^3.0.0",
+        "rollup-plugin-node-externals": "^5.0.3",
+        "rollup-plugin-ts": "^3.1.1",
+        "tslib": "^2.4.1",
+        "typescript": "^4.9.4"
+    },
+    "dependencies": {
+        "@types/pino": "5",
+        "chalk": "^4.1.2",
+        "dotenv": "^16.0.3",
+        "lodash": "^4.17.21",
+        "pino": "^5.16.0",
+        "shortid": "^2.2.16",
+        "zoned-cls": "git://github.com/poshplum/zoned-cls.git" 
+    },
+    "scripts": {
+        "clean": "rm dist/*",
+        "build": "FORCE_COLOR=1 concurrently --names \"server,browser\" -c \"bgBlue.bold,bgMagenta.bold\" \"rollup -c\" \"rollup -c rollup.browser.config.js\"",
+        "dev": "FORCE_COLOR=1 pnpm build:watch",
+        "build:watch": "concurrently --names \"server,browser\" -c \"bgBlue.bold,bgMagenta.bold\" \"rollup -cw\" \"rollup -c rollup.browser.config.js -w\""
+    }
+}

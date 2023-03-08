@@ -1,0 +1,25 @@
+@mixin fontSize($size, $size-min: false ) {
+    
+    @if $size-min == false {
+        $size-min: $size - 0.2rem;
+    }
+    $f-size-max: $size; 
+    $f-size-responsive:- $font-size + calc($size - $font-size);
+
+    font-size: clamp($size-min, $f-size-responsive + 3.3vw, $f-size-max);
+}
+
+
+// custom mixin to assemble colors from diffrent token shades 
+@function color($color: primary, $shade: false, $alpha: 1) {
+    @if(map-has-key($tokens, 'color', $color)==false) {
+        @warn "Missing color for #{$color}"
+    }
+
+    @if($shade) {
+        $lighten: calc(calc(500 - $shade) * 0.1);
+        $hue-offset: calc(abs($lighten) * $hue-offset-modifier);
+        @return hsla(calc(var(--color-#{$color}-h) + $hue-offset), var(--color-#{$color}-s), calc(var(--color-#{$color}-l) + $lighten * 1%), $alpha)
+    }
+    @return var(--color-#{$color});
+}

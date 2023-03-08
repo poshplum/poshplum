@@ -1,0 +1,27 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "lib": ["es2017", "dom"],
+        "target": "es2017",
+        "baseUrl": ".",
+        "module": "es6",
+        "declaration": true,
+        "moduleResolution": "node16",
+        "jsx": "react",
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "allowJs": true,
+        "outDir": "dist"
+    },
+    "include": [
+        "src/index.ts"
+        // "src/**/*.tsx",
+        // "src/**/*.jsx",
+        // "src/**/*.ts",
+        // "src/**/*.js",
+        // "src/**/*.mdx"
+    ],
+    "exclude": ["dist"]
+}

@@ -1,0 +1,20 @@
+@import "./tokens/tokens_color";
+@import "./tokens/tokens_color-dark";
+@import "./tokens/tokens_map";
+
+// custom css var config
+:root {
+    --hue-modifier: 0.2;
+    --unit-modifier: .1;
+    //alias colors
+    --color-error: var(--color-danger);
+}
+
+$hue-offset-modifier: var(--hue-modifier); // offset hue relative to shade for slight variation of look, set to 0 for no offset
+
+$font-size-modifier: 1;
+$height-size-modifier: 1;
+$unit-size-modifier: 1.1; // custom color mixin to generate shades
+$enable-smooth-scroll: true;
+$enable-button-pointers: true;
+

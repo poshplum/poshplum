@@ -1,0 +1,200 @@
+.card {
+  &.card-main {
+    position: relative;
+    //active/hover styles
+    &:after {
+      position: absolute;
+      width: 0.2rem;
+      height: 100%;
+      left: -0.2rem;
+      top: 0;
+      content: '';
+      background-color: transparent;
+    }
+
+    &:hover,
+    &.active {
+      &:after {
+        background-color: $primary;
+      }
+    }
+  }
+  .card-title { color: green }
+
+  .card-header {
+    display: flex;
+    gap: $spacer;
+
+    .card-label {
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+// .card {
+//     --handleWidth: 4px;
+//     --handleWidthSelected: 7px;
+//     --fixedLeftPad: 2px;
+//     margin-left: 2px;
+//     margin-right: 0.5rem;
+//     break-inside: avoid;
+  
+//     padding-left: calc(var(--fixedLeftPad) + var(--handleWidthSelected) - var(--handleWidth) );  // 5px;
+//     margin-bottom: 2px;
+  
+//     & + .card:last-of-type { margin-bottom: 0.5em }
+  
+//     border-left: var(--handleWidth) solid #ccc;
+//     box-shadow: 2px 2px 0px #aaa, 4px 4px 0px #ccc;
+  
+//     //&:last-of-type { margin-bottom: 0.5em }
+  
+//     p:last-child { margin-bottom: 0; }
+  
+//     &.compact {
+//       --handleWidth: 2px;
+//       --handleWidthSelected:5px;
+//       margin-bottom: 1px;
+//       margin-right: 0;
+  
+//       .card-body {
+//         padding: 0.33em;
+//         &:last-child { padding: 0.33em; }
+//       }
+//     }
+//     .card-body {
+//       padding: 0.5em;
+//     }
+//     &:active:hover, &.active, &.focus-within {
+//       border-left: var(--handleWidthSelected) solid #6060aa;
+//       padding-left: var(--fixedLeftPad);
+//     }
+  
+//     &.active {
+//       border-top: 1px solid #7979c7;
+//       border-bottom: 1px solid #7979c7;
+//     }
+//     &:not(:active):not(.active):not(.focus-within):hover {
+//       border-left: var(--handleWidthSelected) solid #7681ff;
+//       padding-left: var(--fixedLeftPad);
+//       box-shadow: 2px 2px 0px #aad, 4px 4px 0px #ccf;
+//     }
+//     h1, h2, h3, h4, h5, h6 {
+//       display: contents;
+//     }
+//     .card-title {
+//       float: left;
+//       width: fit-content;
+//       ~ .header-right {
+//         float: right;
+//       }
+//     }
+//     .card-title.pop-title {
+//       background: white;
+//       border-top: 0.5px solid #7d7d7d;
+//       border-top-left-radius: 3px;
+//       border-top-right-radius: 3px;
+//       margin-left: -0.7rem;
+//       margin-right: -0.5rem;
+//       padding: 0.0em 0.35rem;
+//       margin-top: -0.9rem;
+//       box-shadow: 1.5px -3px 1px -1.5px #6663, 8px -6px 1px -7px #6662;
+//       background:
+//               linear-gradient(113deg, #bbb, #fff0 0.5rem),
+//               linear-gradient(242deg, #ccc, #fff0 0.4rem),
+//               linear-gradient(to bottom, #fff, #fff 0.01rem, #fff0 0.25rem );
+  
+//         ~ .header-right {
+//           margin-top: -0.8rem;
+//       }
+//     }
+//     &.active .card-title.pop-title {
+//       border-top: 0.5px solid #6060aa;
+//     }
+  
+//     &.active .card-header .pop-left {
+//       box-shadow:
+//               -3px 0 1px #6060aa,
+//               -1px 0 1px #999;
+//     }
+//     &:not(:active):not(.active):not(.focus-within):hover .card-header .pop-left {
+//       box-shadow:
+//               -2px 0 1px #7681ff,
+//               -1px 0 1px #999;
+//     }
+  
+//     .card-header {
+//       position: relative;
+  
+//       & + .card-body {
+//         padding-top: 0
+//       };
+  
+//       .chip.icon {
+//         padding-left: 0.15em;
+//         overflow-x: visible;
+//       }
+  
+//       .pop-left {
+//         display: inline-block;
+//         position: absolute;  // vers its relative container
+//         top:-0.33em;
+//         left: calc(-1em - 2px);
+  
+//         //margin: 0.25em 0.25em 0.25em 0.25em;
+//         width: 1.5em;
+//         margin-bottom: -0.25rem;
+//         padding-left: 0.5em;
+//         height: 1.75em;
+//         width: 1.75em;
+//         //border: 1px solid red;
+//         box-shadow:
+//                 -1px 0 1px #fff,
+//                 -2px 0 1px #999;
+//       }
+  
+  
+//       .card-label {
+//         /*border: 2px solid hsl(0, 100%, 50%);*/
+//         display: inline-block;
+//         white-space: nowrap;
+//         position: relative;
+//         z-index: 1;
+  
+//         margin-left: -0.75em;
+  
+//         min-width: 1em;
+//         float:right;
+//         height: 1.25rem;
+  
+//         right: -1.7em;
+//         top: -1.5em;
+//       }
+  
+//       .zero-height {
+//         overflow-x: visible;
+//         /*height:0;*/
+//         margin-bottom:-1.35rem;  /* effectively removes from vertical flow*/
+//       }
+  
+//       .pop-right {
+//         background: linear-gradient(to left, #eef0f3ff, #eef0f333 1.9em), linear-gradient(to bottom, #eef0f3ff, #eef0f3ff 0.1em, #eef0f333 0.5em);
+//         box-shadow: 3px 0px 0px #ccc,
+//           1px -1px 0px #ccc;
+  
+//         &.chip-sm {
+//           right: -0.6em;
+//           top: -0.5rem;
+//         }
+//         &.chip-tiny {
+//           top: -0.25em;
+//         }
+  
+//         ~ .header-right {
+//           top: -0.7rem;
+//           position: relative
+//         }
+  
+//       }
+//     }
+//   }

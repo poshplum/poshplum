@@ -1,0 +1,38 @@
+//$primary-color: #2e5bec;
+//$dark-color: #3e396b;
+// $bg-color-brown: #974b00;
+// $bg-color-yellow: #f8f28e;
+
+// @import "./config_global";
+// @import "./mixins";
+// @import "./utilities";
+// @import "./spectre/spectre";
+// @import "./reboot";
+
+@import "bootstrap/app.scss";
+@import "./plum/plum";
+@import "./fonts"; //@TODO make font import optional config
+
+.card {
+    padding: 0.25em;
+    border: 1px solid #e7e7e7;
+    border-radius: 0.25em;
+}
+
+//! x-ray only spans one level
+.xray-show,
+.no-xray .xray-show,
+.xray .no-xray .xray-show {
+    display: none;
+}
+//! x-ray shows content when enabled.
+.xray .xray-show,
+.no-xray .xray .xray-show {
+  display: inline-block;
+  position: relative; top: 0.5em;
+  padding: 3px 5px;
+  border-radius: 3px;
+  opacity: 0.6;
+  background: var(--bg--1, black);
+  color: var(--fg--1, #bbb);
+}

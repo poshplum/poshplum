@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "lib": ["es2018", "dom"],
+        "target": "es5",
+        "baseUrl": ".",
+        "module": "es2015",
+        "moduleResolution": "NodeNext",
+        "jsx": "react",
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "noEmit": true,
+        "allowJs": true,
+        "outDir": "dist",
+        "paths": {
+        }
+    },
+    "typeRoots": [
+        "./node_modules/@types",
+        "**/*/dist",
+    ],
+    "paths": {
+        //!!!!! these SHOULD be unneeded...
+        // "@poshplum/utils": ["utils/dist/utils.mjs"],      
+        // "@poshplum/utils/browser": ["utils/dist/utils-browser"],
+        // "@poshplum/poshplum": ["poshplum/"]
+    },
+    "include": ["src/**/*.tsx", "src/**/*.jsx", "src/**/*.ts", "src/**/*.js"],
+    "exclude": ["dist", "node_modules"]
+}
