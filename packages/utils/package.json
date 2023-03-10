@@ -1,9 +1,12 @@
 {
     "name": "@poshplum/utils",
-    "version": "0.8.0",
+    "version": "0.8.2",
     "description": "Platform-agnostic utilities for poshplum and supporting modules",
-    "license": "private - not licensed for public use",
-    "private": true,
+    "license": "TBD",
+    "private": false,
+    "files": [
+        "dist/"
+    ],
     "exports": {
         ".": {
             "node": "./dist/utils.mjs",
@@ -59,7 +62,7 @@
         "lodash": "^4.17.21",
         "pino": "^5.16.0",
         "shortid": "^2.2.16",
-        "zoned-cls": "git://github.com/poshplum/zoned-cls.git" 
+        "zoned-cls": "git://github.com/poshplum/zoned-cls.git"
     },
     "scripts": {
         "clean": "rm dist/*",
