@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+//!!! todo add types
+
 import React from "react";
 
-import { Reactor } from "../Reactor";
 import { autobind } from "@poshplum/utils/browser";
+import { Reactor } from "../Reactor";
 
 export class Subscribe extends React.Component {
     constructor(props) {
@@ -62,9 +65,8 @@ export class Subscribe extends React.Component {
     doSubscribe() {
         delete this.subscriptionPending;
 
-        let { optional = false } = this.props;
-
-        let subscriberReq = Reactor.SubscribeToEvent({
+        const { optional = false } = this.props;
+        const subscriberReq = Reactor.SubscribeToEvent({
             eventName: this.eventName,
             single: true,
             optional: true,
@@ -96,7 +98,6 @@ export class Subscribe extends React.Component {
                     this.setState({ retries: 1 + retries });
                 }
             );
-            if (ok && this.state.retries) debugger
         } else {
             console.log(
                 `Subscribe: event '${this.eventName}' didn't get a chance to register before being unmounted.  \n` +
@@ -132,7 +133,7 @@ export class Subscribe extends React.Component {
     }
 
     render() {
-        let { children, skipLevel, optional, debug, ...handler } = this.props;
+        const { children, skipLevel, optional, debug, ...handler } = this.props;
 
         const foundKeys = Object.keys(handler);
         if (foundKeys.length > 1) {

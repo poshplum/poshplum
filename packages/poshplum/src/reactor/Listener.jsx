@@ -1,20 +1,23 @@
 import React from "react";
+
 import { inheritName } from "../helpers/ClassNames";
 import {
-    trace,
-    logger,
-    eventDebug,
-    reactorTag,
+    EVENT_IS_LOOPING_MAYBE,
     Reactor,
     debugInt,
-    stdHandlers,
     elementInfo,
-    EVENT_IS_LOOPING_MAYBE,
+    eventDebug,
+    logger,
+    reactorTag,
+    stdHandlers,
+    trace,
 } from "../Reactor";
 
+//!!! todo: add typescript types and make eslint actually satisfied, not suppressed.
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function Listener(componentClass) {
     const componentClassName = componentClass.name;
-    let displayName = inheritName(componentClass, "👂");
+    const displayName = inheritName(componentClass, "👂");
     trace(`listener creating subclass ${displayName}`);
     const clazz = class Listener extends componentClass {
         constructor(props) {
@@ -135,7 +138,10 @@ export function Listener(componentClass) {
                 rawHandler,
                 event
             ) {
-                if (event.detail.debug) debugger;
+                if (event.detail.debug) {
+                    // eslint-disable-next-line no-debugger
+                    debugger;
+                }
                 if (!event.detail.single) return rawHandler(event);
 
                 const result = rawHandler(event);
@@ -173,8 +179,7 @@ export function Listener(componentClass) {
                 : "(NOTE: listener applied additional wrapper)";
 
             let listeningNode = at || this._listenerRef.current;
-            if ("instance:get" === eventName) debugger;
-            
+
             const handler =
                 existing ||
                 (isInternal
@@ -337,6 +342,7 @@ export function Listener(componentClass) {
                         `\n   ...in listeners`,
                         [...listenersOfThisType.values()]
                     );
+                    // eslint-disable-next-line no-debugger
                     debugger;
                     return;
                 }
@@ -356,6 +362,7 @@ export function Listener(componentClass) {
                         Reactor.bindWarning,
                     handler
                 );
+                // eslint-disable-next-line no-debugger
                 debugger;
             }
             // avoids closure
@@ -369,6 +376,8 @@ export function Listener(componentClass) {
             return wrapped;
 
             function wrappedHandler(createdBy, details, handler, event) {
+                // it's important to clarify the `this` context.  Sorry, eslint.                
+                // eslint-disable-next-line @typescript-eslint/no-this-alias
                 const reactor = this;
                 const {
                     eventName,
@@ -394,7 +403,7 @@ export function Listener(componentClass) {
                 event.handledBy = event.handledBy || [];
                 const listenerObj = handler.boundThis || Reactor.bindWarning;
                 const listenerFunction = handler.innerFunction || handler;
-                let handled = {
+                const handled = {
                     reactor,
                     reactorNode: this,
                     eventName,
@@ -402,7 +411,10 @@ export function Listener(componentClass) {
                     createdBy,
                     listenerFunction,
                 };
-                if (!handled.reactorNode) debugger;
+                if (!handled.reactorNode) {
+                    // eslint-disable-next-line no-debugger
+                    debugger;
+                }
 
                 const isInternalEvent = type in Reactor.Events || isInternal;
                 const listenerTarget =
@@ -440,6 +452,7 @@ export function Listener(componentClass) {
                             console.warn(msg, { handler });
                         }
                         if (event.error) {
+                            // eslint-disable-next-line no-debugger
                             debugger;
                         } else {
                             if (!isInternalEvent)
@@ -470,8 +483,10 @@ export function Listener(componentClass) {
                         eventDebug("event observer called");
                     } else if (result === undefined || !!result) {
                         if (!isInternalEvent) eventDebug("(event was handled)");
-                        if (event.handledBy.length > EVENT_IS_LOOPING_MAYBE)
+                        if (event.handledBy.length > EVENT_IS_LOOPING_MAYBE) {
+                            // eslint-disable-next-line no-debugger
                             debugger;
+                        }
                         event.handledBy.push(handled);
                         if (single) event.stopPropagation();
                     } else {

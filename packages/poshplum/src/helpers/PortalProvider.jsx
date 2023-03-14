@@ -1,17 +1,11 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { __decorate } from "tslib";
 import React from "react";
+import { autobind, autobindMethods } from "@poshplum/utils/browser";
 import { Reactor } from "../Reactor";
 import { Action } from "../reactor/Action";
-import { autobind, autobindMethods } from "@poshplum/utils/browser";
 
-function bumpState(p, m, d) {
-    if ("bump" !== m) {
-        throw new Error(`@bumpState: expected to decorate method name 'bump()'`)
-    }
-    d.value = bumpState.inner
-    return autobind(p,m,d)
-}
-bumpState.inner =  function bump() {
+function bumper() {
     this.setState(({ gen = 0 }) => ({ gen: gen + 1 }));
 }
 
@@ -27,6 +21,7 @@ export function PortalProvider({ ...options }) {
         props: portalProviderProps,
     } = options;
     if ("string" !== typeof As) {
+        // eslint-disable-next-line no-debugger
         debugger;
         throw new Error(
             `portalProvider ${portalName}: 'as' option must be a string such as 'div' or 'h2' naming an html tag`
@@ -40,7 +35,7 @@ export function PortalProvider({ ...options }) {
         components.default = component;
     }
 
-    // console.warn(`TODO: hot-reloader for factoried portalProvider?`);
+    console.warn(`TODO: hot-reloader for factoried portalProvider?`);
     const portalProviderClass = autobindMethods(
         class portalProvider extends React.Component {
             static displayName = `portalProvider‹${portalName}›`;
@@ -56,7 +51,7 @@ export function PortalProvider({ ...options }) {
             componentDidMount() {
                 this._connectToRegistry();
             }
-            bump = bumpState.inner;
+            bump = bumper;
 
             @autobind
             _connectToRegistry() {
@@ -64,8 +59,9 @@ export function PortalProvider({ ...options }) {
                     this,
                     "portal:registry",
                     () => {
+                        const attempts = this.state.attempts;
                         //! it handles a race between mounting a portal provider and the registry
-                        if ((this.state.attempts || 0) > 5) {
+                        if ((attempts || 0) > 5) {
                             throw new Error(
                                 `PortalProvider for ${portalName} unable to connect to portal registry after ${attempts} attempts`
                             );
@@ -128,6 +124,7 @@ export function PortalProvider({ ...options }) {
                     );
                 }
                 const { default: DefaultComponent } = this._components || {};
+                // eslint-disable-next-line no-debugger
                 if (debug) debugger;
 
                 // prettier-ignore
@@ -144,7 +141,6 @@ export function PortalProvider({ ...options }) {
             );
             }
             @autobind getTarget() {
-                debugger
                 return this.portalTarget.current || this.__parentDomNode;
             }
             @autobind getNamedComponentsOrFacades() {
@@ -177,7 +173,12 @@ export function PortalProvider({ ...options }) {
                     "string" === typeof Component
                         ? Component
                         : Component.displayName || Component.name;
-                if (!contentName) debugger;
+                if (!contentName) {
+                    console.warn("PortalProvider: unknown component (see debugger for more info)");
+                    // eslint-disable-next-line no-debugger
+                    debugger;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-this-alias
                 const provider = this;
                 return class portalComp extends React.Component {
                     // static contentComponent = content;
