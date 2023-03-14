@@ -88,7 +88,7 @@ export function PortalProvider({ ...options }) {
                 //! it uses the configured portal name by default
                 //!  if an overridden portalName is provided in props, it uses that instead
                 const {
-                    defaultClassName = predefinedClassName,
+                    defaultClassName = predefinedClassName || "",
                     className = "",
                     id,
                     initialize,
