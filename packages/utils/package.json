@@ -7,6 +7,9 @@
     "files": [
         "dist/"
     ],
+    "engines": {
+        "node": ">=16.0.0"
+      },    
     "exports": {
         ".": {
             "node": "./dist/utils.mjs",
@@ -66,6 +69,7 @@
     },
     "scripts": {
         "clean": "rm dist/*",
+        "pub": "pnpm publish --access public",
         "build": "FORCE_COLOR=1 concurrently --names \"server,browser\" -c \"bgBlue.bold,bgMagenta.bold\" \"rollup -c\" \"rollup -c rollup.browser.config.js\"",
         "dev": "FORCE_COLOR=1 pnpm build:watch",
         "build:watch": "concurrently --names \"server,browser\" -c \"bgBlue.bold,bgMagenta.bold\" \"rollup -cw\" \"rollup -c rollup.browser.config.js -w\""

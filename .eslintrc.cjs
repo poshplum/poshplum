@@ -4,6 +4,10 @@ const { defineConfig } = require('eslint-define-config')
 
 module.exports = defineConfig({
   root: true,
+  env: {
+      browser: true,
+    node: true,
+  },
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',
@@ -30,7 +34,7 @@ module.exports = defineConfig({
     ],
 
     'node/no-missing-import': [
-      'error',
+      'warn',
       {
         allowModules: ['types', 'estree', 'less', 'sass', 'stylus'],
         tryExtensions: ['.ts', '.js', '.jsx', '.tsx', '.d.ts'],
@@ -96,7 +100,7 @@ module.exports = defineConfig({
         ignoreDeclarationSort: true,
         ignoreMemberSort: false,
         memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
-        allowSeparatedGroups: false,
+        allowSeparatedGroups: true,
       },
     ],
 
@@ -154,13 +158,13 @@ module.exports = defineConfig({
         'node/no-unsupported-features/es-builtins': [
           'error',
           {
-            version: '^14.18.0 || >=16.0.0',
+            version: '>=16.0.0',
           },
         ],
         'node/no-unsupported-features/node-builtins': [
           'error',
           {
-            version: '^14.18.0 || >=16.0.0',
+            version: '>=16.0.0',
           },
         ],
         '@typescript-eslint/explicit-module-boundary-types': 'off',
