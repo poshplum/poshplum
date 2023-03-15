@@ -45,11 +45,11 @@ const cssOpts = {
 };
 
 export default [
-    {
-        input: "src/scss/app.scss",
-        plugins: [postcss(cssOpts)],
-        output: { file: "dist/plum.css" },
-    },
+    // {
+    //     input: "src/scss/app.scss",
+    //     plugins: [postcss(cssOpts)],
+    //     output: { file: "dist/plum.css" },
+    // },
     // {
     //     input: "src/scss/plum.scss",
     //     plugins: [postcss(cssOpts)],
