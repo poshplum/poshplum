@@ -13,21 +13,24 @@ const dummy1 = {},
 
 // See bottom for default export.
 
-let instance = React.createRef();
+const instance = React.createRef();
 
-const defaultCompLookup = function () {};
+const defaultCompLookup = function () {
+    //! it provides a proxy making it easy to extract the default component for a named portal.
+
+    // (that proxy is attached to the prototype of an empty function, which is then 
+    //   used as a base class for the portal API)
+};
+
 const defaultPortalComponentProxy = new Proxy(dummy1, {
     get(neverChanged, portalName, reg) {
         if ("__zone_symbol__unconfigurables" === portalName) return undefined;
         if ("splice" === portalName) {
-            debugger;
             return undefined;
         }
 
         console.warn("checking for portal ", portalName);
-        instanceRequired();
-
-        const foundPortal = instance.current.portals[portalName];
+        const foundPortal = hasRequiredInstance()?.portals?.[portalName];
         //! it returns the default component (or facade) for the given portalName
         return foundPortal?.getDefaultComponentOrFacade() || lateOrMissingPortal(portalName)
     },
@@ -46,31 +49,42 @@ class PortalAPI extends defaultCompLookup {
     raw = portalTargetProxy;
 }
 
-function instanceRequired() {
-    if (!instance.current)
-        throw new Error(
-            `Posh Plum: Portal: no singleton instance of <Portal.Registry /> found in the application`
-        );
+function hasRequiredInstance() {
+    if (!instance.current) {
+        setTimeout(() => {
+            // ???
+            if (!instance.current) {
+                throw new Error(
+                    `Posh Plum: Portal: no singleton instance of <Portal.Registry /> found in the application`
+                );            
+            }
+        }, 2000);
+    }
+
+    return instance.current;
 }
 
 const portalComponentsProxy = new Proxy(dummy2, {
     get(neverChanged, portalName, reg) {
-        instanceRequired();
         //! it returns a map of component facades for the given portalName
 
-        return instance.current.portals[portalName]?.getNamedComponentsOrFacades() ||
-             lateOrMissingPortalComponents(portalName);
+        const foundProxy = hasRequiredInstance()?.portals[
+            portalName
+        ]?.getNamedComponentsOrFacades() ||
+            lateOrMissingPortalComponents(portalName);
 
+            return foundProxy;
     },
 });
 
 const portalTargetProxy = new Proxy(dummy3, {
     get(neverChanged, portalName, reg) {
-        instanceRequired();
+        if (!hasRequiredInstance()) {
+            return lateOrMissingPortal(portalName)
+        }
         //! it returns a DOM node for the given portalName
 
         console.error(`TODO: identify any remaining need for this code path - or, remove it.`)
-        debugger
         return instance.current.portals[portalName]?.getTarget() ||
             lateOrMissingPortal(portalName);
     },
@@ -103,14 +117,14 @@ function lateOrMissingPortal(portalName, componentName) {
             console.warn(`checking for late bound ${action}`);
             const { attempts } = this.state;
             const debug = attempts > 9 ? 1 : undefined;
+            // eslint-disable-next-line no-debugger
             if (debug) debugger;
 
             let LateBound;
-            let matchingPortal = instance.current.portals[portalName];
+            const matchingPortal = instance.current?.portals[portalName];
             const foundPortal = {};
             if (matchingPortal) {
                 if (componentName) {
-                    debugger;
                     LateBound =
                         matchingPortal.getNamedComponentsOrFacades()[
                             componentName
@@ -208,7 +222,7 @@ function lateOrMissingPortalComponents(badPortalName) {
                     " ->",
                     componentName,
                 ];
-                if (componentName == Symbol.toPrimitive) {
+                if (Symbol.toPrimitive === componentName) {
                     console.error(
                         `Portal-component request for: `,
                         badPortalName
@@ -221,7 +235,7 @@ function lateOrMissingPortalComponents(badPortalName) {
                             portalComponentsUsage.join("")
                     );
                 }
-                if (componentName[0] == "_") {
+                if ("_" === componentName[0]) {
                     msg.push("Usage: ", ...portalComponentsUsage);
                     console.error(...msg);
                 } else {
@@ -234,7 +248,7 @@ function lateOrMissingPortalComponents(badPortalName) {
 
     //! it gives developers a clear signal when they use it wrong and their accessed value
     //  is used as a react component
-    const DevErrorIncorrectUsage = function (props) {
+    const DevHelper = function usageInfoComponent(props) {
         console.warn(`Portal.components‹${badPortalName}› proxy: `, p);
         return (
             <div className="alert alert-danger">
@@ -251,17 +265,19 @@ function lateOrMissingPortalComponents(badPortalName) {
     };
     // fixes up the function for developer-errors to fit interface requirements of Preact.
     // probably these are the same way React does things :pray:
-    DevErrorIncorrectUsage.defaultProps = null;
-    DevErrorIncorrectUsage.propTypes = null;
-    DevErrorIncorrectUsage.displayName = "invalild‹Portal.components›";
-    DevErrorIncorrectUsage.contextType = null;
-    DevErrorIncorrectUsage.getDerivedStateFromProps = null;
+    DevHelper.defaultProps = null;
+    DevHelper.propTypes = null;
+    DevHelper.displayName = "invalild‹Portal.components›";
+    DevHelper.contextType = null;
+    DevHelper.getDerivedStateFromProps = null;
     // without these ^, the proxy prototype returns values these properties that cue Preact incorrectly.
 
     //! it returns an object with proxying behavior for later access to the components defined by a portal
-    Object.setPrototypeOf(DevErrorIncorrectUsage, p);
-    return DevErrorIncorrectUsage; // does it work?
-    return p;
+    const ProxyAndDevHelper = DevHelper;
+    Object.setPrototypeOf(ProxyAndDevHelper, p);
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ sweet magic here
+
+    return ProxyAndDevHelper;
 }
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

@@ -209,6 +209,8 @@ export function PortalProvider({ ...options }) {
     return portalProviderClass;
 }
 PortalProvider.client = function PortalClient(Wrapped) {
+    throw new Error(`unused?`);
+    
     const Provider = function portalProvider({ ...props }) {};
     Provider.displayName = `portalProvider‹›`;
 };
