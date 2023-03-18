@@ -189,7 +189,7 @@ export function PortalProvider({ ...options }) {
                         const { portalTarget: portal } = provider;
                         return (
                             <div
-                                className={`_comp-${contentName} _portal-to-${fullId} d-none`}
+                                className={`_c--${contentName} _portal-to-${fullId} d-none`}
                             >
                                 {portal?.current &&
                                     React.createPortal(
