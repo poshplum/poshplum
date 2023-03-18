@@ -1160,7 +1160,7 @@ export function Reactor(componentClass) {
                     className={`reactor for-${componentClassName}${isFramework}`}
                     {...props}
                 >
-                    {mounting && Reactor.earlyUniversalActors}
+                    {(mounted || mounting) && Reactor.earlyUniversalActors}
                     {mounted && Reactor.universalActors}
                     {mounted && super.render()}
                 </div>
