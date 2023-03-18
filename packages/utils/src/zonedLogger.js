@@ -461,9 +461,10 @@ function browserConsoleLogger(
             detail, summary,
             consoleMethod : cmOverride,
             indent: space=indent,
+            msg: msgAttr=""
          } = extraAttrs;
          
-         let message = "string" === typeof args[0] ? args.shift() : "";
+         let message = "string" === typeof args[0] ? args.shift() : msgAttr;
          let [...rest] = args;
 
          let consoleMethod = cmOverride ? (
