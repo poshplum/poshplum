@@ -22,6 +22,7 @@ export { StateMachine } from "./StateMachine";
 export {PlatformSubtleCrypto} from "../platform/browser/SubtleCrypto";
 export {PlatformTextEncoder} from "../platform/browser/TextEncoder";
 export {child_process} from "../platform/browser/child_process";
+export { copyToClipboard } from "./copyToClipboard";
 
 export {
     text2list,
