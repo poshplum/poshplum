@@ -77,7 +77,8 @@ export class Action extends React.Component {
         }
         name = name || foundName;
         if (this._unmounting) return;
-
+        if (debug > 1) debugger
+        
         let registerEvent = Reactor.RegisterAction({
             single: true,
             name,
