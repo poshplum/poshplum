@@ -18,17 +18,18 @@ export class PortalRegistry extends React.Component {
     @autobind
     addPortal(name, portalInstance) {
         const {props:{id}} = portalInstance;
+        const {portals} = this.state;
+
         const nameAndId = id ? `${name}:${id}` : name;
         if (this.state.portals[nameAndId]) {
             debugger
             throw new Error(`duplicate '${nameAndId}' portal`);
         }
+        portals[nameAndId] = portalInstance
 
-        this.setState({portals: {
-            ...this.state.portals,
-            [nameAndId] : portalInstance
-        }})
+        this.setState({portals})
     }
+    
     @autobind 
     removePortal(name, instance) {
         const {portals: {[name]: found, ...portals }} = this.state;
@@ -48,6 +49,7 @@ export class PortalRegistry extends React.Component {
         }
     }
     render() {
+        console.error(`PortalRegistry: `, this.state.portals);
         return (
             <div ref={this.registry}>
                 <Action returnsResult registry={this.getRegistry} />

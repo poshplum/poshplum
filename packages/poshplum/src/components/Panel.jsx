@@ -128,7 +128,7 @@ export class Panel extends Layout {
                             {HeaderRight}
                             {HeaderMiddle}
                             <h2 aria-live="assertive" aria-atomic="true">
-                                <span className="screader">
+                                <span className="visually-hidden">
                                     Overlay Panel: Escape to close
                                 </span>
                                 {announceTitle && <span>&nbsp;</span>}

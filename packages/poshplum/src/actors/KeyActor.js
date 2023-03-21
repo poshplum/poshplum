@@ -329,7 +329,7 @@ export class KeyActor extends React.Component {
         let itemCount = 0;
         const rendered = (
             <div ref={this.helpPanel}>
-                <span className="screader" alia-live="assertive">
+                <span className="visually-hidden" aria-live="assertive">
                     Keyboard Help: press Control+slash
                 </span>
                 <Action
@@ -376,7 +376,7 @@ export class KeyActor extends React.Component {
                         aria-atomic="true"
                     >
                         Keyboard and Controls Help
-                        <span className="screader">
+                        <span className="visually-hidden">
                             Overlay Panel: Control+slash to close
                         </span>
                     </h3>

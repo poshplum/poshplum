@@ -54,7 +54,7 @@ export class Chip extends Layout {
             } };
 
         // let clickFn = (e) => { if (cardItemClicked) cardItemClicked(item) };
-        const showScreaderLink = link && <Link to={link} ref={this._link} className="screader">{Title || "expand"}</Link>;
+        const showScreaderLink = link && <Link to={link} ref={this._link} className="visually-hidden">{Title || "expand"}</Link>;
 
         const widthClass=fullWidth ? "full-width" : halfWidth ? "half-width" : "";
         if (debug) debugger;
