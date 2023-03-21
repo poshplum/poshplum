@@ -374,7 +374,7 @@ function consoleProgress(...args) {
 
 function consoleWarn(...args) {
     if (!child_process) {
-        return browserLogWriter.write.info.call(this, ...args);
+        return browserLogWriter.write.warn.call(this, ...args);
     } else {
         if (!toConsoleOnly) this.warn(...args);
     }
