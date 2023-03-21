@@ -240,8 +240,19 @@ export class Layout extends Component {
                 );
             }
 
+            //! it combines explicitly-provided default-slot content 
+            //   with implicit default-slot content, resulting in a single default-slot item with all indicated content
+            //   ... explicit e.g. <Body>...explicit body elements...</Body>
+            //   ... implicit elements without the <Body> tag
+            //  
+            const defaultSlotChildren = [];
+            const foundExplicitDefaultSlot = content[defaultSlotName]
+            if (foundExplicitDefaultSlot) for (const defaultSlotInstance of foundExplicitDefaultSlot) {
+                defaultSlotChildren.push(... defaultSlotInstance.props.children )
+            }
+            defaultSlotChildren.push(... content.default)
             content[defaultSlotName] = React.createElement(defaultSlot, {
-                children: content.default,
+                children: defaultSlotChildren,
             });
             delete content.default;
         }
