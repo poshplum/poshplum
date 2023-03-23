@@ -13,7 +13,12 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "allowJs": true,
-        "outDir": "dist"
+        "outDir": "dist",
+        "paths": {
+            //!!!!! these SHOULD be unneeded...
+            "@poshplum/utils": ["../utils/dist/utils.mjs"],      
+            "@poshplum/utils/browser": ["../utils/dist/utils-browser"],
+        }
     },
     "include": [
         "src/index.ts"
@@ -23,5 +28,5 @@
         // "src/**/*.js",
         // "src/**/*.mdx"
     ],
-    "exclude": ["dist"]
+    "exclude": ["dist"],
 }

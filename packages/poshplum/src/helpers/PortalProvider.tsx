@@ -1,15 +1,47 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { __decorate } from "tslib";
+// import { __decorate } from "tslib";
 import React from "react";
+import { createPortal } from "react-dom";
+
 import { autobind, autobindMethods } from "@poshplum/utils/browser";
 import { Reactor } from "../Reactor";
-import { Action } from "../reactor/Action";
 
-function bumper() {
-    this.setState(({ gen = 0 }) => ({ gen: gen + 1 }));
+// import { Action } from "../reactor/Action";
+//!!! todo verify we can get rid of slotName, and do it.  Or remove this note.  
+
+interface hasGen {
+    gen: number
 }
 
-export function PortalProvider({ ...options }) {
+interface BasePortalProviderProps {
+    defaultClassName?: string,
+    className?: string,
+    id?: string,
+    // initialize,
+    debug?: number,
+    children: typeof React.Children,
+}
+
+type specificPortalProviderProps = BasePortalProviderProps & {
+    [key: string]: any
+}
+
+interface PortalProviderState extends hasGen {
+    attempts: number,
+    registry: any,
+    ready: boolean
+}
+
+interface PortalProviderOptions {
+    name: string
+    slotName: string,
+    as: React.ComponentType,
+    defaultClassName?: string,
+    component? : React.ComponentType, 
+    components? : Record<string, React.ComponentType>,
+    facade?: boolean,
+}
+export function PortalProvider({ ...options }: PortalProviderOptions) {
     const {
         name: portalName,
         slotName = portalName,
@@ -18,7 +50,6 @@ export function PortalProvider({ ...options }) {
         component,
         components = {},
         facade = true, //!!! todo probably some better way of expressing this
-        props: portalProviderProps,
     } = options;
     if ("string" !== typeof As) {
         // eslint-disable-next-line no-debugger
@@ -35,9 +66,8 @@ export function PortalProvider({ ...options }) {
         components.default = component;
     }
 
-    console.warn(`TODO: hot-reloader for factoried portalProvider?`);
     const portalProviderClass = autobindMethods(
-        class portalProvider extends React.Component {
+        class portalProvider extends React.Component<specificPortalProviderProps, PortalProviderState> {
             static displayName = `portalProvider‹${portalName}›`;
             static autobindMethods = [
                 "_connectToRegistry",
@@ -46,14 +76,28 @@ export function PortalProvider({ ...options }) {
                 "getDefaultComponentOrFacade",
             ];
             static slotName = slotName;
-            portalTarget = React.createRef();
-            state = {gen:0};
             componentDidMount() {
                 this._connectToRegistry();
             }
-            bump = bumper;
+            bump() {
+                this.setState(({ gen = 0 }) => ({ gen: gen + 1 }));
+            }
+            portalTarget: React.Ref<any>
+            _components?: Record<string, React.ComponentType>
 
-            @autobind
+            constructor(props: specificPortalProviderProps) {
+                super(props);
+                this.portalTarget = React.createRef();
+                this.state = {
+                    gen: 0,
+                    attempts: 0,
+                    registry: null,
+                    ready: false
+                }
+            }
+
+            //!!! todo: revisit autobind if/when it can be valid inside this dynamic class : (
+            // @autobind
             _connectToRegistry() {
                 const registry = Reactor.actionResult(
                     this,
@@ -91,7 +135,7 @@ export function PortalProvider({ ...options }) {
                     defaultClassName = predefinedClassName || "",
                     className = "",
                     id,
-                    initialize,
+                    // initialize,
                     debug,
                     children,
                     ...props
@@ -133,27 +177,35 @@ export function PortalProvider({ ...options }) {
                     <As
                         ref={this.portalTarget}
                         className={`${defaultClassName} ${className}`}
-                        {...portalProviderProps}
+                        {...props}
                     >
-                        {children}
+                        {children as any}
                     </As>
                 </>
             );
             }
-            @autobind getTarget() {
-                return this.portalTarget.current || this.__parentDomNode;
+            //!!! todo: revisit autobind if/when it can be valid inside this dynamic class : (
+            // @autobind
+            getTarget() {
+                //!!! todo: work on this type
+                //@ts-expect-error until we figure out the type problem with target?.current
+                return this.portalTarget?.current || this.__parentDomNode;
             }
-            @autobind getNamedComponentsOrFacades() {
+            //!!! todo: revisit autobind if/when it can be valid inside this dynamic class : (
+            // @autobind
+            getNamedComponentsOrFacades() {
                 return this._components;
             }
-            @autobind getDefaultComponentOrFacade() {
+            //!!! todo: revisit autobind if/when it can be valid inside this dynamic class : (
+            // @autobind
+            getDefaultComponentOrFacade() {
                 // ok!
-                return this._components.default;
+                return this._components?.default;
             }
 
             _initializeFacades() {
                 // const { components, name: portalName } = options;
-                const f = (this._components = {});
+                const f : Record<string, React.ComponentType> = (this._components = {});
                 for (const [name, component] of Object.entries(components)) {
                     f[name] =
                         (!facade && component) || this.mkFacade(component);
@@ -164,7 +216,7 @@ export function PortalProvider({ ...options }) {
                     );
             }
 
-            mkFacade(Component) {
+            mkFacade(Component : React.ComponentType) {
                 const { id } = this.props;
 
                 const fullId = id ? `${portalName}:${id}` : portalName;
@@ -185,17 +237,20 @@ export function PortalProvider({ ...options }) {
                     static displayName = `portalComp‹${contentName}›`;
 
                     render() {
-                        const { children, ...props } = this.props;
+                        const { children, ...props } = this.props as any
                         const { portalTarget: portal } = provider;
                         return (
                             <div
                                 className={`_c--${contentName} _portal-to-${fullId} d-none`}
                             >
-                                {portal?.current &&
-                                    React.createPortal(
+                                {
+                                    //@ts-expect-error  for now
+                                portal?.current &&
+                                    createPortal(
                                         <Component {...props}>
                                             {children}
                                         </Component>,
+                                        //@ts-expect-error until we figure out how to correct portal.current's type
                                         portal.current
                                     )}
                             </div>
@@ -208,9 +263,10 @@ export function PortalProvider({ ...options }) {
 
     return portalProviderClass;
 }
-PortalProvider.client = function PortalClient(Wrapped) {
-    throw new Error(`unused?`);
+
+// PortalProvider.client = function PortalClient(Wrapped) {
+//     throw new Error(`unused?`);
     
-    const Provider = function portalProvider({ ...props }) {};
-    Provider.displayName = `portalProvider‹›`;
-};
+//     const Provider = function portalProvider({ ...props }) {};
+//     Provider.displayName = `portalProvider‹›`;
+// };
