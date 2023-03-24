@@ -30,6 +30,7 @@ export { isInsideDOM, isOutsideDOM } from "./helpers/isOutsideDOM";
 export { Mousetrap } from "./helpers/mousetrap";
 export { Portal } from "./helpers/Portal";
 export { PortalProvider } from "./helpers/PortalProvider";
+export {genericTag,propIsRequired} from "./helpers/genericTag";
 
 // type MethodDecorator = <T>(
 //     target: Record<string, any>,
