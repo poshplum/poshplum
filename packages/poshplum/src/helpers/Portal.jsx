@@ -2,6 +2,7 @@ import React from "react";
 // these are never changed
 
 import { PortalRegistry } from "../actors/PortalRegistry";
+import levenshtein from "fast-levenshtein";
 
 const baseRetryInterval = 100;  // retry no more frequently than this
 const maxAttempts = 10;  // only retry this number of times
@@ -120,6 +121,9 @@ function lateOrMissingPortal(portalName, componentName) {
             // eslint-disable-next-line no-debugger
             if (debug) debugger;
 
+            //??? here?
+
+            
             let LateBound;
             const matchingPortal = instance.current?.portals[portalName];
             const foundPortal = {};
@@ -169,18 +173,22 @@ function lateOrMissingPortal(portalName, componentName) {
 
             const elapsed = new Date().getTime() - started;
             const needsWarning = (elapsed > minLagTime) ? true : undefined;
-            if (!componentName)
+            if (!componentName) {
+                const likely = orderedPossibilities(portalName, Object.keys(instance.current?.portals)).join(", ")
+                
                 return (needsWarning &&
                     <div className="alert alert-warning">
-                        warning: unknown portal: {portalName} after {attempts}{" "}
-                        tries
+                        qx1: warning: unknown portal {portalName} after {attempts}{" "}
+                        tries...<br/>
+                        Did you mean {likely}
                     </div>
                 );
+            }
 
             if (foundPortal)
                 return ( needsWarning &&
                     <div className="alert alert-warning">
-                        error: portal {portalName} found (after {attempts}{" "}
+                        pu2: error: portal {portalName} found (after {attempts}{" "}
                         tries), but it doesn't have a &lt;{componentName}&gt;
                         component.
                     </div>
@@ -188,7 +196,7 @@ function lateOrMissingPortal(portalName, componentName) {
 
             return (
                 needsWarning && <div className="alert alert-warning">
-                    warning: no &lt;{componentName}&gt; in unknown portal:{" "}
+                    uf3: warning: no &lt;{componentName}&gt; in unknown portal:{" "}
                     {portalName} after {attempts} tries
                 </div>
             );
@@ -280,6 +288,38 @@ function lateOrMissingPortalComponents(badPortalName) {
     return ProxyAndDevHelper;
 }
 
+function orderedPossibilities(wrong, possibles=[]) {
+    const distances = possibles.map((candidate) => [
+        levenshtein.get(candidate, wrong) / wrong.length,
+        candidate,
+    ])
+        .sort(([d1], [d2]) => (d1 < d2 ? -1 : 1))
+
+    const closeDistances = distances.filter(
+        ([distance, x]) => distance < 0.6
+    );
+
+    const likelyCandidates = closeDistances
+        .map(distanceToCandidate);
+
+    if (likelyCandidates.length) return likelyCandidates
+
+    const lessLikely = distances.filter(
+        ([distance, x]) => distance < 1
+    );
+
+    if (lessLikely.length) return lessLikely.map(distanceToCandidate);
+
+    return distances.map(distanceToCandidate);
+    // return distances.map(([d, x]) => `${x}@${d}`);
+
+    function distanceToCandidate([distance, candidate]) { return candidate }
+}
+
+
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 export const Portal = new PortalAPI();
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
