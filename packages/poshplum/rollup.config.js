@@ -15,8 +15,8 @@ const watchDeps = {
     name: "dev-deps",
     async buildStart() {
         this.addWatchFile("./rollup.config.js");
-    }
-}
+    },
+};
 
 const bundle = (config) => ({
     ...config,
@@ -67,32 +67,33 @@ export default [
                 },
                 tsconfig(existing) {
                     // console.warn(existing)
-                    return existing
+                    return existing;
                 },
                 swcConfig: {
-                    "jsc": {
-                        "parser": {
-                          "syntax": "ecmascript",
-                          "jsx": false,
-                          "dynamicImport": false,
-                          "privateMethod": false,
-                          "functionBind": false,
-                          "exportDefaultFrom": false,
-                          "exportNamespaceFrom": false,
-                          "decorators": true,
-                          "decoratorsBeforeExport": true,
-                          "topLevelAwait": false,
-                          "importMeta": false,
-                          "preserveAllComments": false
+                    jsc: {
+                        parser: {
+                            syntax: "ecmascript",
+                            jsx: false,
+                            dynamicImport: false,
+                            privateMethod: false,
+                            functionBind: false,
+                            exportDefaultFrom: false,
+                            exportNamespaceFrom: false,
+                            decorators: true,
+                            decoratorsBeforeExport: true,
+                            topLevelAwait: false,
+                            importMeta: false,
+                            preserveAllComments: false,
                         },
-                        "transform": null,
-                        "target": "es5",
-                        "loose": false,
-                        "externalHelpers": false,
+                        transform: null,
+                        target: "es5",
+                        loose: false,
+                        externalHelpers: false,
                         // Requires v1.2.50 or upper and requires target to be es2016 or upper.
-                        "keepClassNames": true
-                      },
-                      "isModule": false                                    },
+                        keepClassNames: true,
+                    },
+                    isModule: false,
+                },
             }),
         ],
         output: [
