@@ -1,4 +1,5 @@
 import { child_process } from "@platform/child_process";
+const {spawn} = child_process;
 
 import dotenv from 'dotenv'
 const envFile = process.env.ENV_FILE;
@@ -8,7 +9,15 @@ const cfg = envFile ? dotenv.config({ path: envFile }) : {};
 
 import createLogger from "pino";
 
-  
+import { fileURLToPath } from 'url';
+import path from 'path';
+// const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(process.argv[1]);
+// console.log(import.meta)
+// debugger
+const logger = fileURLToPath(await import.meta.resolve('pino-couch/pino-couch.js', `file://${process.argv[1]}`));
+
+
 export function logDestination() {
     const adapter = localEnv("DB_ADAPTER");
     if ("http" !== adapter) {
@@ -24,20 +33,22 @@ export function logDestination() {
             }
         }
 
-        const connectionURL = localEnv("DB_ROOT")
-        const logDb = localEnv("DB_logs")
+        const connectionURL = localEnv("DB_URL")
+        const logDb = localEnv("DB_logs");
+
+
         const user = localEnv("DB_USERNAME")
         const pass = localEnv("DB_PASSWORD")
         const connectionString = connectionURL.replace(
             /^(http[s]?:\/\/)/,
             (match, prefix) => `${prefix}${user}:${pass}@`
         );
-        console.log("spawning log/database bridge - " + __dirname);
-        const dir =
-            "development" === process.env.NODE_ENV ? "." : `${__dirname}/..`; // in production, node_modules rides next to server/  - not necessary for an important reason.
-        debugger;
-        const worker = child_process.spawn(
-            `${dir}/node_modules/.bin/pino-couch`,
+        const t = logger;  //!!! todo: cer49kn - why is this needed to prevent spawn() from getting incorrect args?
+        console.log("spawning log/database bridge - " + t);
+
+        const worker = spawn(
+            `${t}`,  // cer49kn - also this!?!?
+            // `${dir}/node_modules/.bin/pino-couch`,
             ["--quiet", "-U", connectionString, "-d", logDb],
             {
                 stdio: ["pipe", "inherit", "inherit"],

@@ -1,4 +1,5 @@
 
-import { subtle } from 'node:crypto';
+import { webcrypto } from 'node:crypto';
+const {subtle} = webcrypto;
 
 export let PlatformSubtleCrypto = subtle;
