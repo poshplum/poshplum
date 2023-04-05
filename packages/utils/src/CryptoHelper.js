@@ -5,7 +5,6 @@ import {PlatformSubtleCrypto} from "@platform/SubtleCrypto";
 
 export class CryptoHelper {
     static async sign(plainText, privateKey) {
-        if (navigator.hi) console.log('hi3');
         // console.warn({plainText, privateKey}, new Error("stack"));
         if (!privateKey) throw new Error("signing requires a privateKey");
         let plainBuffer = new PlatformTextEncoder("utf-8").encode(plainText);
