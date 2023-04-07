@@ -2,7 +2,8 @@ import React from "react";
 import * as shortid from "shortid";
 
 import { autobind } from "@poshplum/utils/browser";
-import { Action, Subscribe, Actor } from "../reactor/index";
+import { Action, Actor,  Subscribe } from "../reactor/index";
+import { Portal } from "../helpers/Portal";
 import { Reactor } from "../Reactor";
 
 @Actor
@@ -10,7 +11,7 @@ export class NotificationArea extends React.Component {
     logFacility = "notificationArea";
     alertsRef = React.createRef();
     name() {
-        return "notificationArea"
+        return "notificationArea";
     }
 
     @autobind
@@ -31,6 +32,7 @@ export class NotificationArea extends React.Component {
     @autobind
     hold() {
         if (this.releaser) return;
+
         const holdPendingPromise = new Promise((res, rej) => {
             this.releaser = res;
         });
@@ -84,9 +86,20 @@ export class NotificationArea extends React.Component {
         }
 
         const timeout = setTimeout(async () => {
-            await this.state.hold;
+            if (this.state.hold) {
+                // console.warn(
+                //     "waiting for mouse hold to be released"
+                // );
+                await this.state.hold;
+            }
             this.setState(removeThisMessage);
+            // console.warn("removing msg");
         }, 6000);
+        function removeThisMessage(state) {
+            let { notices } = state;
+            notices = notices.filter((n) => n.id !== id);
+            return { notices };
+        }
 
         notice = { id, message, severity, timeout };
 
@@ -98,49 +111,79 @@ export class NotificationArea extends React.Component {
             );
             return { notices };
         });
-
-        function removeThisMessage(state) {
-            let { notices } = state;
-            notices = notices.filter((n) => n.id !== id);
-            return { notices };
-        }
     }
 
     render() {
-        let { notices = [], hold = "" } = this.state || {};
-        let tooltip = (hold && { "data-tooltip": "✋ 🖱️" }) || {};
+        const { notices = [], hold = "" } = this.state || {};
+
+        //!!! todo: implement Alert in Design Lib
+        const { WithTooltip, Alert } = Portal.components.BootstrapDesignLib;
+
+        const holdIcons = "✋ 🖱️";
+        const DivOrTooltipAndDiv = hold ? WithTooltip : "div";
+        const tooltip =
+            (hold && {
+                as: "div",
+                showTooltip: true,
+                placement: "bottom",
+                tooltip: holdIcons,
+            }) ||
+            {};
+
+        // notices.push({ severity: "error", message: "hi there" });
+        // notices.push({ severity: "warning", message: "hi there warning" });
+        // notices.push({ severity: "warn", message: "hi there warn" });
+        // if (!notices.length) notices.push({ severity: "success", message: "hi there success" });
+
+        const alertClasses = {
+            error: "danger",
+        };
 
         return (
-            <>
+            <div ref={this.alertsRef}>
                 <Subscribe error={this.addError} />
                 <Subscribe success={this.addSuccess} />
                 <Subscribe warning={this.addWarning} />
 
-                <Action bare mouseover={this.hold} />
-                <Action bare mouseleave={this.releaseHold} />
+                {this.alertsRef.current && (
+                    <>
+                        <Action
+                            bare
+                            at={this.alertsRef.current}
+                            mouseover={this.hold}
+                        />
+                        <Action
+                            bare
+                            at={this.alertsRef.current}
+                            mouseleave={this.releaseHold}
+                        />
+                    </>
+                )}
 
-                <div
-                    role="alert"
-                    ref={this.alertsRef}
-                    className={
-                        hold ? "tooltip tooltip-bottom tooltip-left" : ""
-                    }
+
+                <DivOrTooltipAndDiv
                     {...tooltip}
+                    role="alert"
                     aria-relevant="additions"
                 >
                     {" "}
                     {/*  aria-live="polite"  - omitted to avoid double speaking issues in iOS per https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions#content */}
-                    {notices.map(({ severity, message }, i) => (
-                        <div
+                    {notices.map(({ severity, message }, i) => {
+                        const override = alertClasses[severity];
+                        if (override) severity = override;
+                        return (
+                            <div
+                            aria-role="alert"
                             aria-label={`${severity} notice`}
-                            key={i}
-                            className={`toast toast-${severity}`}
-                        >
-                            {this.mungeMessage(message)}
-                        </div>
-                    ))}
-                </div>
-            </>
+                                key={i}
+                                className={`alert alert-${severity}`}
+                            >
+                                {this.mungeMessage(message)}
+                            </div>
+                        );
+                    })}
+                </DivOrTooltipAndDiv>
+            </div>
         );
     }
     mungeMessage(message) {
