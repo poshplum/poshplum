@@ -64,10 +64,12 @@ export class Layout extends Component {
     }
     static withMarkup(basedOnSlot, RenderComponent) {
         let componentWithMarkup;
-        let slot = (componentWithMarkup = ({ children, ...props }) => (
-            <RenderComponent {...props}>{children}</RenderComponent>
-        ));
+        let slot = (componentWithMarkup = ({ children, ...props }) => {
+            if (slot.debug) debugger
+            return <RenderComponent {...props}>{children}</RenderComponent>
+        });
         slot.raw = RenderComponent;
+        slot.withDebug = () => { slot.debug = 1; return slot }
         slot.displayName = basedOnSlot.displayName;
 
         // if (basedOnSlot.tagName) throw new Error(`slot: withTagName("${basedOnSlot.tagName}"): .withMarkup(...) conflicts with bare tag name.`)
