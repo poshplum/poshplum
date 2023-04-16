@@ -125,8 +125,9 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
                     this.bump()
                 }
             }
+            registry!: any
             componentWillUnmount() {
-                this.state?.registry?.instance?.removePortal(portalName, this);
+                this.registry.instance.removePortal(this.portalId, this);
             }
             render() {
                 //! it uses the configured portal name by default
@@ -143,7 +144,7 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
                 const { ready } = this.state;
                 const reserved = ["target", "registry", "components"];
 
-                const fullId = id ? `${portalName}:${id}` : portalName;
+                const portalId = this.portalId;
                 //! it registers itself with the portal registry to expose
                 //  itself as a portal target, enabling this named portal to be
                 //  discovered by portal clients.
@@ -176,6 +177,7 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
                 <>
                     <As
                         ref={this.portalTarget}
+                        data-portalid={portalId}
                         className={`${defaultClassName} ${className}`}
                         {...props}
                     >
@@ -184,6 +186,11 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
                 </>
             );
             }
+            private get portalId() {
+                const {id} = this.props
+                return id ? `${portalName}:${id}` : portalName;
+            }
+
             //!!! todo: revisit autobind if/when it can be valid inside this dynamic class : (
             // @autobind
             getTarget() {
