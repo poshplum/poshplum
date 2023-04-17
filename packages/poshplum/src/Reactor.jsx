@@ -1175,12 +1175,12 @@ Reactor.pendingResult = Symbol("‹pending›");
 Reactor.onInit = [];
 Reactor.earlyUniversalActors = [];
 Reactor.universalActors = [];
-
+const throwUnhandled = Symbol("throw on unhandled")
 Reactor.actionResult = function getEventResult(
     target,
     eventName,
     detail = {},
-    onUnhandled
+    onUnhandled=throwUnhandled
 ) {
     let event;
     if (eventName instanceof Event) {
@@ -1197,7 +1197,7 @@ Reactor.actionResult = function getEventResult(
     }
 
     event.detail.result = Reactor.pendingResult;
-    if (!onUnhandled)
+    if (!onUnhandled || (throwUnhandled === onUnhandled))
         onUnhandled = (unhandledEvent, error = "") => {
             if (error) {
                 const msg = `caught error in action('${eventName}'‹returnsResult›):`;
