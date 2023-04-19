@@ -18,7 +18,6 @@ export class FormSection extends React.Component {
                         width: "fit-content",
                         padding: "0 0.5em",
                         marginLeft: "0.5em",
-                        background: "var(--bg2, #f7f7f7)",
                     }}
                 >
                     {label || "‹missing label= prop›"}
