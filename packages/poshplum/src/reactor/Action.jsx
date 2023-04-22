@@ -1,5 +1,5 @@
 import React from "react";
-import { logger, Reactor, elementInfo } from "../Reactor";
+import { Reactor, elementInfo, logger } from "../Reactor";
 
 export class Action extends React.Component {
     constructor(props) {
@@ -8,8 +8,17 @@ export class Action extends React.Component {
         this._actionRef = React.createRef();
     }
 
+    get delegateEl() {
+        const {delegate:d} = this.props
+        if (d && !d.el) {
+            debugger
+            throw new Error(`Action: delegate: missing expected .el`)
+        }
+        return d?.el || this._actionRef.current;
+    }
+
     render() {
-        let {
+        const {
             children,
             id,
             name,
@@ -18,8 +27,10 @@ export class Action extends React.Component {
             isAsync,
             observer = "",
             bare,
+            _info,
             capture = "",
             client,
+            delegate,
             debug,
             ...handler
         } = this.props;
@@ -30,11 +41,10 @@ export class Action extends React.Component {
             <div
                 {...{ id }}
                 style={{ display: "none" }}
-                className={`action${observer && " observer"}${
-                    capture && " capture-event"
-                } action-${foundName}${
-                    (returnsResult && " use-actionResult") || ""
-                }`}
+                className={`action${observer && " observer"}${capture &&
+                    " capture-event"} action-${foundName}${(returnsResult &&
+                    " use-actionResult") ||
+                    ""}${(delegate && " listensAtSourceDelegate") || ""}`}
                 ref={this._actionRef}
             />
         );
@@ -48,10 +58,12 @@ export class Action extends React.Component {
             at,
             returnsResult,
             isAsync,
+            _info,
             observer = "",
             bare,
             capture,
             client = "‹unknown›",
+            delegate,
             debug,
             ...handler
         } = this.props;
@@ -60,7 +72,7 @@ export class Action extends React.Component {
         const foundKeys = Object.keys(handler);
         if (foundKeys.length > 1) {
             throw new Error(
-                "Actions should only have a single prop - the action name. (plus 'debug', 'id', 'returnsResult', 'observer', or 'bare')\n" +
+                "Actions should only have a single prop - the action name. (plus 'debug', 'id', 'delegate', 'returnsResult', 'observer', or 'bare')\n" +
                     "If your action name can't be a prop, specify it with name=, and the action function with action="
             );
         }
@@ -77,25 +89,22 @@ export class Action extends React.Component {
         }
         name = name || foundName;
         if (this._unmounting) return;
-        if (debug > 1) debugger
-        
+        if (debug > 1) debugger;
+
         let registerEvent = Reactor.RegisterAction({
             single: true,
             name,
             returnsResult,
             action: this,
+            debug,
             observer,
             bare,
             at,
             capture,
             handler,
             isAsync,
-            debug,
         });
-        this.handler = Reactor.actionResult(
-            this._actionRef.current,
-            registerEvent
-        );
+        this.handler = Reactor.actionResult(this.delegateEl, registerEvent);
         this.fullName = registerEvent.detail.name;
         Object.defineProperty(this, "Name", {
             value: (observer && "👁️") + (bare ? "⚡" : "🏒") + this.fullName,
@@ -112,6 +121,7 @@ export class Action extends React.Component {
             at,
             returnsResult,
             isAsync,
+            _info,
             observer = "",
             bare,
             capture,
@@ -125,44 +135,38 @@ export class Action extends React.Component {
 
         client = client || (handler && handler.name) || "‹no handler›";
         this._unmounting = true;
+        const { delegate } = this.props;
         const el = this._actionRef.current;
         if (!el) return;
 
-        logger(
-            `${this.constructor.name}: scheduling action removal: '${this.fullName}'`
-        );
-        if (debug)
-            console.log(
-                `${this.constructor.name}: scheduling action removal: '${this.fullName}'`
-            );
         // setTimeout(() => {
         logger(
             `${this.constructor.name}: removing action '${this.fullName}' from client: `,
             client
         );
-        if (debug)
+        if (debug) {
             console.log(
                 `${this.constructor.name}: removing action '${this.fullName}' from client: `,
                 client
             );
-        logger(
-            "...from el",
-            el.outerHTML,
-            "with parent",
-            elementInfo(el.parentNode)
-        );
-        if (debug)
             console.log(
                 "...from el",
                 el.outerHTML,
                 "with parent",
-                elementInfo(el.parentNode)
+                elementInfo(el.parentNode),
+                "\n",
+                el,
+                ...((delegate && ["delegate => ", delegate]) || [
+                    "(no delegate)",
+                ])
             );
-        if (debug > 1) console.log(stack);
+            console.log(stack);
+        }
 
         try {
+            if (debug > 1) debugger;
             Reactor.trigger(
-                el,
+                this.delegateEl,
                 Reactor.RemoveAction({
                     single: true,
                     instance: this,

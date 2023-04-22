@@ -1,6 +1,7 @@
 import React from "react";
+import * as ReactDOM from "react-dom";
+import dbg from "debug";
 import levenshtein from "fast-levenshtein";
-import {ErrorTrigger} from "./components/ErrorTrigger";
 
 export const EVENT_IS_LOOPING_MAYBE = 20;
 export const reactorTag = Symbol("Reactor");
@@ -48,9 +49,8 @@ export const reactorTag = Symbol("Reactor");
 // Action boundaries (when in Dev mode) reflect unhandled Action events, indicating
 //   a bug in developer code.
 
-import * as ReactDOM from "react-dom";
+import { ErrorTrigger } from "./components/ErrorTrigger";
 import { inheritName } from "./helpers/ClassNames";
-import dbg from "debug";
 import { Publish } from "./reactor/Publish";
 import { Action } from "./reactor/Action";
 import { Listener } from "./reactor/Listener";
@@ -102,14 +102,14 @@ export function Reactor(componentClass) {
     if (componentClass.prototype instanceof React.Component) {
         //! it wraps an existing react Class component
     } else if ("function" === typeof componentClass) {
-        debugger
+        // eslint-disable-next-line no-debugger
+        debugger;
         throw new Error("TBD: support for functional components with @Reactor");
     } else {
         //! it throws a useful error message for incorrect usage as a <ReactElement>
-        const msg = "Incorrect use of <Reactor> as a React element.  Use @Reactor decorator on a React class component instead."
-        return <ErrorTrigger error={msg}>
-            Developer error: {msg}
-        </ErrorTrigger>
+        const msg =
+            "Incorrect use of <Reactor> as a React element.  Use @Reactor decorator on a React class component instead.";
+        return <ErrorTrigger error={msg}>Developer error: {msg}</ErrorTrigger>;
     }
     const wrappedName = componentClass.wrappedName || componentClass.name;
     const listenerClass = Listener(componentClass);
@@ -120,7 +120,9 @@ export function Reactor(componentClass) {
         get wrappedName() {
             return super.wrappedName || wrappedName;
         }
-        static get wrappedName() { return super.wrappedName || wrappedName }
+        static get wrappedName() {
+            return super.wrappedName || wrappedName;
+        }
         get displayName() {
             return componentClass.displayName || componentClass.name;
         }
@@ -381,6 +383,7 @@ export function Reactor(componentClass) {
             let { onReactor, result, debug } = event.detail;
             trace(`${reactorName}: responding to reactorProbe`);
 
+            // eslint-disable-next-line no-debugger
             if (debug) debugger;
 
             if (!(result || onReactor)) {
@@ -534,7 +537,8 @@ export function Reactor(componentClass) {
                     console.warn("existing listener: ", listener);
                 }
             }
-
+            // eslint-disable-next-line no-debugger
+            if (debug) debugger;
             const effectiveHandler = this.listen(name, handler, capture, {
                 at,
                 isInternal,
@@ -616,10 +620,8 @@ export function Reactor(componentClass) {
 
             const foundAction = this.actions[name];
             if (!foundAction && !(bare || observer)) {
-                logger(
-                    `can't removeAction '${name}' (not registered)`,
-                    new Error("Backtrace")
-                );
+                // eslint-disable-next-line no-debugger
+                debugger;
                 console.warn(
                     `can't removeAction '${name}' (not registered)`,
                     new Error("Backtrace")
@@ -639,12 +641,15 @@ export function Reactor(componentClass) {
                             },
                             `listener mismatch in removeAction`
                         );
+                        // eslint-disable-next-line no-debugger
                         debugger;
                         throw new Error(
                             `ruh roh.  these should match, shaggy.`
                         );
                     }
-                    this.unlisten(name, [node, handler], capture);
+                    // eslint-disable-next-line no-debugger
+                    if (debug) debugger;
+                    this.unlisten(name, [node, handler], capture, debug);
                     delete this.actions[name];
                 } else if (
                     foundAction &&
@@ -672,8 +677,9 @@ export function Reactor(componentClass) {
                         delete this.actions[name];
                     }
                 } else {
-                    debugger;
-                    this.unlisten(name, [node, handler], capture);
+                    // eslint-disable-next-line no-debugger
+                    if (debug) debugger;
+                    this.unlisten(name, [node, handler], capture, debug);
                 }
                 event.stopPropagation();
                 event.handledBy = handledInternally;
@@ -949,13 +955,9 @@ export function Reactor(componentClass) {
                     // before letting the event propage up through the tree.
                     event.detail.candidates = allKnownCandidates;
 
-                    logger(
-                        `${this.constructor.name}: unknown registerSubscriber request; passing to higher reactor`,
-                        event.detail
-                    );
                     if (debug)
                         console.warn(
-                            `${this.constructor.name}: ignored unknown registerSubscriber request`,
+                            `${this.constructor.name}: unknown subscription requested for ${eventName}; passing to higher reactor...`,
                             event.detail
                         );
                     return false;
@@ -1015,16 +1017,21 @@ export function Reactor(componentClass) {
                     const ownerBit = existingOwner
                         ? ["\n...with existing owner", existingOwner]
                         : [];
+                    // eslint-disable-next-line no-debugger
+                    debugger;
                     console.error(
                         `addSubscriberEvent('${eventName}'): ignoring duplicate subscription:`,
                         subscriberFn,
                         ...ownerBit,
                         `\n---> have you subscribed using a method in your class as an event handler?  \n` +
-                            `     you should probably bind that function to its instance in constructor.`
+                            `     you should probably bind that function to its instance in constructor.\n`,
+                        { reactor: this }
                     );
                     return false;
                 } else {
                     const pOwner = owners.get(subscriberFn);
+                    // eslint-disable-next-line no-debugger
+                    if (debug) debugger;
                     if (pOwner) {
                         // this isn't supposed to happen - it's just for sanity-checking.
                         const message = `addSubscriberEvent('${eventName}'): subscriberOwners already has this subscriberFunction registered to another owner`;
@@ -1147,6 +1154,8 @@ export function Reactor(componentClass) {
             let props = this.filterProps(this.props);
             let { isFramework = "" } = this;
             if (isFramework) isFramework = " _fw_";
+
+            // eslint-disable-next-line no-debugger
             if (this.debug || this.props.debug) debugger;
 
             const { wrappedName: wn } = this;
@@ -1175,12 +1184,12 @@ Reactor.pendingResult = Symbol("‹pending›");
 Reactor.onInit = [];
 Reactor.earlyUniversalActors = [];
 Reactor.universalActors = [];
-const throwUnhandled = Symbol("throw on unhandled")
+const throwUnhandled = Symbol("throw on unhandled");
 Reactor.actionResult = function getEventResult(
     target,
     eventName,
     detail = {},
-    onUnhandled=throwUnhandled
+    onUnhandled = throwUnhandled
 ) {
     let event;
     if (eventName instanceof Event) {
@@ -1197,7 +1206,7 @@ Reactor.actionResult = function getEventResult(
     }
 
     event.detail.result = Reactor.pendingResult;
-    if (!onUnhandled || (throwUnhandled === onUnhandled))
+    if (!onUnhandled || throwUnhandled === onUnhandled)
         onUnhandled = (unhandledEvent, error = "") => {
             if (error) {
                 const msg = `caught error in action('${eventName}'‹returnsResult›):`;
@@ -1210,6 +1219,7 @@ Reactor.actionResult = function getEventResult(
             } else {
                 const msg = `actionResult('${eventName}'): Error: no responders (check the event name carefully)!`;
                 error = new Error(msg);
+                // eslint-disable-next-line no-debugger
                 debugger;
                 console.error(
                     "unhandled actionResult event:",
@@ -1271,7 +1281,8 @@ Reactor.dispatchTo = Reactor.trigger = function dispatchWithHandledDetection(
         try {
             target = ReactDOM.findDOMNode(target);
         } catch (e) {
-            debugger
+            // eslint-disable-next-line no-debugger
+            debugger;
             // no-op; will fall through to errors below
         }
     }
@@ -1468,24 +1479,6 @@ Reactor.bindWithBreadcrumb = function (fn, boundThis, fnName, ...args) {
 export function autobind(proto, name, descriptor) {
     let func = descriptor.value;
     throw new Error(`use @poshplum/utils/browser`);
-
-    if ("function" !== typeof func) {
-        throw new TypeError(`@autobind must only be used on instance methods`);
-    }
-
-    return {
-        configurable: true,
-        get() {
-            const bound = Reactor.bindWithBreadcrumb(func, this, name);
-            Object.defineProperty(this, name, {
-                configurable: false,
-                get() {
-                    return bound;
-                },
-            });
-            return bound;
-        },
-    };
 }
 
 Reactor.Events = {

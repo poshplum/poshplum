@@ -301,9 +301,9 @@ export function Listener(componentClass) {
             }, this.unlistenDelay);
         }
 
-        unlisten(type, listener, capture) {
-            let [node, handler] = listener;
-            let listenersOfThisType = this.listening.get(type);
+        unlisten(type, listener, capture, debug) {
+            const [node, handler] = listener;
+            const listenersOfThisType = this.listening.get(type);
 
             let foundListening = listenersOfThisType.has(listener) && listener;
 
@@ -313,11 +313,25 @@ export function Listener(componentClass) {
                 // because they don't currently store a reference
                 //   to the [node, handler] pair; they pass us
                 //   an equivalent array, we compare its elements.
+                if (debug)
+                    console.warn("   ...finding matching listener for", {
+                        h: handler,
+                        n: node,
+                    });
+
                 for (const listener of listenersOfThisType.values()) {
                     const [n, h] = listener;
+                    if (debug)
+                        console.warn("        ...checking listener", { h, n });
                     if (h === handler) {
                         if (n === node) {
+                            if (debug)
+                                console.warn(
+                                    "        ...found matching listener",
+                                    { h, n }
+                                );
                             foundListening = listener;
+                            break;
                         } else {
                             console.warn(
                                 {
@@ -332,6 +346,11 @@ export function Listener(componentClass) {
                         }
                     }
                 }
+                if (debug) {
+                    console.warn("     <- done checking for matching listener", node, foundListening);
+                    debugger;
+                }
+
                 if (
                     !foundListening ||
                     !listenersOfThisType.has(foundListening)
@@ -376,7 +395,7 @@ export function Listener(componentClass) {
             return wrapped;
 
             function wrappedHandler(createdBy, details, handler, event) {
-                // it's important to clarify the `this` context.  Sorry, eslint.                
+                // it's important to clarify the `this` context.  Sorry, eslint.
                 // eslint-disable-next-line @typescript-eslint/no-this-alias
                 const reactor = this;
                 const {

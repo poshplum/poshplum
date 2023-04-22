@@ -11,11 +11,26 @@ export class Subscribe extends React.Component {
         super(props);
         this._subRef = React.createRef();
     }
+
+    get delegateEl() {
+        const {delegate:d} = this.props
+        if (d && !d.el) {
+            debugger
+            throw new Error(`Subscribe: delegate: missing expected .el`)
+        }
+        return d?.el || this.reactor?.el
+    }
+
     componentDidMount() {
         if (super.componentDidMount) super.componentDidMount();
-        let { skipLevel, optional = false } = this.props;
+        const { skipLevel, delegate, optional = false } = this.props;
 
         this.subscriptionPending = true;
+
+        if (delegate) {
+            setTimeout(this.doSubscribe, 1);
+            return
+        }
 
         const attempt = tryNow.bind(this);
         attempt();
@@ -75,14 +90,18 @@ export class Subscribe extends React.Component {
             debug: this.debug,
         });
 
+       if (this.debug > 2) debugger
+ 
         if (!this._unmounting && this._subRef.current) {
             let ok = true
             Reactor.trigger(
-                this.reactor.el,
+                this.delegateEl,
                 subscriberReq,
                 {},
                 (unhandledEvent) => {
                     ok = false
+                    if (this.debug > 2) debugger
+                    
                     console.warn(
                         `${(optional && "optional ") || ""}subscribe to '${
                             this.eventName
@@ -110,7 +129,7 @@ export class Subscribe extends React.Component {
         if (super.componentWillUnmount) super.componentWillUnmount();
 
         if (this.failed) return;
-        if (!this.reactor.el) {
+        if (!this.delegateEl) {
             console.warn(
                 `‹Subscribe› forcibly unmounted; skipping removeSubscriber`
             );
@@ -119,7 +138,7 @@ export class Subscribe extends React.Component {
 
         if (!this.subscriptionPending && !this.pubUnmounted)
             Reactor.trigger(
-                this.reactor.el,
+                this.delegateEl,
                 Reactor.StopSubscribing({
                     eventName: this.eventName,
                     single: true,
@@ -133,7 +152,7 @@ export class Subscribe extends React.Component {
     }
 
     render() {
-        const { children, skipLevel, optional, debug, ...handler } = this.props;
+        const { children, skipLevel, optional, delegate, debug, ...handler } = this.props;
 
         const foundKeys = Object.keys(handler);
         if (foundKeys.length > 1) {
@@ -158,7 +177,9 @@ export class Subscribe extends React.Component {
         return (
             <div
                 style={{ display: "none" }}
-                className={`listen listen-${this.eventName}`}
+                className={`listen listen-${this.eventName} ${
+                    (delegate && " listensAtSourceDelegate" ) || ""
+                }`}
                 ref={this._subRef}
             />
         );
