@@ -6,38 +6,40 @@ import { Actor } from "../reactor/Actor";
 
 @Actor
 export class PortalRegistry extends React.Component {
-    state = {portals: {}};
+    constructor() {
+        super();
+
+        this._portals = {};
+    }
+
     name() {
         return "portal";
     }
 
     get portals() {
-        return this.state.portals || {}
+        return this._portals
     }
     
     @autobind
     addPortal(name, portalInstance) {
         const {props:{id}} = portalInstance;
-        const {portals} = this.state;
 
         const nameAndId = id ? `${name}:${id}` : name;
-        if (this.state.portals[nameAndId]) {
+        if (this._portals[nameAndId]) {
             debugger
             throw new Error(`duplicate '${nameAndId}' portal`);
         }
-        portals[nameAndId] = portalInstance
-
-        this.setState({portals})
+        this._portals[nameAndId] = portalInstance
     }
     
     @autobind 
     removePortal(name, instance) {
-        const {portals: {[name]: found, ...portals }} = this.state;
+        const {[name]: found, ...updatedPortals } = this._portals;
 
         if (found !== instance) {
             throw new Error(`portal '${name}' mismatched during remove`)
         }
-        this.setState({portals})
+        this._portals = updatedPortals;
     }
 
     registry = React.createRef();
@@ -45,11 +47,11 @@ export class PortalRegistry extends React.Component {
     getRegistry() {
         return {
             instance: this,
-            dom: this.registry.current
+            // dom: this.registry.current
         }
     }
     render() {
-        console.error(`PortalRegistry: `, this.state.portals);
+        console.error(`PortalRegistry: `, this._portals);
         return (
             <div ref={this.registry}>
                 <Action returnsResult registry={this.getRegistry} />

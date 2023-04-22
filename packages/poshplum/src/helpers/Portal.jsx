@@ -1,13 +1,13 @@
 import React from "react";
-// these are never changed
+import levenshtein from "fast-levenshtein";
 
 import { PortalRegistry } from "../actors/PortalRegistry";
-import levenshtein from "fast-levenshtein";
 
 const baseRetryInterval = 100;  // retry no more frequently than this
 const maxAttempts = 10;  // only retry this number of times
 const minLagTime = 800;  // don't show warnings until this much time (millis) has passed without found portals.
 
+// these are never changed
 const dummy1 = {},
     dummy2 = {},
     dummy3 = {};
