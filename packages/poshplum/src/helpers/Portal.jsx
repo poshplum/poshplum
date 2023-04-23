@@ -30,7 +30,7 @@ const defaultPortalComponentProxy = new Proxy(dummy1, {
             return undefined;
         }
 
-        console.warn("checking for portal ", portalName);
+        // console.warn("checking for portal ", portalName);
         const foundPortal = hasRequiredInstance()?.portals?.[portalName];
         //! it returns the default component (or facade) for the given portalName
         return foundPortal?.getDefaultComponentOrFacade() || lateOrMissingPortal(portalName)
@@ -115,7 +115,7 @@ function lateOrMissingPortal(portalName, componentName) {
                 ? `portal:components:${portalName}`
                 : `portal:${portalName}`;
 
-            console.warn(`checking for late bound ${action}`);
+            // console.warn(`checking for late bound ${action}`);
             const { attempts } = this.state;
             const debug = attempts > 9 ? 1 : undefined;
             // eslint-disable-next-line no-debugger

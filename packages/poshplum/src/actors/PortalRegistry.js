@@ -51,7 +51,7 @@ export class PortalRegistry extends React.Component {
         }
     }
     render() {
-        console.error(`PortalRegistry: `, this._portals);
+        // console.error(`PortalRegistry: `, this._portals);
         return (
             <div ref={this.registry}>
                 <Action returnsResult registry={this.getRegistry} />
