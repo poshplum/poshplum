@@ -113,7 +113,8 @@ export class Subscribe extends React.Component {
                         console.warn(`giving up on Subscribe ${this.eventName}`);
                         return;
                     }
-                    setTimeout(this.doSubscribe, Math.pow(1.27, retries));
+                    //! it retries 10 times in ~0.5s, starting after ~10ms.
+                    setTimeout(this.doSubscribe, 10 * Math.pow(1.27, retries));
                     this.setState({ retries: 1 + retries });
                 }
             );
