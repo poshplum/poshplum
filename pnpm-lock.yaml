@@ -68,6 +68,7 @@ importers:
       fast-levenshtein: ^3.0.0
       jest: ^24.7.1
       lodash: ^4.17.21
+      nanoid: ^4.0.2
       postcss: ^8.4.14
       preact: '10'
       prop-types: ^15.8.1
@@ -85,17 +86,16 @@ importers:
       rollup-plugin-postcss: ^4.0.2
       rollup-plugin-ts: ^3.1.1
       sass: ^1.57.1
-      shortid: ^2.2.16
       tslib: ^2.4.1
       typescript: ^4.9.4
       vite: '3'
     dependencies:
       '@poshplum/utils': link:../utils
       lodash: 4.17.21
+      nanoid: 4.0.2
       prop-types: 15.8.1
       react-bootstrap: 2.7.2_pmekkgnqduwlme35zpnqhenc34
       react-router-dom: 5.3.4_react@18.2.0
-      shortid: 2.2.16
     devDependencies:
       '@babel/core': 7.21.0
       '@babel/plugin-proposal-class-properties': 7.18.6_@babel+core@7.21.0
@@ -4736,7 +4736,7 @@ packages:
     resolution: {integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==}
     engines: {node: '>= 4.0'}
     os: [darwin]
-    deprecated: fsevents 1 will break on node v14+ and could be using insecure binaries. Upgrade to fsevents 2.
+    deprecated: The v1 package contains DANGEROUS / INSECURE binaries. Upgrade to safe fsevents v2
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
@@ -6784,6 +6784,12 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  /nanoid/4.0.2:
+    resolution: {integrity: sha512-7ZtY5KTCNheRGfEFxnedV5zFiORN1+Y1N6zvPTnHQd8ENUvfaDBeuJDZb2bN/oXwXxu3qkTXDzy57W5vAmDTBw==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
+    dev: false
 
   /nanomatch/1.2.13:
     resolution: {integrity: sha512-fpoe2T0RbHwBTBUOftAfBPaDEi06ufaUai0mE6Yn1kacc3SnTErfb/h+X94VXzI64rKFHYImXSvdwGGCmwOqCA==}

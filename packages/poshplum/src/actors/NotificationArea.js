@@ -1,5 +1,5 @@
 import React from "react";
-import * as shortid from "shortid";
+import { nanoid } from 'nanoid/non-secure'
 
 import { autobind } from "@poshplum/utils/browser";
 import { Action, Actor,  Subscribe } from "../reactor/index";
@@ -63,7 +63,7 @@ export class NotificationArea extends React.Component {
     addNotice(severity, event) {
         let { id, [severity]: notice, reactor, isDecorated } = event.detail;
         if (!id) {
-            id = shortid.generate();
+            id = nanoid()
             event.detail.id = id;
         }
         event.stopPropagation();

@@ -64,7 +64,6 @@
         "dotenv": "^16.0.3",
         "lodash": "^4.17.21",
         "pino": "^5.16.0",
-        "shortid": "^2.2.16",
         "zoned-cls": "git://github.com/poshplum/zoned-cls.git"
     },
     "scripts": {
