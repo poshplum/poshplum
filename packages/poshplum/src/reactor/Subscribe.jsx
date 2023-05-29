@@ -102,15 +102,18 @@ export class Subscribe extends React.Component {
                     ok = false
                     if (this.debug > 2) debugger
                     
-                    console.warn(
-                        `${(optional && "optional ") || ""}subscribe to '${
-                            this.eventName
-                        }': no matching Publish, will retry`
-                    );
+                    if( ! this.didWarnRetry ) {
+                        console.warn(
+                            `${(optional && "optional ") || ""}subscribe to '${
+                                this.eventName
+                            }': no matching Publish, will retry`
+                        );
+                        this.didWarnRetry = true;
+                    }
                     const { retries = 0 } = this.state;
-                    if (retries > 10) {
+                    if (retries >= 10) {
                         this.failed = true;
-                        console.warn(`giving up on Subscribe ${this.eventName}`);
+                        console.warn(`giving up on Subscribe ${this.eventName} after ${retries} attempts`);
                         return;
                     }
                     //! it retries 10 times in ~0.5s, starting after ~10ms.
