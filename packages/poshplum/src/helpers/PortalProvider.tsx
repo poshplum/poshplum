@@ -50,6 +50,7 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
         component,
         components = {},
         facade = true, //!!! todo probably some better way of expressing this
+        ...moreProps
     } = options;
     if ("string" !== typeof As) {
         // eslint-disable-next-line no-debugger
@@ -179,6 +180,7 @@ export function PortalProvider({ ...options }: PortalProviderOptions) {
                         ref={this.portalTarget}
                         data-portalid={portalId}
                         className={`${defaultClassName} ${className}`}
+                        {...moreProps}
                         {...props}
                     >
                         {children as any}
