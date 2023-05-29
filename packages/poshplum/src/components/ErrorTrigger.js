@@ -11,9 +11,9 @@ export class ErrorTrigger extends React.Component {
         }
 
         return (
-            <div className={className} ref={this.node}>
+            <code className={className} ref={this.node}>
                 {children}
-            </div>
+            </code>
         );
     }
     componentDidMount() {
