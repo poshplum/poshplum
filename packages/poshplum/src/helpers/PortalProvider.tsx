@@ -34,8 +34,9 @@ interface PortalProviderState extends hasGen {
 
 interface PortalProviderOptions {
     name: string
-    slotName: string,
-    as: React.ComponentType,
+    slotName?: string,
+    as?: React.ComponentType,
+
     defaultClassName?: string,
     component? : React.ComponentType, 
     components? : Record<string, React.ComponentType>,
